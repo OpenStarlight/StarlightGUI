@@ -101,6 +101,8 @@ namespace winrt::StarlightGUI::implementation {
 
 		// Deuterium
 		static BOOL DeuteriumInvoke(DEUTERIUM_PROXY_INVOKE& function) noexcept;
+		static BOOL DeuteriumAlloc(DEUTERIUM_PROXY_ALLOCATE& function, bool map) noexcept;
+		static BOOL DeuteriumFree(DEUTERIUM_PROXY_FREE& function, bool map) noexcept;
 
 	private:
 		static BOOL GetDriverDevice() noexcept;

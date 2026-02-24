@@ -19,6 +19,9 @@ namespace winrt::StarlightGUI::implementation
     DeuteriumPage::DeuteriumPage() {
 		InitializeComponent();
 
+        StackListView().ItemsSource(m_stackList);
+        if (!list_animation) StackListView().ItemContainerTransitions().Clear();
+
         Loaded([this](auto&&, auto&&){
             if (!loaded) {
                 loaded = true;
@@ -32,119 +35,8 @@ namespace winrt::StarlightGUI::implementation
                 dialog.ShowAsync();
             }
 			});
-    }
 
-    /* 
-     * 0 = 成功
-     * 1 = 输入不匹配
-     * 2 = 输入为空
-     * 3 = 未知类型
-     * 4 = 溢出
-     */
-    int DeuteriumPage::CheckParam(DEUTERIUM_PROXY_VAR_TYPE varType, hstring value) {
-        if (varType == TYPE_NULLABLE) return 0;
-        if (value.empty()) return 2;
-        switch (varType) {
-        case TYPE_LONG: {
-            LONG64 v = 0;
-            if (StringToNumber(value.c_str(), v)) {
-                if (v > std::numeric_limits<LONG>::max() || v < std::numeric_limits<LONG>::min()) return 4;
-                return 0;
-            }
-            else return 1;
-            break;
-        }
-        case TYPE_LONG64: {
-            LONG64 v = 0;
-            if (StringToNumber(value.c_str(), v)) {
-                if (v > std::numeric_limits<LONG64>::max() || v < std::numeric_limits<LONG64>::min()) return 4;
-                return 0;
-            }
-            else return 1;
-            break;
-        }
-        case TYPE_ULONG: {
-            ULONG64 v = 0;
-            if (StringToNumber(value.c_str(), v)) {
-                if (v > std::numeric_limits<ULONG>::max() || v < std::numeric_limits<ULONG>::min()) return 4;
-                return 0;
-            }
-            else return 1;
-            break;
-        }
-        case TYPE_ULONG64: {
-            ULONG64 v = 0;
-            if (StringToNumber(value.c_str(), v)) {
-                if (v > std::numeric_limits<ULONG64>::max() || v < std::numeric_limits<ULONG64>::min()) return 4;
-                return 0;
-            }
-            else return 1;
-            break;
-        }
-        case TYPE_CHAR: {
-            LONG64 v = 0;
-            if (StringToNumber(value.c_str(), v)) {
-                if (v > std::numeric_limits<CHAR>::max() || v < std::numeric_limits<CHAR>::min()) return 4;
-                return 0;
-            }
-            else return 1;
-            break;
-        }
-        case TYPE_UCHAR: {
-            ULONG64 v = 0;
-            if (StringToNumber(value.c_str(), v)) {
-                if (v > std::numeric_limits<UCHAR>::max() || v < std::numeric_limits<UCHAR>::min()) return 4;
-                return 0;
-            }
-            else return 1;
-            break;
-        }
-        case TYPE_WCHAR: {
-            ULONG64 v = 0;
-            if (StringToNumber(value.c_str(), v)) {
-                if (v > std::numeric_limits<WCHAR>::max() || v < std::numeric_limits<WCHAR>::min()) return 4;
-                return 0;
-            }
-            else return 1;
-            break;
-        }
-        case TYPE_SHORT: {
-            LONG64 v = 0;
-            if (StringToNumber(value.c_str(), v)) {
-                if (v > std::numeric_limits<SHORT>::max() || v < std::numeric_limits<SHORT>::min()) return 4;
-                return 0;
-            }
-            else return 1;
-            break;
-        }
-        case TYPE_USHORT: {
-            LONG64 v = 0;
-            if (StringToNumber(value.c_str(), v)) {
-                if (v > std::numeric_limits<USHORT>::max() || v < std::numeric_limits<USHORT>::min()) return 4;
-                return 0;
-            }
-            else return 1;
-            break;
-        }
-        case TYPE_BOOLEAN: {
-            if (value == L"true" || value == L"false" || value == L"TRUE" || value == L"FALSE") return 0;
-            else return 1;
-            break;
-        }
-        case TYPE_PVOID: {
-            ULONG64 v = 0;
-            if (HexStringToULong(value.c_str(), v)) {
-                if ((v > 0x0ULL && v <= 0x00007FFFFFFFFFFFULL) || (v >= 0xFFFF800000000000ULL || v <= 0xFFFFFFFFFFFFFFFFULL)) return 0;
-                else return 4;
-            }
-            else return 1;
-            break;
-        }
-        default: {
-            return 3;
-            break;
-        }
-       }
+        LOG_INFO(L"DeuteriumPage", L"DeuteriumPage initialized.");
     }
 
     IAsyncAction DeuteriumPage::ExecuteButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
@@ -160,6 +52,74 @@ namespace winrt::StarlightGUI::implementation
         else {
             CreateInfoBarAndDisplay(L"失败", L"调用失败: 执行请求时出错", InfoBarSeverity::Error, g_mainWindowInstance);
 		}
+
+        co_return;
+    }
+
+    IAsyncAction DeuteriumPage::AllocButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+        if (AllocSizeSlider().Value() < 4 || AllocSizeSlider().Value() > 64) {
+            CreateInfoBarAndDisplay(L"失败", L"分配失败: 大小不合法", InfoBarSeverity::Error, g_mainWindowInstance);
+            co_return;
+        }
+
+        DEUTERIUM_PROXY_ALLOCATE function{};
+        function.Size = (ULONG)AllocSizeSlider().Value();
+
+        BOOL status = KernelInstance::DeuteriumAlloc(function, AllocMapBox().IsChecked().GetBoolean());
+
+        if (status) {
+            if (function.Address) {
+                auto entry = make<winrt::StarlightGUI::implementation::GeneralEntry>();
+                entry.String1(ULongToHexString(function.Address));
+                entry.ULong1(function.Size);
+                entry.Bool1(AllocMapBox().IsChecked().GetBoolean());
+                m_stackList.Append(entry);
+                CreateInfoBarAndDisplay(L"成功", L"分配成功！请在列表里查看地址！", InfoBarSeverity::Success, g_mainWindowInstance);
+            }
+            else {
+                CreateInfoBarAndDisplay(L"失败", L"分配失败: 执行请求成功，但返回地址为空！", InfoBarSeverity::Success, g_mainWindowInstance);
+            }
+        }
+        else {
+            CreateInfoBarAndDisplay(L"失败", L"分配失败: 执行请求时出错, Error: " + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+        }
+
+        co_return;
+    }
+
+    IAsyncAction DeuteriumPage::FreeButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+        DEUTERIUM_PROXY_FREE function{};
+        
+        if (!HexStringToULong(FreeAddressBox().Text().c_str(), function.Address)) {
+            CreateInfoBarAndDisplay(L"失败", L"释放失败: 地址不合法", InfoBarSeverity::Error, g_mainWindowInstance);
+            co_return;
+        }
+
+        uint32_t index = 114514;
+        for (const auto& stack : m_stackList) {
+            ULONG64 address = 0;
+            if (HexStringToULong(stack.String1().c_str(), address)) {
+                if (address == function.Address) {
+                    m_stackList.IndexOf(stack, index);
+                    break;
+                }
+            }
+        }
+
+        if (index == 114514) {
+            CreateInfoBarAndDisplay(L"失败", L"释放失败: 地址不存在于列表中", InfoBarSeverity::Error, g_mainWindowInstance);
+            co_return;
+        }
+
+        BOOL status = KernelInstance::DeuteriumFree(function, FreeMapBox().IsChecked().GetBoolean());
+
+        if (status) {
+            m_stackList.RemoveAt(index);
+            CreateInfoBarAndDisplay(L"成功", L"释放成功！", InfoBarSeverity::Success, g_mainWindowInstance);
+        }
+        else {
+            CreateInfoBarAndDisplay(L"失败", L"释放失败: 执行请求时出错", InfoBarSeverity::Error, g_mainWindowInstance);
+        }
 
         co_return;
     }
@@ -402,5 +362,130 @@ namespace winrt::StarlightGUI::implementation
         function.Param10 = param10;
 
         return true;
+    }
+
+    /*
+ * 0 = 成功
+ * 1 = 输入不匹配
+ * 2 = 输入为空
+ * 3 = 未知类型
+ * 4 = 溢出
+ */
+    int DeuteriumPage::CheckParam(DEUTERIUM_PROXY_VAR_TYPE varType, hstring value) {
+        if (varType == TYPE_NULLABLE) return 0;
+        if (value.empty()) return 2;
+        switch (varType) {
+        case TYPE_LONG: {
+            LONG64 v = 0;
+            if (StringToNumber(value.c_str(), v)) {
+                if (v > std::numeric_limits<LONG>::max() || v < std::numeric_limits<LONG>::min()) return 4;
+                return 0;
+            }
+            else return 1;
+            break;
+        }
+        case TYPE_LONG64: {
+            LONG64 v = 0;
+            if (StringToNumber(value.c_str(), v)) {
+                if (v > std::numeric_limits<LONG64>::max() || v < std::numeric_limits<LONG64>::min()) return 4;
+                return 0;
+            }
+            else return 1;
+            break;
+        }
+        case TYPE_ULONG: {
+            ULONG64 v = 0;
+            if (StringToNumber(value.c_str(), v)) {
+                if (v > std::numeric_limits<ULONG>::max() || v < std::numeric_limits<ULONG>::min()) return 4;
+                return 0;
+            }
+            else return 1;
+            break;
+        }
+        case TYPE_ULONG64: {
+            ULONG64 v = 0;
+            if (StringToNumber(value.c_str(), v)) {
+                if (v > std::numeric_limits<ULONG64>::max() || v < std::numeric_limits<ULONG64>::min()) return 4;
+                return 0;
+            }
+            else return 1;
+            break;
+        }
+        case TYPE_CHAR: {
+            LONG64 v = 0;
+            if (StringToNumber(value.c_str(), v)) {
+                if (v > std::numeric_limits<CHAR>::max() || v < std::numeric_limits<CHAR>::min()) return 4;
+                return 0;
+            }
+            else return 1;
+            break;
+        }
+        case TYPE_UCHAR: {
+            ULONG64 v = 0;
+            if (StringToNumber(value.c_str(), v)) {
+                if (v > std::numeric_limits<UCHAR>::max() || v < std::numeric_limits<UCHAR>::min()) return 4;
+                return 0;
+            }
+            else return 1;
+            break;
+        }
+        case TYPE_WCHAR: {
+            ULONG64 v = 0;
+            if (StringToNumber(value.c_str(), v)) {
+                if (v > std::numeric_limits<WCHAR>::max() || v < std::numeric_limits<WCHAR>::min()) return 4;
+                return 0;
+            }
+            else return 1;
+            break;
+        }
+        case TYPE_SHORT: {
+            LONG64 v = 0;
+            if (StringToNumber(value.c_str(), v)) {
+                if (v > std::numeric_limits<SHORT>::max() || v < std::numeric_limits<SHORT>::min()) return 4;
+                return 0;
+            }
+            else return 1;
+            break;
+        }
+        case TYPE_USHORT: {
+            LONG64 v = 0;
+            if (StringToNumber(value.c_str(), v)) {
+                if (v > std::numeric_limits<USHORT>::max() || v < std::numeric_limits<USHORT>::min()) return 4;
+                return 0;
+            }
+            else return 1;
+            break;
+        }
+        case TYPE_BOOLEAN: {
+            if (value == L"true" || value == L"false" || value == L"TRUE" || value == L"FALSE") return 0;
+            else return 1;
+            break;
+        }
+        case TYPE_PVOID: {
+            ULONG64 v = 0;
+            if (HexStringToULong(value.c_str(), v)) {
+                if ((v > 0x0ULL && v <= 0x00007FFFFFFFFFFFULL) || (v >= 0xFFFF800000000000ULL || v <= 0xFFFFFFFFFFFFFFFFULL)) return 0;
+                else return 4;
+            }
+            else return 1;
+            break;
+        }
+        default: {
+            return 3;
+            break;
+        }
+        }
+    }
+
+    void DeuteriumPage::StackListView_ContainerContentChanging(
+        winrt::Microsoft::UI::Xaml::Controls::ListViewBase const& sender,
+        winrt::Microsoft::UI::Xaml::Controls::ContainerContentChangingEventArgs const& args)
+    {
+        if (args.InRecycleQueue())
+            return;
+
+        // 将 Tag 设到容器上，便于 ListViewItemPresenter 通过 TemplatedParent 绑定
+        if (auto itemContainer = args.ItemContainer())
+            itemContainer.Tag(sender.Tag());
     }
 }

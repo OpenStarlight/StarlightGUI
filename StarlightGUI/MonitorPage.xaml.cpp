@@ -71,6 +71,8 @@ namespace winrt::StarlightGUI::implementation
 		Unloaded([this](auto&&, auto&&) {
 			windbgTimer.Stop();
 			});
+
+		LOG_INFO(L"MonitorPage", L"MonitorPage initialized.");
 	}
 
 	winrt::Windows::Foundation::IAsyncAction MonitorPage::LoadPartitionList(std::wstring path) {

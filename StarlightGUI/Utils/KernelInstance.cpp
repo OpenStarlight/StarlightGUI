@@ -1970,6 +1970,38 @@ namespace winrt::StarlightGUI::implementation {
 		return status;
 	}
 
+	BOOL KernelInstance::DeuteriumAlloc(DEUTERIUM_PROXY_ALLOCATE& function, bool map) noexcept {
+		if (!GetDriverDevice() || !IsRunningAsAdmin()) return FALSE;
+
+		BOOL status = FALSE;
+		if (map) {
+			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\", parameters: []", IOCTL_AX_DEUTERIUM_ALLOCATE_MODERN, __WFUNCTION__.c_str());
+			status = DeviceIoControl(driverDevice, IOCTL_AX_DEUTERIUM_ALLOCATE_MODERN, &function, sizeof(DEUTERIUM_PROXY_ALLOCATE), &function, sizeof(DEUTERIUM_PROXY_ALLOCATE), 0, NULL);
+		}
+		else {
+			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\", parameters: []", IOCTL_AX_DEUTERIUM_ALLOCATE, __WFUNCTION__.c_str());
+			status = DeviceIoControl(driverDevice, IOCTL_AX_DEUTERIUM_ALLOCATE, &function, sizeof(DEUTERIUM_PROXY_ALLOCATE), &function, sizeof(DEUTERIUM_PROXY_ALLOCATE), 0, NULL);
+		}
+
+		return status;
+	}
+
+	BOOL KernelInstance::DeuteriumFree(DEUTERIUM_PROXY_FREE& function, bool map) noexcept {
+		if (!GetDriverDevice() || !IsRunningAsAdmin()) return FALSE;
+
+		BOOL status = FALSE;
+		if (map) {
+			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\", parameters: []", IOCTL_AX_DEUTERIUM_FREE_MODERN, __WFUNCTION__.c_str());
+			status = DeviceIoControl(driverDevice, IOCTL_AX_DEUTERIUM_FREE_MODERN, &function, sizeof(DEUTERIUM_PROXY_FREE), &function, sizeof(DEUTERIUM_PROXY_FREE), 0, NULL);
+		}
+		else {
+			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\", parameters: []", IOCTL_AX_DEUTERIUM_FREE, __WFUNCTION__.c_str());
+			status = DeviceIoControl(driverDevice, IOCTL_AX_DEUTERIUM_FREE, &function, sizeof(DEUTERIUM_PROXY_FREE), &function, sizeof(DEUTERIUM_PROXY_FREE), 0, NULL);
+		}
+
+		return status;
+	}
+
 	// =================================
 	//				PRIVATE
 	// =================================
