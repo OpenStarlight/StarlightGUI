@@ -125,7 +125,10 @@
                 <!--  从上到下  -->
                 <!--  最下面是设置  -->
                 <NavigationView.FooterMenuItems>
-                    <NavigationViewItem Content="Deuterium" Tag="Deuterium">
+                    <NavigationViewItem
+                        Content="Work in progress..."
+                        IsEnabled="False"
+                        Tag="Deuterium">
                         <NavigationViewItem.Icon>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe945;" />
                         </NavigationViewItem.Icon>
