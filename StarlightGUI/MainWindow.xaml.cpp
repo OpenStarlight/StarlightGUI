@@ -69,6 +69,7 @@ namespace winrt::StarlightGUI::implementation
         Activated([this](auto&&, auto&&) -> IAsyncAction {
             if (!loaded) {
                 RootNavigation().IsEnabled(false);
+                loaded = true;
                 // 加载模块
                 slg::CreateInfoBarAndDisplay(L"信息", L"正在加载模块，这可能需要一点时间...", InfoBarSeverity::Informational, g_mainWindowInstance);
                 co_await LoadModules();
@@ -79,7 +80,6 @@ namespace winrt::StarlightGUI::implementation
                 RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(0));
 
                 RootNavigation().IsEnabled(true);
-                loaded = true;
 
                 // 检查更新
                 CheckUpdate();
