@@ -271,8 +271,12 @@ namespace winrt::StarlightGUI::implementation
 
 	void MonitorPage::ObjectListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
 	{
-		if (!ObjectListView().SelectedItem() || segmentedIndex != 0) return;
-		auto item = ObjectListView().SelectedItem().as<winrt::StarlightGUI::ObjectEntry>();
+		auto listView = sender.as<ListView>();
+
+		slg::SelectItemOnRightTapped(listView, e);
+
+		if (!listView.SelectedItem() || segmentedIndex != 0) return;
+		auto item = listView.SelectedItem().as<winrt::StarlightGUI::ObjectEntry>();
 
 		// 获取信息
 		BOOL status = KernelInstance::GetObjectDetails(item.Path().c_str(), item.Type().c_str(), item);
@@ -443,14 +447,7 @@ namespace winrt::StarlightGUI::implementation
 	{
 		auto listView = CallbackListView();
 
-		if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-		{
-			auto container = FindParent<ListViewItem>(fe);
-			if (container)
-			{
-				listView.SelectedItem(container.Content());
-			}
-		}
+		slg::SelectItemOnRightTapped(listView, e);
 
 		if (!listView.SelectedItem()) return;
 
@@ -519,14 +516,7 @@ namespace winrt::StarlightGUI::implementation
 	{
 		auto listView = MiniFilterListView();
 
-		if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-		{
-			auto container = FindParent<ListViewItem>(fe);
-			if (container)
-			{
-				listView.SelectedItem(container.Content());
-			}
-		}
+		slg::SelectItemOnRightTapped(listView, e);
 
 		if (!listView.SelectedItem()) return;
 
@@ -603,14 +593,7 @@ namespace winrt::StarlightGUI::implementation
 	{
 		auto listView = StdFilterListView();
 
-		if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-		{
-			auto container = FindParent<ListViewItem>(fe);
-			if (container)
-			{
-				listView.SelectedItem(container.Content());
-			}
-		}
+		slg::SelectItemOnRightTapped(listView, e);
 
 		if (!listView.SelectedItem()) return;
 
@@ -688,14 +671,7 @@ namespace winrt::StarlightGUI::implementation
 		auto listView = sender.as<ListView>();
 		bool isSSDT = listView != SSSDTListView();
 
-		if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-		{
-			auto container = FindParent<ListViewItem>(fe);
-			if (container)
-			{
-				listView.SelectedItem(container.Content());
-			}
-		}
+		slg::SelectItemOnRightTapped(listView, e);
 
 		if (!listView.SelectedItem()) return;
 
@@ -782,14 +758,7 @@ namespace winrt::StarlightGUI::implementation
 	{
 		auto listView = ExCallbackListView();
 
-		if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-		{
-			auto container = FindParent<ListViewItem>(fe);
-			if (container)
-			{
-				listView.SelectedItem(container.Content());
-			}
-		}
+		slg::SelectItemOnRightTapped(listView, e);
 
 		if (!listView.SelectedItem()) return;
 
@@ -866,14 +835,7 @@ namespace winrt::StarlightGUI::implementation
 	{
 		auto listView = PiDDBListView();
 
-		if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-		{
-			auto container = FindParent<ListViewItem>(fe);
-			if (container)
-			{
-				listView.SelectedItem(container.Content());
-			}
-		}
+		slg::SelectItemOnRightTapped(listView, e);
 
 		if (!listView.SelectedItem()) return;
 
@@ -934,14 +896,7 @@ namespace winrt::StarlightGUI::implementation
 	{
 		auto listView = HALDPTListView();
 
-		if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-		{
-			auto container = FindParent<ListViewItem>(fe);
-			if (container)
-			{
-				listView.SelectedItem(container.Content());
-			}
-		}
+		slg::SelectItemOnRightTapped(listView, e);
 
 		if (!listView.SelectedItem()) return;
 
@@ -1276,16 +1231,5 @@ namespace winrt::StarlightGUI::implementation
 			LoadingRing().IsActive(false);
 		}
 		co_return;
-	}
-
-	template <typename T>
-	T MonitorPage::FindParent(DependencyObject const& child)
-	{
-		DependencyObject parent = VisualTreeHelper::GetParent(child);
-		while (parent && !parent.try_as<T>())
-		{
-			parent = VisualTreeHelper::GetParent(parent);
-		}
-		return parent.try_as<T>();
 	}
 }

@@ -9,7 +9,7 @@
     xmlns:local="using:StarlightGUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     Background="{StaticResource WindowBackgroundBrush}"
-    NavigationCacheMode="Disabled"
+    NavigationCacheMode="Enabled"
     mc:Ignorable="d">
 
     <Grid>
@@ -453,67 +453,7 @@
                         </Grid>
                     </Button>
                     <!--  磁盘  -->
-                    <Button
-                        Margin="0,0,0,10"
-                        HorizontalAlignment="Stretch"
-                        HorizontalContentAlignment="Stretch"
-                        essential:RevealFocusPanel.AttachToPanel="{x:Bind RevealFocusPanel}">
-                        <Grid Padding="10">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <ct:RadialGauge
-                                x:Name="DiskGauge"
-                                Grid.Column="0"
-                                Width="150"
-                                IsInteractive="False"
-                                Maximum="100"
-                                Minimum="0"
-                                NeedleBrush="LimeGreen"
-                                StepSize="1"
-                                TickSpacing="10"
-                                TrailBrush="LimeGreen"
-                                ValueStringFormat=" {0}% " />
-                            <StackPanel Grid.Column="1" Margin="20,0,0,0">
-                                <TextBlock
-                                    FontSize="20"
-                                    FontWeight="Bold"
-                                    Text="磁盘" />
-                                <TextBlock
-                                    x:Name="DiskManufacture"
-                                    FontSize="16"
-                                    FontWeight="SemiBold" />
-                                <StackPanel Margin="0,10,0,0" Orientation="Horizontal">
-                                    <StackPanel Width="200">
-                                        <TextBlock>
-                                            <Run Text="读取速度: " />
-                                            <Run x:Name="DiskRead" Foreground="LightGray" />
-                                        </TextBlock>
-                                        <TextBlock>
-                                            <Run Text="写入速度: " />
-                                            <Run x:Name="DiskWrite" Foreground="LightGray" />
-                                        </TextBlock>
-                                        <TextBlock>
-                                            <Run Text="传输量: " />
-                                            <Run x:Name="DiskTrans" Foreground="LightGray" />
-                                        </TextBlock>
-                                        <TextBlock>
-                                            <Run Text="I/O 量: " />
-                                            <Run x:Name="DiskIO" Foreground="LightGray" />
-                                        </TextBlock>
-                                    </StackPanel>
-                                </StackPanel>
-                            </StackPanel>
-                            <TextBlock
-                                x:Name="DiskPercent"
-                                Grid.Column="3"
-                                FontSize="24"
-                                FontWeight="Bold" />
-                        </Grid>
-                    </Button>
+                    <StackPanel x:Name="DiskCardPanel" Margin="0" />
                     <!--  GPU  -->
                     <Button
                         Margin="0,0,0,10"
@@ -633,11 +573,6 @@
                                 </StackPanel>
                             </StackPanel>
                             <StackPanel Grid.Column="3" VerticalAlignment="Bottom">
-                                <Button
-                                    Margin="0,0,0,5"
-                                    HorizontalAlignment="Right"
-                                    Click="NextAdapterName_Click"
-                                    Content="下一个适配器名称" />
                                 <Button Click="ChangeMode_Click" Content="图表切换发送/接收" />
                             </StackPanel>
                         </Grid>

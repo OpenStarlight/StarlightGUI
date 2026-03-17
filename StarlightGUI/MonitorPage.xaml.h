@@ -227,9 +227,6 @@ namespace winrt::StarlightGUI::implementation
 		inline static hstring dbgViewData = L"";
 		inline static std::mutex dbgViewMutex;
 		inline static DbgViewMonitor dbgViewMonitor{ &dbgViewData, &dbgViewMutex };
-
-		template <typename T>
-		T FindParent(winrt::Microsoft::UI::Xaml::DependencyObject const& child);
     };
 }
 

@@ -21,9 +21,6 @@ namespace winrt::StarlightGUI::implementation
         winrt::Windows::Foundation::Collections::IObservableVector<winrt::StarlightGUI::KCTInfo> m_kctList{
             winrt::single_threaded_observable_vector<winrt::StarlightGUI::KCTInfo>()
         };
-
-        template <typename T>
-        T FindParent(winrt::Microsoft::UI::Xaml::DependencyObject const& child);
     };
 }
 

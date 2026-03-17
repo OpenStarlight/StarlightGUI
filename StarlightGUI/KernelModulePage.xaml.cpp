@@ -55,14 +55,7 @@ namespace winrt::StarlightGUI::implementation
     {
         auto listView = KernelModuleListView();
 
-        if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-        {
-            auto container = FindParent<ListViewItem>(fe);
-            if (container)
-            {
-                listView.SelectedItem(container.Content());
-            }
-        }
+        slg::SelectItemOnRightTapped(listView, e);
 
         if (!listView.SelectedItem()) return;
 
@@ -413,16 +406,5 @@ namespace winrt::StarlightGUI::implementation
         reloadTimer.Start();
 
         co_return;
-    }
-
-    template <typename T>
-    T KernelModulePage::FindParent(DependencyObject const& child)
-    {
-        DependencyObject parent = VisualTreeHelper::GetParent(child);
-        while (parent && !parent.try_as<T>())
-        {
-            parent = VisualTreeHelper::GetParent(parent);
-        }
-        return parent.try_as<T>();
     }
 }

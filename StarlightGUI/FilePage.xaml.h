@@ -56,9 +56,6 @@ namespace winrt::StarlightGUI::implementation
         inline static bool m_isSizeAscending = true;
         inline static bool currentSortingOption;
         inline static std::string currentSortingType;
-
-        template <typename T>
-        T FindParent(winrt::Microsoft::UI::Xaml::DependencyObject const& child);
     };
 
     extern winrt::hstring currentDirectory;

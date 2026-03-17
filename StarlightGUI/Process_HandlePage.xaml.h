@@ -21,9 +21,6 @@ namespace winrt::StarlightGUI::implementation
         winrt::Windows::Foundation::Collections::IObservableVector<winrt::StarlightGUI::HandleInfo> m_handleList{
             winrt::single_threaded_observable_vector<winrt::StarlightGUI::HandleInfo>()
         };
-
-        template <typename T>
-        T FindParent(winrt::Microsoft::UI::Xaml::DependencyObject const& child);
     };
 }
 

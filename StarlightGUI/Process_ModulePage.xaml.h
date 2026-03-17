@@ -21,9 +21,6 @@ namespace winrt::StarlightGUI::implementation
         winrt::Windows::Foundation::Collections::IObservableVector<winrt::StarlightGUI::MokuaiInfo> m_moduleList{
             winrt::single_threaded_observable_vector<winrt::StarlightGUI::MokuaiInfo>()
         };
-
-        template <typename T>
-        T FindParent(winrt::Microsoft::UI::Xaml::DependencyObject const& child);
     };
 }
 

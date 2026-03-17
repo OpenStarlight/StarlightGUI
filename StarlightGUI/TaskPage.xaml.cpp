@@ -74,14 +74,7 @@ namespace winrt::StarlightGUI::implementation
     {
         auto listView = ProcessListView();
 
-        if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-        {
-            auto container = FindParent<ListViewItem>(fe);
-            if (container)
-            {
-                listView.SelectedItem(container.Content());
-            }
-        }
+        slg::SelectItemOnRightTapped(listView, e);
 
         if (!listView.SelectedItem()) return;
 
@@ -960,17 +953,6 @@ namespace winrt::StarlightGUI::implementation
             else slg::CreateInfoBarAndDisplay(L"失败", L"无法结束进程: " + item.Name() + L" (" + to_hstring(item.Id()) + L"), 错误码: " + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
         }
         co_return;
-    }
-
-    template <typename T>
-    T TaskPage::FindParent(DependencyObject const& child)
-    {
-        DependencyObject parent = VisualTreeHelper::GetParent(child);
-        while (parent && !parent.try_as<T>())
-        {
-            parent = VisualTreeHelper::GetParent(parent);
-        }
-        return parent.try_as<T>();
     }
 
     winrt::Windows::Foundation::IAsyncAction TaskPage::WaitAndReloadAsync(int interval) {

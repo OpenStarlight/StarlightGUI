@@ -21,7 +21,10 @@
 #include <random>
 #include <chrono>
 #include <iomanip>
+#include <algorithm>
+#include <cwctype>
 #include <iphlpapi.h>
+#include <pdhmsg.h>
 #include "MainWindow.xaml.h"
 
 using namespace winrt;
@@ -258,16 +261,12 @@ namespace winrt::StarlightGUI::implementation
             PdhAddCounterW(query, L"\\Memory\\Page Writes/sec", 0, &counter_mem_write);
             PdhAddCounterW(query, L"\\Memory\\Pages Input/sec", 0, &counter_mem_input);
             PdhAddCounterW(query, L"\\Memory\\Pages Output/sec", 0, &counter_mem_output);
-            PdhAddCounterW(query, L"\\LogicalDisk(_Total)\\% Disk Time", 0, &counter_disk_time);
-            PdhAddCounterW(query, L"\\LogicalDisk(_Total)\\Disk Transfers/sec", 0, &counter_disk_trans);
-            PdhAddCounterW(query, L"\\LogicalDisk(_Total)\\Disk Read Bytes/sec", 0, &counter_disk_read);
-            PdhAddCounterW(query, L"\\LogicalDisk(_Total)\\Disk Write Bytes/sec", 0, &counter_disk_write);
-            PdhAddCounterW(query, L"\\LogicalDisk(_Total)\\Split IO/Sec", 0, &counter_disk_io);
+            PdhAddCounterW(query, L"\\PhysicalDisk(*)\\% Disk Time", 0, &counter_disk_time);
+            PdhAddCounterW(query, L"\\PhysicalDisk(*)\\Disk Transfers/sec", 0, &counter_disk_trans);
+            PdhAddCounterW(query, L"\\PhysicalDisk(*)\\Disk Read Bytes/sec", 0, &counter_disk_read);
+            PdhAddCounterW(query, L"\\PhysicalDisk(*)\\Disk Write Bytes/sec", 0, &counter_disk_write);
+            PdhAddCounterW(query, L"\\PhysicalDisk(*)\\Split IO/Sec", 0, &counter_disk_io);
             PdhAddCounterW(query, L"\\GPU Engine(*)\\Utilization Percentage", 0, &counter_gpu_time);
-            PdhAddCounterW(query, L"\\Network Interface(*)\\Bytes Received/sec", 0, &counter_net_receive);
-            PdhAddCounterW(query, L"\\Network Interface(*)\\Bytes Sent/sec", 0, &counter_net_send);
-            PdhAddCounterW(query, L"\\Network Interface(*)\\Packets Received/sec", 0, &counter_net_packet_receive);
-            PdhAddCounterW(query, L"\\Network Interface(*)\\Packets Sent/sec", 0, &counter_net_packet_send);
 
             LOG_INFO(L"MonitorInstance", L"Initialized PDH counters.");
 
@@ -305,25 +304,6 @@ namespace winrt::StarlightGUI::implementation
             }
 
             LOG_INFO(L"MonitorInstance", L"Initialized CPU information.");
-
-            // 获取硬盘型号
-            HANDLE hDevice = CreateFileW(L"\\\\.\\PhysicalDrive0", 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-
-            if (hDevice != INVALID_HANDLE_VALUE) {
-                STORAGE_PROPERTY_QUERY spq{};
-                spq.PropertyId = StorageDeviceProperty;
-                spq.QueryType = PropertyStandardQuery;
-
-                buffer = std::vector<BYTE>(1024);
-                if (DeviceIoControl(hDevice, IOCTL_STORAGE_QUERY_PROPERTY, &spq, sizeof(spq), buffer.data(), buffer.size(), NULL, NULL))
-                {
-                    PSTORAGE_DEVICE_DESCRIPTOR sdd = reinterpret_cast<PSTORAGE_DEVICE_DESCRIPTOR>(buffer.data());
-                    if (sdd->ProductIdOffset != 0) {
-                        LPCSTR productId = reinterpret_cast<LPCSTR>(buffer.data() + sdd->ProductIdOffset);
-                        disk_manufacture = to_hstring(productId);
-                    }
-                } else LOG_ERROR(L"MonitorInstance", L"Failed to complete I/O with PhysicalDrive0.");
-            } else LOG_ERROR(L"MonitorInstance", L"Failed to open PhysicalDrive0.");
 
             // 获取 GPU 型号
             try {
@@ -369,23 +349,7 @@ namespace winrt::StarlightGUI::implementation
                 }
             }
 
-            // 获取网络适配器型号
-            bufferSize = 0;
-            if (GetAdaptersInfo(NULL, &bufferSize) == ERROR_BUFFER_OVERFLOW) {
-                buffer = std::vector<BYTE>(bufferSize);
-                PIP_ADAPTER_INFO iai = reinterpret_cast<PIP_ADAPTER_INFO>(buffer.data());
-                if (GetAdaptersInfo(iai, &bufferSize) == ERROR_SUCCESS) {
-                    int index = 0;
-                    while (iai) {
-                        adpt_name_map[index] = to_hstring(iai->Description);
-                        iai = iai->Next;
-                        index++;
-                    }
-                    netadpt_manufacture = adpt_name_map[0];
-                    adptIndex++;
-                }
-                else LOG_ERROR(L"MonitorInstance", L"Failed to get adapter info.");
-            }
+            TrySelectActiveNetworkAdapter();
 
             initialized = true;
         }
@@ -423,6 +387,7 @@ namespace winrt::StarlightGUI::implementation
 
         if (auto strong_this = weak_this.get()) {
             co_await wil::resume_foreground(DispatcherQueue());
+            InitializeDiskCards();
 
             graphX += 1;
 
@@ -460,20 +425,48 @@ namespace winrt::StarlightGUI::implementation
             MemPageOutput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_output)) + L"/s");
             TotalLineGraph().AddDataPoint(L"内存", graphX, memInfo.dwMemoryLoad);
 
-            DiskGauge().Value(GetValueFromCounter(counter_disk_time));
-            DiskManufacture().Text(disk_manufacture);
-            ss = std::wstringstream{};
-            ss << std::fixed << std::setprecision(1) << GetValueFromCounter(counter_disk_time) << "%";
-            DiskPercent().Text(ss.str());
-            DiskRead().Text(FormatMemorySize(GetValueFromCounter(counter_disk_read)) + L"/s");
-            DiskWrite().Text(FormatMemorySize(GetValueFromCounter(counter_disk_write)) + L"/s");
-            ss = std::wstringstream{};
-            ss << std::fixed << std::setprecision(1) << GetValueFromCounter(counter_disk_trans) << "/s";
-            DiskTrans().Text(ss.str());
-            ss = std::wstringstream{};
-            ss << std::fixed << std::setprecision(1) << GetValueFromCounter(counter_disk_io) << "/s";
-            DiskIO().Text(ss.str());
-            TotalLineGraph().AddDataPoint(L"磁盘", graphX, GetValueFromCounter(counter_disk_time));
+            auto diskTimeMap = GetDiskCounterMap(counter_disk_time);
+            auto diskReadMap = GetDiskCounterMap(counter_disk_read);
+            auto diskWriteMap = GetDiskCounterMap(counter_disk_write);
+            auto diskTransMap = GetDiskCounterMap(counter_disk_trans);
+            auto diskIoMap = GetDiskCounterMap(counter_disk_io);
+
+            double totalDiskUsage = 0.0;
+            size_t totalDiskCount = 0;
+
+            for (auto& [index, card] : disk_card_map) {
+                double timeValue = diskTimeMap[index];
+                double readValue = diskReadMap[index];
+                double writeValue = diskWriteMap[index];
+                double transValue = diskTransMap[index];
+                double ioValue = diskIoMap[index];
+
+                card.gauge.Value(timeValue);
+
+                ss = std::wstringstream{};
+                ss << std::fixed << std::setprecision(1) << timeValue << "%";
+                card.percent.Text(ss.str());
+                ss = std::wstringstream{};
+                ss << L"读取速度: " << FormatMemorySize(readValue) << L"/s";
+                card.read.Text(ss.str());
+                ss = std::wstringstream{};
+                ss << L"写入速度: " << FormatMemorySize(writeValue) << L"/s";
+                card.write.Text(ss.str());
+
+                ss = std::wstringstream{};
+                ss << L"传输量: " << std::fixed << std::setprecision(1) << transValue << "/s";
+                card.trans.Text(ss.str());
+
+                ss = std::wstringstream{};
+                ss << L"I/O 量: " << std::fixed << std::setprecision(1) << ioValue << "/s";
+                card.io.Text(ss.str());
+
+                totalDiskUsage += timeValue;
+                totalDiskCount++;
+            }
+
+            if (totalDiskCount > 0) totalDiskUsage /= static_cast<double>(totalDiskCount);
+            TotalLineGraph().AddDataPoint(L"磁盘", graphX, totalDiskUsage);
 
             double gpu_time = 0.0;
             if (isNvidia) {
@@ -508,22 +501,27 @@ namespace winrt::StarlightGUI::implementation
             GpuManufacture().Text(gpu_manufacture);
             TotalLineGraph().AddDataPoint(L"GPU", graphX, gpu_time);
 
+            double receiveBytesPerSec = 0.0, sendBytesPerSec = 0.0, receivePacketsPerSec = 0.0, sendPacketsPerSec = 0.0;
+            if (!GetActiveNetworkSpeed(receiveBytesPerSec, sendBytesPerSec, receivePacketsPerSec, sendPacketsPerSec)) {
+                TrySelectActiveNetworkAdapter();
+            }
+
             if (isNetSend) {
-                NetGauge().Value(GetValueFromCounterArray(counter_net_send) / (1024 * 1024));
+                NetGauge().Value(sendBytesPerSec / (1024 * 1024));
                 NetGauge().ValueStringFormat(L"↑ {0} MB/s");
             }
             else {
-                NetGauge().Value(GetValueFromCounterArray(counter_net_receive) / (1024 * 1024));
+                NetGauge().Value(receiveBytesPerSec / (1024 * 1024));
                 NetGauge().ValueStringFormat(L"↓ {0} MB/s");
             }
-            NetManufacture().Text(netadpt_manufacture);
-            NetReceive().Text(FormatMemorySize(GetValueFromCounterArray(counter_net_receive)) + L"/s");
-            NetSend().Text(FormatMemorySize(GetValueFromCounterArray(counter_net_send)) + L"/s");
+            NetManufacture().Text(netadpt_manufacture.empty() ? L"无活跃网络适配器" : netadpt_manufacture);
+            NetReceive().Text(FormatMemorySize(receiveBytesPerSec) + L"/s");
+            NetSend().Text(FormatMemorySize(sendBytesPerSec) + L"/s");
             ss = std::wstringstream{};
-            ss << std::fixed << std::setprecision(1) << GetValueFromCounterArray(counter_net_packet_receive) << "/s";
+            ss << std::fixed << std::setprecision(1) << receivePacketsPerSec << "/s";
             NetPacketReceive().Text(ss.str());
             ss = std::wstringstream{};
-            ss << std::fixed << std::setprecision(1) << GetValueFromCounterArray(counter_net_packet_send) << "/s";
+            ss << std::fixed << std::setprecision(1) << sendPacketsPerSec << "/s";
             NetPacketSend().Text(ss.str());
         }
     }
@@ -560,23 +558,352 @@ namespace winrt::StarlightGUI::implementation
         co_return;
     }
 
-    void HomePage::NextAdapterName_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
-    {
-        if (adptIndex >= adpt_name_map.size()) {
-            adptIndex = 0;
-            netadpt_manufacture = to_hstring(adpt_name_map[0]);
-        }
-        else {
-            netadpt_manufacture = to_hstring(adpt_name_map[adptIndex]);
-        }
-        NetManufacture().Text(netadpt_manufacture);
-        adptIndex++;
-    }
-
     void HomePage::ChangeMode_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         isNetSend = !isNetSend;
         UpdateGauges();
+    }
+
+    bool HomePage::IsVirtualAdapterName(std::wstring const& name)
+    {
+        if (name.empty()) return false;
+
+        std::wstring lower = name;
+        std::transform(lower.begin(), lower.end(), lower.begin(), [](wchar_t c) { return static_cast<wchar_t>(towlower(c)); });
+        static const std::vector<std::wstring> keys = {
+            L"virtual", L"vmware", L"hyper-v", L"vethernet", L"tap", L"tun", L"vpn", L"loopback", L"pseudo", L"bridge", L"bluetooth"
+        };
+
+        for (auto const& key : keys) {
+            if (lower.find(key) != std::wstring::npos) return true;
+        }
+        return false;
+    }
+
+    bool HomePage::TrySelectActiveNetworkAdapter()
+    {
+        ULONG bestIfIndex = 0;
+        GetBestInterface(0x08080808, &bestIfIndex);
+
+        ULONG bufferSize = 0;
+        if (GetAdaptersInfo(NULL, &bufferSize) != ERROR_BUFFER_OVERFLOW || bufferSize == 0) return false;
+
+        std::vector<BYTE> buffer(bufferSize);
+        auto adapters = reinterpret_cast<PIP_ADAPTER_INFO>(buffer.data());
+        if (GetAdaptersInfo(adapters, &bufferSize) != ERROR_SUCCESS) return false;
+
+        PIP_ADAPTER_INFO selected = nullptr;
+        PIP_ADAPTER_INFO fallback = nullptr;
+
+        for (auto p = adapters; p; p = p->Next) {
+            if (p->Type == MIB_IF_TYPE_LOOPBACK) continue;
+
+            std::wstring desc = StringToWideString(p->Description ? p->Description : "");
+            if (IsVirtualAdapterName(desc)) continue;
+
+            MIB_IFROW row{};
+            row.dwIndex = p->Index;
+            if (GetIfEntry(&row) != NO_ERROR) continue;
+            if (row.dwOperStatus != IF_OPER_STATUS_OPERATIONAL) continue;
+
+            if (!fallback) fallback = p;
+            if (p->Index == bestIfIndex) {
+                selected = p;
+                break;
+            }
+        }
+
+        if (!selected) selected = fallback;
+        if (!selected) {
+            net_selected = false;
+            netadpt_manufacture = L"";
+            return false;
+        }
+
+        active_net_if_index = selected->Index;
+        std::wstring adapterName = StringToWideString(selected->Description ? selected->Description : "");
+        if (adapterName.empty()) adapterName = StringToWideString(selected->AdapterName ? selected->AdapterName : "");
+        netadpt_manufacture = adapterName.empty() ? hstring(L"未知适配器") : hstring(adapterName);
+        net_selected = true;
+
+        MIB_IFROW row{};
+        row.dwIndex = active_net_if_index;
+        if (GetIfEntry(&row) == NO_ERROR) {
+            last_in_octets = row.dwInOctets;
+            last_out_octets = row.dwOutOctets;
+            last_in_packets = row.dwInUcastPkts + row.dwInNUcastPkts;
+            last_out_packets = row.dwOutUcastPkts + row.dwOutNUcastPkts;
+            last_net_tick = GetTickCount64();
+        }
+
+        return true;
+    }
+
+    bool HomePage::GetActiveNetworkSpeed(double& receiveBytesPerSec, double& sendBytesPerSec, double& receivePacketsPerSec, double& sendPacketsPerSec)
+    {
+        receiveBytesPerSec = 0.0;
+        sendBytesPerSec = 0.0;
+        receivePacketsPerSec = 0.0;
+        sendPacketsPerSec = 0.0;
+
+        if (!net_selected && !TrySelectActiveNetworkAdapter()) return false;
+
+        MIB_IFROW row{};
+        row.dwIndex = active_net_if_index;
+        if (GetIfEntry(&row) != NO_ERROR || row.dwOperStatus != IF_OPER_STATUS_OPERATIONAL) {
+            net_selected = false;
+            return false;
+        }
+
+        auto nowTick = GetTickCount64();
+        if (last_net_tick == 0 || nowTick <= last_net_tick) {
+            last_in_octets = row.dwInOctets;
+            last_out_octets = row.dwOutOctets;
+            last_in_packets = row.dwInUcastPkts + row.dwInNUcastPkts;
+            last_out_packets = row.dwOutUcastPkts + row.dwOutNUcastPkts;
+            last_net_tick = nowTick;
+            return true;
+        }
+
+        double seconds = (nowTick - last_net_tick) / 1000.0;
+        if (seconds <= 0.0) seconds = 1.0;
+
+        UINT64 inOctets = row.dwInOctets;
+        UINT64 outOctets = row.dwOutOctets;
+        UINT64 inPackets = row.dwInUcastPkts + row.dwInNUcastPkts;
+        UINT64 outPackets = row.dwOutUcastPkts + row.dwOutNUcastPkts;
+
+        UINT64 inOctetsDelta = inOctets >= last_in_octets ? (inOctets - last_in_octets) : 0;
+        UINT64 outOctetsDelta = outOctets >= last_out_octets ? (outOctets - last_out_octets) : 0;
+        UINT64 inPacketsDelta = inPackets >= last_in_packets ? (inPackets - last_in_packets) : 0;
+        UINT64 outPacketsDelta = outPackets >= last_out_packets ? (outPackets - last_out_packets) : 0;
+
+        receiveBytesPerSec = static_cast<double>(inOctetsDelta) / seconds;
+        sendBytesPerSec = static_cast<double>(outOctetsDelta) / seconds;
+        receivePacketsPerSec = static_cast<double>(inPacketsDelta) / seconds;
+        sendPacketsPerSec = static_cast<double>(outPacketsDelta) / seconds;
+
+        last_in_octets = inOctets;
+        last_out_octets = outOctets;
+        last_in_packets = inPackets;
+        last_out_packets = outPackets;
+        last_net_tick = nowTick;
+        return true;
+    }
+
+    int HomePage::ParseDiskIndexFromInstanceName(PCWSTR instanceName)
+    {
+        if (!instanceName || !instanceName[0]) return -1;
+        if (wcscmp(instanceName, L"_Total") == 0) return -1;
+
+        int index = 0;
+        bool hasDigit = false;
+        for (size_t i = 0; instanceName[i]; i++) {
+            if (instanceName[i] >= L'0' && instanceName[i] <= L'9') {
+                hasDigit = true;
+                index = index * 10 + (instanceName[i] - L'0');
+            }
+            else {
+                break;
+            }
+        }
+
+        return hasDigit ? index : -1;
+    }
+
+    std::unordered_map<int, double> HomePage::GetDiskCounterMap(PDH_HCOUNTER& counter)
+    {
+        std::unordered_map<int, double> result;
+
+        DWORD bufferSize = 0;
+        DWORD itemCount = 0;
+        PDH_STATUS status = PdhGetFormattedCounterArrayW(counter, PDH_FMT_DOUBLE, &bufferSize, &itemCount, NULL);
+        if (status != PDH_MORE_DATA || bufferSize == 0 || itemCount == 0) return result;
+
+        std::vector<BYTE> buffer(bufferSize);
+        auto items = reinterpret_cast<PPDH_FMT_COUNTERVALUE_ITEM_W>(buffer.data());
+        status = PdhGetFormattedCounterArrayW(counter, PDH_FMT_DOUBLE, &bufferSize, &itemCount, items);
+        if (status != ERROR_SUCCESS) return result;
+
+        for (DWORD i = 0; i < itemCount; i++) {
+            int index = ParseDiskIndexFromInstanceName(items[i].szName);
+            if (index < 0) continue;
+            result[index] += items[i].FmtValue.doubleValue;
+        }
+
+        return result;
+    }
+
+    std::vector<int> HomePage::EnumerateDiskIndexes()
+    {
+        std::vector<int> indexes;
+
+        DWORD counterListSize = 0;
+        DWORD instanceListSize = 0;
+        auto status = PdhEnumObjectItemsW(NULL, NULL, L"PhysicalDisk", NULL, &counterListSize, NULL, &instanceListSize, PERF_DETAIL_WIZARD, 0);
+        if (status != PDH_MORE_DATA || instanceListSize == 0) return indexes;
+
+        std::vector<wchar_t> counterList(counterListSize);
+        std::vector<wchar_t> instanceList(instanceListSize);
+        status = PdhEnumObjectItemsW(NULL, NULL, L"PhysicalDisk", counterList.data(), &counterListSize, instanceList.data(), &instanceListSize, PERF_DETAIL_WIZARD, 0);
+        if (status != ERROR_SUCCESS) return indexes;
+
+        for (const wchar_t* p = instanceList.data(); p && *p; p += wcslen(p) + 1) {
+            int index = ParseDiskIndexFromInstanceName(p);
+            if (index >= 0 && std::find(indexes.begin(), indexes.end(), index) == indexes.end()) {
+                indexes.push_back(index);
+            }
+        }
+
+        std::sort(indexes.begin(), indexes.end());
+        return indexes;
+    }
+
+    hstring HomePage::QueryDiskManufacture(int diskIndex)
+    {
+        std::wstring path = L"\\\\.\\PhysicalDrive" + std::to_wstring(diskIndex);
+        HANDLE hDevice = CreateFileW(path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+        if (hDevice == INVALID_HANDLE_VALUE) {
+            LOG_ERROR(L"MonitorInstance", L"Failed to open %s.", path.c_str());
+            return L"未知型号";
+        }
+
+        STORAGE_PROPERTY_QUERY spq{};
+        spq.PropertyId = StorageDeviceProperty;
+        spq.QueryType = PropertyStandardQuery;
+
+        std::vector<BYTE> buffer(1024);
+        DWORD bytesReturned = 0;
+        hstring manufacture = L"未知型号";
+
+        if (DeviceIoControl(hDevice, IOCTL_STORAGE_QUERY_PROPERTY, &spq, sizeof(spq), buffer.data(), static_cast<DWORD>(buffer.size()), &bytesReturned, NULL))
+        {
+            auto sdd = reinterpret_cast<PSTORAGE_DEVICE_DESCRIPTOR>(buffer.data());
+            if (sdd->ProductIdOffset != 0 && sdd->ProductIdOffset < buffer.size()) {
+                LPCSTR productId = reinterpret_cast<LPCSTR>(buffer.data() + sdd->ProductIdOffset);
+                manufacture = to_hstring(productId);
+            }
+        }
+        else {
+            LOG_ERROR(L"MonitorInstance", L"Failed to query disk info with %s.", path.c_str());
+        }
+
+        CloseHandle(hDevice);
+        return manufacture;
+    }
+
+    void HomePage::BuildDiskCard(int diskIndex, hstring const& manufacture)
+    {
+        auto diskButton = Button();
+        diskButton.Margin(ThicknessHelper::FromLengths(0, 0, 0, 10));
+        diskButton.HorizontalAlignment(HorizontalAlignment::Stretch);
+        diskButton.HorizontalContentAlignment(HorizontalAlignment::Stretch);
+        winrt::WinUI3Package::RevealFocusPanel::SetAttachToPanel(diskButton, RevealFocusPanel());
+
+        auto grid = Grid();
+        grid.Padding(ThicknessHelper::FromUniformLength(10));
+
+        ColumnDefinition c1, c2, c3, c4;
+        c1.Width(GridLengthHelper::FromPixels(150));
+        c2.Width(GridLengthHelper::Auto());
+        c3.Width(GridLengthHelper::FromValueAndType(1, GridUnitType::Star));
+        c4.Width(GridLengthHelper::Auto());
+        grid.ColumnDefinitions().Append(c1);
+        grid.ColumnDefinitions().Append(c2);
+        grid.ColumnDefinitions().Append(c3);
+        grid.ColumnDefinitions().Append(c4);
+
+        auto gauge = winrt::XamlToolkit::WinUI::Controls::RadialGauge();
+        gauge.Width(150);
+        gauge.IsInteractive(false);
+        gauge.Minimum(0);
+        gauge.Maximum(100);
+        gauge.StepSize(1);
+        gauge.TickSpacing(10);
+        gauge.NeedleBrush(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LimeGreen()));
+        gauge.TrailBrush(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LimeGreen()));
+        gauge.ValueStringFormat(L" {0}% ");
+        Grid::SetColumn(gauge, 0);
+        grid.Children().Append(gauge);
+
+        auto infoPanel = StackPanel();
+        infoPanel.Margin(ThicknessHelper::FromLengths(20, 0, 0, 0));
+        Grid::SetColumn(infoPanel, 1);
+
+        auto title = TextBlock();
+        title.FontSize(20);
+        title.FontWeight(winrt::Microsoft::UI::Text::FontWeights::Bold());
+        std::wstringstream ss;
+        ss << L"磁盘 " << diskIndex;
+        title.Text(ss.str());
+        infoPanel.Children().Append(title);
+
+        auto model = TextBlock();
+        model.FontSize(16);
+        model.FontWeight(winrt::Microsoft::UI::Text::FontWeights::SemiBold());
+        model.Text(manufacture);
+        infoPanel.Children().Append(model);
+
+        auto readText = TextBlock();
+        readText.Margin(ThicknessHelper::FromLengths(0, 10, 0, 0));
+        readText.Text(L"读取速度: 0 B/s");
+        readText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
+        infoPanel.Children().Append(readText);
+
+        auto writeText = TextBlock();
+        writeText.Text(L"写入速度: 0 B/s");
+        writeText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
+        infoPanel.Children().Append(writeText);
+
+        auto transText = TextBlock();
+        transText.Text(L"传输量: 0/s");
+        transText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
+        infoPanel.Children().Append(transText);
+
+        auto ioText = TextBlock();
+        ioText.Text(L"I/O 量: 0/s");
+        ioText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
+        infoPanel.Children().Append(ioText);
+
+        grid.Children().Append(infoPanel);
+
+        auto percent = TextBlock();
+        percent.FontSize(24);
+        percent.FontWeight(winrt::Microsoft::UI::Text::FontWeights::Bold());
+        percent.Text(L"0.0%");
+        Grid::SetColumn(percent, 3);
+        grid.Children().Append(percent);
+
+        diskButton.Content(grid);
+        DiskCardPanel().Children().Append(diskButton);
+
+        DiskCardControl card{};
+        card.index = diskIndex;
+        card.manufacture = manufacture;
+        card.gauge = gauge;
+        card.title = title;
+        card.read = readText;
+        card.write = writeText;
+        card.trans = transText;
+        card.io = ioText;
+        card.percent = percent;
+        disk_card_map[diskIndex] = card;
+    }
+
+    void HomePage::InitializeDiskCards()
+    {
+        if (!disk_card_map.empty()) return;
+
+        auto indexes = EnumerateDiskIndexes();
+        if (indexes.empty()) {
+            LOG_ERROR(L"MonitorInstance", L"No physical disk instance found.");
+            return;
+        }
+
+        for (auto index : indexes) {
+            hstring manufacture = QueryDiskManufacture(index);
+            BuildDiskCard(index, manufacture);
+        }
     }
 
 }

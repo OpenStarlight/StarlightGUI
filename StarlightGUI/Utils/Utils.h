@@ -90,4 +90,35 @@ namespace slg {
     DataTemplate GetTemplate(hstring xaml);
 
     bool CheckIllegalComboBoxAction(IInspectable const& sender, SelectionChangedEventArgs const& e);
+
+    template <typename T>
+    T FindParent(winrt::Microsoft::UI::Xaml::DependencyObject const& child)
+    {
+        auto parent = winrt::Microsoft::UI::Xaml::Media::VisualTreeHelper::GetParent(child);
+        while (parent && !parent.try_as<T>())
+        {
+            parent = winrt::Microsoft::UI::Xaml::Media::VisualTreeHelper::GetParent(parent);
+        }
+        return parent.try_as<T>();
+    }
+
+    inline bool SelectItemOnRightTapped(
+        winrt::Microsoft::UI::Xaml::Controls::ListView const& listView,
+        winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e,
+        bool keepMultiSelection = false)
+    {
+        if (auto fe = e.OriginalSource().try_as<winrt::Microsoft::UI::Xaml::FrameworkElement>())
+        {
+            auto container = FindParent<winrt::Microsoft::UI::Xaml::Controls::ListViewItem>(fe);
+            if (container)
+            {
+                if (!keepMultiSelection || listView.SelectedItems().Size() < 2)
+                {
+                    listView.SelectedItem(container.Content());
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

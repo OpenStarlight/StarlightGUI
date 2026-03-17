@@ -52,14 +52,7 @@ namespace winrt::StarlightGUI::implementation
     {
         auto listView = sender.as<ListView>();
 
-        if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-        {
-            auto container = FindParent<ListViewItem>(fe);
-            if (container)
-            {
-                listView.SelectedItem(container.Content());
-            }
-        }
+        slg::SelectItemOnRightTapped(listView, e);
 
         if (!listView.SelectedItem()) return;
 
@@ -152,16 +145,5 @@ namespace winrt::StarlightGUI::implementation
         LoadingRing().IsActive(false);
 
         LOG_INFO(__WFUNCTION__, L"Loaded handle list, %d entry(s) in total.", m_handleList.Size());
-    }
-
-    template <typename T>
-    T Process_HandlePage::FindParent(DependencyObject const& child)
-    {
-        DependencyObject parent = VisualTreeHelper::GetParent(child);
-        while (parent && !parent.try_as<T>())
-        {
-            parent = VisualTreeHelper::GetParent(parent);
-        }
-        return parent.try_as<T>();
     }
 }

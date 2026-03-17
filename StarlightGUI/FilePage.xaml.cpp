@@ -52,14 +52,7 @@ namespace winrt::StarlightGUI::implementation
 	{
         auto listView = FileListView();
 
-        if (auto fe = e.OriginalSource().try_as<FrameworkElement>())
-        {
-            auto container = FindParent<ListViewItem>(fe);
-            if (container)
-            {
-                if (listView.SelectedItems().Size() < 2) listView.SelectedItem(container.Content());
-            }
-        }
+        slg::SelectItemOnRightTapped(listView, e, true);
 
         if (!listView.SelectedItems() || listView.SelectedItems().Size() == 0 || 
             // 只选择"上个文件夹"时不显示，多选的话在下面跳过处理，认为是误选
@@ -667,17 +660,6 @@ namespace winrt::StarlightGUI::implementation
         reloadTimer.Start();
 
         co_return;
-    }
-
-    template <typename T>
-    T FilePage::FindParent(DependencyObject const& child)
-    {
-        DependencyObject parent = VisualTreeHelper::GetParent(child);
-        while (parent && !parent.try_as<T>())
-        {
-            parent = VisualTreeHelper::GetParent(parent);
-        }
-        return parent.try_as<T>();
     }
 
     slg::coroutine FilePage::CopyFiles() {
