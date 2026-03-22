@@ -375,47 +375,70 @@ namespace winrt::StarlightGUI::implementation
 
                 LOG_INFO(L"Driver", L"Loading necessary modules...");
 
+                int failedCount = 0;
                 auto kernelFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\Assets\\kernel.sys");
                 auto astralFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\Assets\\AstralX.sys");
                 auto wtmFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\WindowTopMost.dll");
                 auto iamKeyHackerFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\IAMKeyHacker.dll");
 
-                if (kernelFile) {
-                    kernelPath = kernelFile.Path();
+                kernelPath = kernelFile.Path();
+                astralPath = astralFile.Path();
+                wtmPath = wtmFile.Path();
+                iamKeyHackerPath = iamKeyHackerFile.Path();
 
-                    LOG_INFO(L"Driver", L"kernel.sys path [%s], loading...", kernelPath.c_str());
-                    DriverUtils::LoadKernelDriver(kernelPath.c_str(), unused);
+				// 快速对于常见报错码进行判断，减少用户困惑
+
+                if (DriverUtils::LoadKernelDriver(kernelPath.c_str(), unused)) {
+                    LOG_INFO(L"Driver", L"kernel.sys initializated successfully.");
+                }
+                else {
+                    failedCount++;
                     LOG_INFO(L"Driver", L"kernel.sys initialization result: %s, GetLastError() = %d", unused.c_str(), GetLastError());
+
+                    if (GetLastError() == 2 || GetLastError() == 98) {
+                        co_await wil::resume_foreground(DispatcherQueue());
+                        slg::CreateInfoBarAndDisplay(L"错误", L"加载 kernel.sys 时出错：请退出所有杀毒软件和内核级应用.", InfoBarSeverity::Error, g_mainWindowInstance);
+                        co_await winrt::resume_background();
+                    }
+                    else if (GetLastError() == 193) {
+                        co_await wil::resume_foreground(DispatcherQueue());
+                        slg::CreateInfoBarAndDisplay(L"错误", L"加载 kernel.sys 时出错：请关闭 Windows Defender 内的内核隔离.", InfoBarSeverity::Error, g_mainWindowInstance);
+                        co_await winrt::resume_background();
+                    }
                 }
 
-                if (astralFile) {
-                    astralPath = astralFile.Path();
 
-                    LOG_INFO(L"Driver", L"AstralX.sys path [%s], loading...", astralPath.c_str());
-                    DriverUtils::LoadDriver(astralPath.c_str(), L"AstralX", unused);
+                if (DriverUtils::LoadDriver(astralPath.c_str(), L"AstralX", unused)) {
+                    LOG_INFO(L"Driver", L"AstralX.sys initializated successfully.");
+                }
+                else {
+                    failedCount++;
                     LOG_INFO(L"Driver", L"AstralX.sys initialization result: %s, GetLastError() = %d", unused.c_str(), GetLastError());
+
+                    if (GetLastError() == 2 || GetLastError() == 98) {
+                        co_await wil::resume_foreground(DispatcherQueue());
+                        slg::CreateInfoBarAndDisplay(L"错误", L"加载 kernel.sys 时出错：请退出所有杀毒软件和内核级应用.", InfoBarSeverity::Error, g_mainWindowInstance);
+                    }
+                    else if (GetLastError() == 193) {
+                        co_await wil::resume_foreground(DispatcherQueue());
+                        slg::CreateInfoBarAndDisplay(L"错误", L"加载 kernel.sys 时出错：请关闭 Windows Defender 内的内核隔离.", InfoBarSeverity::Error, g_mainWindowInstance);
+                    }
                 }
-
-                if (wtmFile) {
-                    wtmPath = wtmFile.Path();
-
-                    LOG_INFO(L"Driver", L"WindowTopMost.dll path [%s].", wtmPath.c_str());
-                }
-
-                if (iamKeyHackerFile) {
-                    iamKeyHackerPath = iamKeyHackerFile.Path();
-
-                    LOG_INFO(L"Driver", L"IAMKeyHacker.dll path [%s].", iamKeyHackerPath.c_str());
-                }
-
-                LOG_INFO(L"Driver", L"Loaded successfully.", kernelPath.c_str());
 
                 co_await wil::resume_foreground(DispatcherQueue());
-                slg::CreateInfoBarAndDisplay(L"成功", L"模块加载成功！", InfoBarSeverity::Success, g_mainWindowInstance);
+
+                if (failedCount > 0) {
+                    LOG_ERROR(L"Driver", L"%d module(s) failed to load.", failedCount);
+                    slg::CreateInfoBarAndDisplay(L"错误", L"一个或多个模块无法加载，部分功能将不可用！检查日志以获取更多信息.", InfoBarSeverity::Error, g_mainWindowInstance);
+                }
+                else {
+                    LOG_INFO(L"Driver", L"Modules loaded successfully.", kernelPath.c_str());
+                    slg::CreateInfoBarAndDisplay(L"成功", L"模块加载成功！", InfoBarSeverity::Success, g_mainWindowInstance);
+                }
             }
             catch (const hresult_error& e) {
                 LOG_ERROR(L"Driver", L"Failed to load modules! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-                slg::CreateInfoBarAndDisplay(L"警告", L"一个或多个模块文件未找到或无法加载，部分功能可能不可用！", InfoBarSeverity::Warning, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(L"错误", L"一个或多个模块无法加载，部分功能将不可用！检查日志以获取更多信息.", InfoBarSeverity::Error, g_mainWindowInstance);
             }
         }
     }

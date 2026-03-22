@@ -608,6 +608,7 @@
     <Image Include="Assets\Starlight.ico" />
     <Image Include="Assets\Starlight.png" />
     <Image Include="Assets\StarlightGUI.png" />
+    <Image Include="Assets\StarlightNew.png" />
     <Image Include="Assets\stars.png" />
     <Image Include="Assets\winui.png" />
     <Image Include="Assets\wormwaker.jpg" />

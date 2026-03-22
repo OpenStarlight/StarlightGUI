@@ -263,6 +263,9 @@
     <Image Include="Assets\wormwaker.jpg">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="Assets\StarlightNew.png">
+      <Filter>Assets</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Assets">

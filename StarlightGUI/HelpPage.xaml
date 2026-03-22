@@ -24,7 +24,7 @@
                                 Width="200"
                                 Height="200"
                                 HorizontalAlignment="Center"
-                                Source="/Assets/Starlight.png" />
+                                Source="/Assets/StarlightNew.png" />
                             <TextBlock
                                 HorizontalAlignment="Center"
                                 FontSize="32"
