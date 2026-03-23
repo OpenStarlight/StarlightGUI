@@ -431,6 +431,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
         }
         
+		// 保留选中项避免刷新后丢失选中状态
         auto selectedItem = ProcessListView().SelectedItem();
         int selectedItemId = -1;
         if (selectedItem) selectedItemId = selectedItem.as<winrt::StarlightGUI::ProcessInfo>().Id();
@@ -443,6 +444,7 @@ namespace winrt::StarlightGUI::implementation
             bool shouldRemove = query.empty() ? false : ApplyFilter(process, query);
             if (shouldRemove) continue;
 
+            // 如果有缓存的话就直接用，不在获取的时候再跑一遍了
             std::wstring path = process.ExecutablePath().c_str();
             if (!path.empty()) {
                 auto key = NormalizeCacheKey(path);
@@ -472,6 +474,7 @@ namespace winrt::StarlightGUI::implementation
             for (auto const& process : m_processList) currentProcesses.push_back(process);
         }
         else {
+            // 增量更新，不改整体列表，只更新有变化的项目
             std::unordered_map<int32_t, winrt::StarlightGUI::ProcessInfo> incomingByPid;
             incomingByPid.reserve(visibleProcesses.size());
             for (auto const& process : visibleProcesses) {
@@ -755,6 +758,7 @@ namespace winrt::StarlightGUI::implementation
         std::wstring path = process.ExecutablePath().c_str();
         std::wstring cacheKey = NormalizeCacheKey(path);
 
+        // 查询缓存，有就直接用
         auto cacheIt = iconCache.find(cacheKey);
         if (cacheIt != iconCache.end()) {
             process.Icon(cacheIt->second);
@@ -764,6 +768,7 @@ namespace winrt::StarlightGUI::implementation
 
         auto icon = slg::GetShellIconImage(path, false, 16, false, cacheKey);
 
+		// 系统进程使用 ntoskrnl.exe 的图标，因为没有可执行文件
         if (!icon || process.Name() == L"Idle" || process.Name() == L"System" || process.Name() == L"Registry" || process.Name() == L"Secure System" || process.Name() == L"Memory Compression" || process.Name() == L"Unknown") {
             icon = slg::GetShellIconImage(L"C:\\Windows\\System32\\ntoskrnl.exe", false, 16, false, L"__ntoskrnl__");
         }

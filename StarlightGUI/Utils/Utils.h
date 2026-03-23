@@ -5,6 +5,7 @@
 #include "InfoWindow.xaml.h"
 #include <coroutine>
 #include <exception>
+#include <unordered_map>
 #include <winrt/Microsoft.UI.Xaml.Input.h>
 
 using namespace winrt;
@@ -92,6 +93,8 @@ namespace slg {
     bool CheckIllegalComboBoxAction(IInspectable const& sender, SelectionChangedEventArgs const& e);
 
     winrt::Microsoft::UI::Xaml::Media::ImageSource CreateImageSourceFromHIcon(HICON hIcon, int iconSize = 16, bool destroyIcon = false);
+
+    std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource>& GetShellIconCacheStore();
 
     winrt::Microsoft::UI::Xaml::Media::ImageSource GetShellIconImage(
         std::wstring const& path,
