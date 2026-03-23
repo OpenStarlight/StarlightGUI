@@ -45,7 +45,6 @@ namespace winrt::StarlightGUI::implementation
 {
     static std::unordered_map<hstring, std::optional<winrt::Microsoft::UI::Xaml::Media::ImageSource>> iconCache;
     static std::chrono::steady_clock::time_point lastRefresh;
-    static HDC hdc{ nullptr };
     static int safeAcceptedImage = -1;
     static WTMInit_t WTMInit = nullptr;
     static WTMUninit_t WTMUninit = nullptr;
@@ -69,14 +68,11 @@ namespace winrt::StarlightGUI::implementation
                 WTMSetWindowBand = (WTMSetWindowBand_t)GetProcAddress(hModule, "WTMSetWindowBand");
                 WTMGetWindowBand = (WTMGetWindowBand_t)GetProcAddress(hModule, "WTMGetWindowBand");
             }
-            hdc = GetDC(NULL);
             LoadWindowList();
             co_return;
             });
 
-        this->Unloaded([this](auto&&, auto&&) {
-            ReleaseDC(NULL, hdc);
-            });
+        this->Unloaded([this](auto&&, auto&&) {});
 
         LOG_INFO(L"WindowPage", L"WindowPage initialized.");
     }
@@ -649,42 +645,11 @@ namespace winrt::StarlightGUI::implementation
             if (!hIcon)
 				hIcon = (HICON)LoadImageW(NULL, MAKEINTRESOURCEW(32512), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
             if (!hIcon) co_return;
-            ICONINFO iconInfo;
-            if (GetIconInfo(hIcon, &iconInfo)) {
-                BITMAP bmp;
-                GetObject(iconInfo.hbmColor, sizeof(bmp), &bmp);
-                BITMAPINFOHEADER bmiHeader = { 0 };
-                bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-                bmiHeader.biWidth = bmp.bmWidth;
-                bmiHeader.biHeight = bmp.bmHeight;
-                bmiHeader.biPlanes = 1;
-                bmiHeader.biBitCount = 32;
-                bmiHeader.biCompression = BI_RGB;
+            auto iconSource = slg::CreateImageSourceFromHIcon(hIcon, 16, false);
+            if (!iconSource) co_return;
 
-                int dataSize = bmp.bmWidthBytes * bmp.bmHeight;
-                std::vector<BYTE> buffer(dataSize);
-
-                GetDIBits(hdc, iconInfo.hbmColor, 0, bmp.bmHeight, buffer.data(), reinterpret_cast<BITMAPINFO*>(&bmiHeader), DIB_RGB_COLORS);
-
-                winrt::Microsoft::UI::Xaml::Media::Imaging::WriteableBitmap writeableBitmap(bmp.bmWidth, bmp.bmHeight);
-
-                // 将数据写入 WriteableBitmap
-                uint8_t* data = writeableBitmap.PixelBuffer().data();
-                int rowSize = bmp.bmWidth * 4;
-                for (int i = 0; i < bmp.bmHeight; ++i) {
-                    int srcOffset = i * rowSize;
-                    int dstOffset = (bmp.bmHeight - 1 - i) * rowSize;
-                    std::memcpy(data + dstOffset, buffer.data() + srcOffset, rowSize);
-                }
-
-                DeleteObject(iconInfo.hbmColor);
-                DeleteObject(iconInfo.hbmMask);
-                DestroyIcon(hIcon);
-
-                // 将图标缓存到 map 中
-                iconCache[window.Name()] = writeableBitmap.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>();
-                window.Icon(writeableBitmap);
-            }
+            iconCache[window.Name()] = iconSource;
+            window.Icon(iconSource);
         }
         else {
             if (iconCache[window.Name()].has_value()) {

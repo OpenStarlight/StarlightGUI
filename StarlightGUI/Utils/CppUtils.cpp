@@ -453,4 +453,5 @@ namespace winrt::StarlightGUI::implementation {
         CloseHandle(hSnapshot);
         return 0;
     }
+
 }

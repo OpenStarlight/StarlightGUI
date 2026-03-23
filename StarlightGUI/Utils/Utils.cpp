@@ -1,8 +1,17 @@
 ﻿#include "pch.h"
 #include "Utils.h"
 #include <winrt/XamlToolkit.WinUI.Controls.h>
+#include <unordered_map>
+#include <shellapi.h>
+#include <cstring>
 
 namespace slg {
+    static std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource>& GetShellIconCacheStore()
+    {
+        static std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource> cache;
+        return cache;
+    }
+
     coroutine::coroutine() = default;
 
     coroutine coroutine::promise_type::get_return_object() const noexcept { return {}; }
@@ -250,5 +259,97 @@ namespace slg {
 
         // 正常索引，返回false
         return false;
+    }
+
+    winrt::Microsoft::UI::Xaml::Media::ImageSource CreateImageSourceFromHIcon(HICON hIcon, int iconSize, bool destroyIcon)
+    {
+        if (!hIcon || iconSize <= 0) return nullptr;
+
+        HDC screenDc = GetDC(nullptr);
+        if (!screenDc) {
+            if (destroyIcon) DestroyIcon(hIcon);
+            return nullptr;
+        }
+
+        BITMAPINFO bmi{};
+        bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+        bmi.bmiHeader.biWidth = iconSize;
+        bmi.bmiHeader.biHeight = -iconSize;
+        bmi.bmiHeader.biPlanes = 1;
+        bmi.bmiHeader.biBitCount = 32;
+        bmi.bmiHeader.biCompression = BI_RGB;
+
+        void* bits = nullptr;
+        HBITMAP hBitmap = CreateDIBSection(screenDc, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+        if (!hBitmap || !bits) {
+            ReleaseDC(nullptr, screenDc);
+            if (destroyIcon) DestroyIcon(hIcon);
+            return nullptr;
+        }
+
+        HDC memDc = CreateCompatibleDC(screenDc);
+        if (!memDc) {
+            DeleteObject(hBitmap);
+            ReleaseDC(nullptr, screenDc);
+            if (destroyIcon) DestroyIcon(hIcon);
+            return nullptr;
+        }
+
+        auto oldBitmap = SelectObject(memDc, hBitmap);
+        std::memset(bits, 0, iconSize * iconSize * 4);
+        DrawIconEx(memDc, 0, 0, hIcon, iconSize, iconSize, 0, nullptr, DI_NORMAL);
+
+        winrt::Microsoft::UI::Xaml::Media::Imaging::WriteableBitmap bitmap(iconSize, iconSize);
+        std::memcpy(bitmap.PixelBuffer().data(), bits, iconSize * iconSize * 4);
+
+        SelectObject(memDc, oldBitmap);
+        DeleteDC(memDc);
+        DeleteObject(hBitmap);
+        ReleaseDC(nullptr, screenDc);
+
+        if (destroyIcon) DestroyIcon(hIcon);
+        return bitmap.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>();
+    }
+
+    winrt::Microsoft::UI::Xaml::Media::ImageSource GetShellIconImage(
+        std::wstring const& path,
+        bool isDirectory,
+        int iconSize,
+        bool useFileAttributes,
+        std::wstring const& cacheKey)
+    {
+        auto& cache = GetShellIconCacheStore();
+
+        std::wstring key = cacheKey;
+        if (key.empty()) key = (isDirectory ? L"dir:" : L"file:") + path;
+
+        auto cacheIt = cache.find(key);
+        if (cacheIt != cache.end()) return cacheIt->second;
+
+        SHFILEINFO shfi{};
+        UINT flags = SHGFI_ICON | SHGFI_SMALLICON;
+        DWORD attrs = isDirectory ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
+
+        bool ok = false;
+        if (useFileAttributes) {
+            ok = SHGetFileInfoW(path.c_str(), attrs, &shfi, sizeof(shfi), flags | SHGFI_USEFILEATTRIBUTES) != 0;
+            if (!ok) ok = SHGetFileInfoW(L".", FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(shfi), flags | SHGFI_USEFILEATTRIBUTES) != 0;
+        }
+        else {
+            ok = SHGetFileInfoW(path.c_str(), 0, &shfi, sizeof(shfi), flags) != 0;
+            if (!ok) ok = SHGetFileInfoW(path.c_str(), attrs, &shfi, sizeof(shfi), flags | SHGFI_USEFILEATTRIBUTES) != 0;
+            if (!ok) ok = SHGetFileInfoW(L".", FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(shfi), flags | SHGFI_USEFILEATTRIBUTES) != 0;
+        }
+
+        if (!ok || !shfi.hIcon) return nullptr;
+
+        auto source = CreateImageSourceFromHIcon(shfi.hIcon, iconSize, true);
+        if (source) cache.insert_or_assign(key, source);
+        return source;
+    }
+
+    void ClearShellIconCache()
+    {
+        GetShellIconCacheStore().clear();
     }
 }

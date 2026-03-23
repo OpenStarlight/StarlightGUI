@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "FilePage.g.h"
+#include <unordered_map>
 
 namespace winrt::StarlightGUI::implementation
 {
@@ -9,7 +10,14 @@ namespace winrt::StarlightGUI::implementation
         FilePage();
 
         slg::coroutine RefreshButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
-        slg::coroutine NextDriveButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+        void BackButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+        void ForwardButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+        void UpButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+        void FileTabView_AddTabButtonClick(winrt::Microsoft::UI::Xaml::Controls::TabView const& sender, winrt::Windows::Foundation::IInspectable const& args);
+        void FileTabView_TabCloseRequested(winrt::Microsoft::UI::Xaml::Controls::TabView const& sender, winrt::Microsoft::UI::Xaml::Controls::TabViewTabCloseRequestedEventArgs const& args);
+        void FileTabView_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& e);
+        void PathBreadcrumbBar_ItemClicked(winrt::Microsoft::UI::Xaml::Controls::BreadcrumbBar const& sender, winrt::Microsoft::UI::Xaml::Controls::BreadcrumbBarItemClickedEventArgs const& args);
+        void PathSegmentButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         void HandleExternalDropFiles(std::vector<std::wstring> const& paths);
 
         void FileListView_RightTapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
@@ -24,7 +32,6 @@ namespace winrt::StarlightGUI::implementation
         slg::coroutine ApplySort(bool& isAscending, const std::string& column);
         void SortFileList(bool isAscending, const std::string& column, bool updateHeader);
 
-        void PathBox_KeyDown(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::KeyRoutedEventArgs const& e);
         void SearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         bool ApplyFilter(const winrt::StarlightGUI::FileInfo& file, hstring& query);
 
@@ -44,11 +51,34 @@ namespace winrt::StarlightGUI::implementation
         winrt::Windows::Foundation::IAsyncAction LoadMetaForCurrentList(std::wstring path, uint64_t loadToken);
         void UpdateRealizedItemIcon(winrt::StarlightGUI::FileInfo const& file, winrt::Microsoft::UI::Xaml::Media::ImageSource const& icon);
         void ResetState();
+        void CreateNewTab(std::wstring path, bool shouldSelect);
+        void SelectTab(std::wstring const& tabId, bool reload);
+        void NavigateTo(std::wstring path, bool pushHistory);
+        void SyncCurrentTabUI();
+        void UpdateCurrentTabHeader();
+        void UpdateNavigationButtons();
+        void UpdateBreadcrumbItems();
+        std::wstring GetCurrentTabId();
+
+        struct FileTabState
+        {
+            std::wstring title;
+            std::vector<std::wstring> history;
+            int historyIndex = -1;
+            std::wstring searchText;
+        };
+
         winrt::Microsoft::UI::Xaml::DispatcherTimer reloadTimer;
         std::vector<winrt::StarlightGUI::FileInfo> m_allFiles;
         bool m_isLoadingFiles = false;
         bool m_isPostLoading = false;
         uint64_t m_currentLoadToken = 0;
+        std::unordered_map<std::wstring, FileTabState> m_tabStates;
+        winrt::Windows::Foundation::Collections::IObservableVector<winrt::Windows::Foundation::IInspectable> m_breadcrumbItems{
+            winrt::single_threaded_observable_vector<winrt::Windows::Foundation::IInspectable>()
+        };
+        uint64_t m_nextTabId = 1;
+        bool m_isSyncingTab = false;
 
         inline static bool m_isNameAscending = true;
         inline static bool m_isModifyTimeAscending = true;

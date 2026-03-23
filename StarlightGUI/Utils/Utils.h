@@ -91,6 +91,17 @@ namespace slg {
 
     bool CheckIllegalComboBoxAction(IInspectable const& sender, SelectionChangedEventArgs const& e);
 
+    winrt::Microsoft::UI::Xaml::Media::ImageSource CreateImageSourceFromHIcon(HICON hIcon, int iconSize = 16, bool destroyIcon = false);
+
+    winrt::Microsoft::UI::Xaml::Media::ImageSource GetShellIconImage(
+        std::wstring const& path,
+        bool isDirectory,
+        int iconSize = 16,
+        bool useFileAttributes = false,
+        std::wstring const& cacheKey = L"");
+
+    void ClearShellIconCache();
+
     template <typename T>
     T FindParent(winrt::Microsoft::UI::Xaml::DependencyObject const& child)
     {

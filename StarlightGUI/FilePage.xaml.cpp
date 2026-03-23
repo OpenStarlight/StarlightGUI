@@ -18,6 +18,9 @@ using namespace Microsoft::UI::Xaml;
 
 namespace winrt::StarlightGUI::implementation
 {
+    // 文件页虚拟根目录，代表此电脑
+    static const std::wstring kFileHomePage = L"::drives::";
+
     FilePage* g_filePageInstance = nullptr;
 
 	hstring currentDirectory = L"C:\\";
@@ -25,8 +28,8 @@ namespace winrt::StarlightGUI::implementation
     static std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource> iconCache;
     static std::unordered_set<std::wstring> iconLoadingKeys;
     static std::unordered_map<std::wstring, std::vector<winrt::StarlightGUI::FileInfo>> iconPendingFiles;
-    static HDC hdc{ nullptr };
 
+    // 这些拓展名只缓存一次，因为图标通常不变
     static bool IsFastIconCacheExtension(std::wstring ext)
     {
         std::transform(ext.begin(), ext.end(), ext.begin(), ::towlower);
@@ -41,21 +44,33 @@ namespace winrt::StarlightGUI::implementation
         return fastExts.find(ext) != fastExts.end();
     }
 
+    static std::wstring BuildTabTitle(std::wstring const& path)
+    {
+        if (path.empty() || path == kFileHomePage) return L"此电脑";
+        fs::path p(path);
+        auto name = p.filename().wstring();
+        if (!name.empty()) return name;
+
+        std::wstring cleanPath = FixBackSplash(hstring(path));
+        if (cleanPath.size() >= 2 && cleanPath[1] == L':') return cleanPath.substr(0, 2);
+        return cleanPath;
+    }
+
     FilePage::FilePage() {
         InitializeComponent();
         g_filePageInstance = this;
 
-        hdc = GetDC(NULL);
         FileListView().ItemsSource(m_fileList);
 
         this->Loaded([this](auto&&, auto&&) {
             g_filePageInstance = this;
-            LoadFileList();
+            if (FileTabView().TabItems().Size() == 0) {
+                CreateNewTab(kFileHomePage, true);
+            }
             });
 
         this->Unloaded([this](auto&&, auto&&) {
             if (g_filePageInstance == this) g_filePageInstance = nullptr;
-            ReleaseDC(NULL, hdc);
             });
 
         LOG_INFO(L"FilePage", L"FilePage initialized.");
@@ -67,6 +82,324 @@ namespace winrt::StarlightGUI::implementation
 
         auto lifetime = get_strong();
         CopyDroppedPathsAsync(paths);
+    }
+
+    std::wstring FilePage::GetCurrentTabId()
+    {
+        auto selectedObject = FileTabView().SelectedItem();
+        if (!selectedObject) return L"";
+
+        auto tab = selectedObject.try_as<Microsoft::UI::Xaml::Controls::TabViewItem>();
+        if (!tab || !tab.Tag()) return L"";
+        return unbox_value<hstring>(tab.Tag()).c_str();
+    }
+
+    void FilePage::CreateNewTab(std::wstring path, bool shouldSelect)
+    {
+        // 新标签页默认进入虚拟根目录，不继承上一标签路径
+        std::wstring normalizedPath = path == kFileHomePage ? kFileHomePage : FixBackSplash(hstring(path));
+        if (normalizedPath.empty()) normalizedPath = kFileHomePage;
+
+        std::wstring tabId = L"tab_" + std::to_wstring(m_nextTabId++);
+
+        FileTabState tabState{};
+        tabState.history.push_back(normalizedPath);
+        tabState.historyIndex = 0;
+        tabState.searchText = L"";
+        tabState.title = BuildTabTitle(normalizedPath);
+        m_tabStates.insert_or_assign(tabId, std::move(tabState));
+
+        Microsoft::UI::Xaml::Controls::TabViewItem tabItem;
+        tabItem.Tag(box_value(hstring(tabId)));
+        tabItem.Header(box_value(hstring(m_tabStates[tabId].title)));
+        tabItem.IsClosable(true);
+
+        FileTabView().TabItems().Append(tabItem);
+
+        if (shouldSelect) {
+            m_isSyncingTab = true;
+            FileTabView().SelectedItem(tabItem);
+            m_isSyncingTab = false;
+            SelectTab(tabId, true);
+        }
+    }
+
+    void FilePage::SelectTab(std::wstring const& tabId, bool reload)
+    {
+        auto stateIt = m_tabStates.find(tabId);
+        if (stateIt == m_tabStates.end()) return;
+
+        auto& state = stateIt->second;
+        if (state.history.empty() || state.historyIndex < 0 || state.historyIndex >= static_cast<int>(state.history.size())) return;
+
+        currentDirectory = hstring(state.history[state.historyIndex]);
+        SyncCurrentTabUI();
+        if (reload) LoadFileList();
+    }
+
+    void FilePage::NavigateTo(std::wstring path, bool pushHistory)
+    {
+        if (m_isLoadingFiles || m_isPostLoading) return;
+
+        std::wstring tabId = GetCurrentTabId();
+        if (tabId.empty()) return;
+
+        auto stateIt = m_tabStates.find(tabId);
+        if (stateIt == m_tabStates.end()) return;
+
+        std::wstring normalizedPath = path == kFileHomePage ? kFileHomePage : FixBackSplash(hstring(path));
+        if (normalizedPath.empty()) return;
+
+        auto& state = stateIt->second;
+
+        if (pushHistory) {
+            if (state.historyIndex >= 0 && state.historyIndex < static_cast<int>(state.history.size()) - 1) {
+                state.history.erase(state.history.begin() + state.historyIndex + 1, state.history.end());
+            }
+            if (state.history.empty() || state.history.back() != normalizedPath) {
+                state.history.push_back(normalizedPath);
+                state.historyIndex = static_cast<int>(state.history.size()) - 1;
+            }
+            else {
+                state.historyIndex = static_cast<int>(state.history.size()) - 1;
+            }
+        }
+
+        currentDirectory = hstring(normalizedPath);
+        state.title = BuildTabTitle(normalizedPath);
+        UpdateCurrentTabHeader();
+        SyncCurrentTabUI();
+        LoadFileList();
+    }
+
+	// 同步当前标签页的 UI 状态，不触发文件列表刷新
+    void FilePage::SyncCurrentTabUI()
+    {
+        std::wstring tabId = GetCurrentTabId();
+        if (tabId.empty()) return;
+
+        auto stateIt = m_tabStates.find(tabId);
+        if (stateIt == m_tabStates.end()) return;
+
+        m_isSyncingTab = true;
+        UpdateBreadcrumbItems();
+        SearchBox().Text(hstring(stateIt->second.searchText));
+        m_isSyncingTab = false;
+        UpdateNavigationButtons();
+    }
+
+    // 构建标签页标题（图标和文本）
+    void FilePage::UpdateCurrentTabHeader()
+    {
+        auto selectedObject = FileTabView().SelectedItem();
+        if (!selectedObject) return;
+        auto tab = selectedObject.try_as<Microsoft::UI::Xaml::Controls::TabViewItem>();
+        if (!tab || !tab.Tag()) return;
+
+        std::wstring tabId = unbox_value<hstring>(tab.Tag()).c_str();
+        auto stateIt = m_tabStates.find(tabId);
+        if (stateIt == m_tabStates.end()) return;
+        if (stateIt->second.history.empty() || stateIt->second.historyIndex < 0 || stateIt->second.historyIndex >= static_cast<int>(stateIt->second.history.size())) return;
+
+        auto headerPanel = StackPanel();
+        headerPanel.Orientation(Orientation::Horizontal);
+        headerPanel.Spacing(8);
+
+        auto headerIcon = Image();
+        headerIcon.Width(16);
+        headerIcon.Height(16);
+        headerIcon.VerticalAlignment(VerticalAlignment::Center);
+        auto const& currentPath = stateIt->second.history[stateIt->second.historyIndex];
+        headerIcon.Source(slg::GetShellIconImage(currentPath == kFileHomePage ? L"C:\\" : currentPath, true, 16, false));
+
+        auto headerText = TextBlock();
+        headerText.Text(hstring(stateIt->second.title));
+        headerText.VerticalAlignment(VerticalAlignment::Center);
+
+        headerPanel.Children().Append(headerIcon);
+        headerPanel.Children().Append(headerText);
+
+        tab.Header(headerPanel);
+    }
+
+    void FilePage::UpdateNavigationButtons()
+    {
+        std::wstring tabId = GetCurrentTabId();
+        if (tabId.empty()) return;
+
+        auto stateIt = m_tabStates.find(tabId);
+        if (stateIt == m_tabStates.end()) return;
+
+        auto& state = stateIt->second;
+        bool canGoBack = state.historyIndex > 0;
+        bool canGoForward = !state.history.empty() && state.historyIndex < static_cast<int>(state.history.size()) - 1;
+        bool canGoUp = currentDirectory != kFileHomePage && currentDirectory.size() > 3;
+
+        BackButton().IsEnabled(canGoBack);
+        ForwardButton().IsEnabled(canGoForward);
+        UpButton().IsEnabled(canGoUp);
+    }
+
+    // 构建路径 UI 样式
+    void FilePage::UpdateBreadcrumbItems()
+    {
+        m_breadcrumbItems.Clear();
+        PathSegmentPanel().Children().Clear();
+
+        std::wstring path = FixBackSplash(currentDirectory.c_str());
+        if (path.empty()) return;
+
+        if (path == kFileHomePage) {
+            m_breadcrumbItems.Append(box_value(hstring(L"此电脑")));
+        }
+        else if (path.size() >= 2 && path[1] == L':') {
+            m_breadcrumbItems.Append(box_value(hstring(L"此电脑")));
+            std::wstring drive = path.substr(0, 2);
+            m_breadcrumbItems.Append(box_value(hstring(drive)));
+
+            if (path.size() > 3) {
+                std::wstring remaining = path.substr(3);
+                std::wstringstream ss(remaining);
+                std::wstring part;
+                while (std::getline(ss, part, L'\\')) {
+                    if (!part.empty()) m_breadcrumbItems.Append(box_value(hstring(part)));
+                }
+            }
+        }
+        else {
+            m_breadcrumbItems.Append(box_value(hstring(path)));
+        }
+
+        auto children = PathSegmentPanel().Children();
+        for (uint32_t i = 0; i < m_breadcrumbItems.Size(); ++i) {
+            hstring text = unbox_value<hstring>(m_breadcrumbItems.GetAt(i));
+
+            Microsoft::UI::Xaml::Controls::Button segmentButton{};
+            segmentButton.Style(Resources().Lookup(box_value(L"PathSegmentButtonStyle")).as<Microsoft::UI::Xaml::Style>());
+            segmentButton.Content(box_value(text));
+            segmentButton.Tag(box_value(i));
+            segmentButton.Click({ this, &FilePage::PathSegmentButton_Click });
+            children.Append(segmentButton);
+
+            if (i + 1 < m_breadcrumbItems.Size()) {
+                TextBlock separator{};
+                separator.Text(L">");
+                separator.Opacity(0.6);
+                separator.Margin(Thickness{ 1, 0, 1, 0 });
+                separator.VerticalAlignment(VerticalAlignment::Center);
+                children.Append(separator);
+            }
+        }
+
+        auto scrollViewer = PathSegmentScrollViewer();
+        scrollViewer.UpdateLayout();
+        auto horizontalOffset = box_value(scrollViewer.ScrollableWidth()).as<Windows::Foundation::IReference<double>>();
+        scrollViewer.ChangeView(horizontalOffset, nullptr, nullptr, true);
+    }
+
+    void FilePage::PathBreadcrumbBar_ItemClicked(Microsoft::UI::Xaml::Controls::BreadcrumbBar const& sender, Microsoft::UI::Xaml::Controls::BreadcrumbBarItemClickedEventArgs const& args)
+    {
+        uint32_t index = args.Index();
+        if (m_breadcrumbItems.Size() == 0 || index >= m_breadcrumbItems.Size()) return;
+
+        std::wstring newPath;
+
+        for (uint32_t i = 0; i <= index; ++i) {
+            std::wstring part = unbox_value<hstring>(m_breadcrumbItems.GetAt(i)).c_str();
+            if (i == 0) {
+                if (part == L"此电脑") {
+                    newPath = kFileHomePage;
+                    continue;
+                }
+                if (part.size() >= 2 && part[1] == L':') newPath = part + L"\\";
+                else newPath = part;
+            }
+            else {
+                if (newPath == kFileHomePage) {
+                    if (part.size() >= 2 && part[1] == L':') newPath = part + L"\\";
+                    continue;
+                }
+                if (!newPath.empty() && newPath.back() != L'\\') newPath += L"\\";
+                newPath += part;
+            }
+        }
+
+        NavigateTo(newPath, true);
+    }
+
+    void FilePage::PathSegmentButton_Click(IInspectable const& sender, RoutedEventArgs const& e)
+    {
+        auto button = sender.try_as<Microsoft::UI::Xaml::Controls::Button>();
+        if (!button || !button.Tag()) return;
+        uint32_t index = unbox_value<uint32_t>(button.Tag());
+        if (m_breadcrumbItems.Size() == 0 || index >= m_breadcrumbItems.Size()) return;
+
+        std::wstring newPath;
+
+        for (uint32_t i = 0; i <= index; ++i) {
+            std::wstring part = unbox_value<hstring>(m_breadcrumbItems.GetAt(i)).c_str();
+            if (i == 0) {
+                if (part == L"此电脑") {
+                    newPath = kFileHomePage;
+                    continue;
+                }
+                if (part.size() >= 2 && part[1] == L':') newPath = part + L"\\";
+                else newPath = part;
+            }
+            else {
+                if (newPath == kFileHomePage) {
+                    if (part.size() >= 2 && part[1] == L':') newPath = part + L"\\";
+                    continue;
+                }
+                if (!newPath.empty() && newPath.back() != L'\\') newPath += L"\\";
+                newPath += part;
+            }
+        }
+
+        NavigateTo(newPath, true);
+    }
+
+    void FilePage::FileTabView_AddTabButtonClick(Microsoft::UI::Xaml::Controls::TabView const& sender, winrt::Windows::Foundation::IInspectable const& args)
+    {
+        CreateNewTab(kFileHomePage, true);
+    }
+
+    void FilePage::FileTabView_TabCloseRequested(Microsoft::UI::Xaml::Controls::TabView const& sender, Microsoft::UI::Xaml::Controls::TabViewTabCloseRequestedEventArgs const& args)
+    {
+        auto tab = args.Tab();
+        if (!tab || !tab.Tag()) return;
+
+        std::wstring tabId = unbox_value<hstring>(tab.Tag()).c_str();
+        uint32_t removedIndex = 0;
+        if (sender.TabItems().IndexOf(tab, removedIndex)) {
+            sender.TabItems().RemoveAt(removedIndex);
+        }
+        m_tabStates.erase(tabId);
+
+        if (sender.TabItems().Size() == 0) {
+            CreateNewTab(kFileHomePage, true);
+            return;
+        }
+
+        auto selected = sender.SelectedItem().try_as<Microsoft::UI::Xaml::Controls::TabViewItem>();
+        if (!selected) {
+            auto fallbackIndex = removedIndex;
+            if (fallbackIndex >= sender.TabItems().Size()) fallbackIndex = sender.TabItems().Size() - 1;
+            sender.SelectedItem(sender.TabItems().GetAt(fallbackIndex));
+        }
+
+        auto selectedTab = sender.SelectedItem().try_as<Microsoft::UI::Xaml::Controls::TabViewItem>();
+        if (!selectedTab || !selectedTab.Tag()) return;
+        SelectTab(unbox_value<hstring>(selectedTab.Tag()).c_str(), true);
+    }
+
+    void FilePage::FileTabView_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& e)
+    {
+        if (m_isSyncingTab) return;
+
+        auto tabId = GetCurrentTabId();
+        if (tabId.empty()) return;
+        SelectTab(tabId, true);
     }
 
     void FilePage::FileListView_RightTapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
@@ -110,8 +443,8 @@ namespace winrt::StarlightGUI::implementation
         auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue8e5", L"打开", [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
             for (const auto& item : selectedFiles) {
                 if (item.Directory()) {
-                    currentDirectory = currentDirectory + L"\\" + item.Name();
-                    LoadFileList();
+                    if (currentDirectory == hstring(kFileHomePage)) NavigateTo(item.Path().c_str(), true);
+                    else NavigateTo(FixBackSplash(currentDirectory.c_str()) + L"\\" + item.Name().c_str(), true);
                 }
                 else ShellExecuteW(nullptr, L"open", item.Path().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
             }
@@ -249,11 +582,15 @@ namespace winrt::StarlightGUI::implementation
         auto item = FileListView().SelectedItem().as<winrt::StarlightGUI::FileInfo>();
 
         if (item.Flag() == 999) {
-            currentDirectory = GetParentDirectory(currentDirectory.c_str());
-            LoadFileList();
+            if (currentDirectory != hstring(kFileHomePage) && currentDirectory.size() <= 3) {
+                NavigateTo(kFileHomePage, true);
+            }
+            else {
+                NavigateTo(GetParentDirectory(currentDirectory.c_str()), true);
+            }
         } else if (item.Directory()) {
-            currentDirectory = currentDirectory + L"\\" + item.Name();
-            LoadFileList();
+            if (currentDirectory == hstring(kFileHomePage)) NavigateTo(item.Path().c_str(), true);
+            else NavigateTo(FixBackSplash(currentDirectory.c_str()) + L"\\" + item.Name().c_str(), true);
         }
         else {
             ShellExecuteW(nullptr, L"open", item.Path().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
@@ -329,6 +666,10 @@ namespace winrt::StarlightGUI::implementation
     winrt::Windows::Foundation::IAsyncAction FilePage::CopyDroppedPathsAsync(std::vector<std::wstring> paths)
     {
         if (paths.empty()) co_return;
+        if (currentDirectory == hstring(kFileHomePage)) {
+            slg::CreateInfoBarAndDisplay(L"提示", L"请先进入某个驱动器后再进行复制", InfoBarSeverity::Warning, g_mainWindowInstance);
+            co_return;
+        }
         if (m_isLoadingFiles || m_isPostLoading) {
             slg::CreateInfoBarAndDisplay(L"警告", L"当前正在加载，请稍后再试!", InfoBarSeverity::Warning, g_mainWindowInstance);
             co_return;
@@ -417,22 +758,50 @@ namespace winrt::StarlightGUI::implementation
 
         auto lifetime = get_strong();
 
-        std::wstring path = FixBackSplash(currentDirectory);
+        std::wstring path = currentDirectory == hstring(kFileHomePage) ? kFileHomePage : FixBackSplash(currentDirectory);
         auto loadToken = ++m_currentLoadToken;
         iconLoadingKeys.clear();
         iconPendingFiles.clear();
         currentDirectory = path;
-        PathBox().Text(currentDirectory);
+        std::wstring tabSearchText;
+        auto tabId = GetCurrentTabId();
+        if (!tabId.empty()) {
+            auto stateIt = m_tabStates.find(tabId);
+            if (stateIt != m_tabStates.end() && stateIt->second.historyIndex >= 0 && stateIt->second.historyIndex < static_cast<int>(stateIt->second.history.size())) {
+                stateIt->second.history[stateIt->second.historyIndex] = path;
+                stateIt->second.title = BuildTabTitle(path);
+                tabSearchText = stateIt->second.searchText;
+                UpdateCurrentTabHeader();
+            }
+        }
+        m_isSyncingTab = true;
+        UpdateBreadcrumbItems();
+        m_isSyncingTab = false;
+        UpdateNavigationButtons();
         LOG_INFO(__WFUNCTION__, L"Path = %s", path.c_str());
-
-        // 简单判断根目录
-        PreviousButton().IsEnabled(path.length() > 3);
 
         co_await winrt::resume_background();
 
         m_allFiles.clear();
 
-        KernelInstance::QueryFile(path, m_allFiles);
+        // 首页展示驱动器，行为与系统文件管理器更一致
+        if (path == kFileHomePage) {
+            wchar_t driveBuffer[256]{};
+            GetLogicalDriveStringsW(255, driveBuffer);
+            for (wchar_t* drive = driveBuffer; *drive; drive += wcslen(drive) + 1) {
+                auto driveInfo = winrt::make<winrt::StarlightGUI::implementation::FileInfo>();
+                std::wstring drivePath = drive;
+                driveInfo.Name(hstring(drivePath.substr(0, 2)));
+                driveInfo.Path(hstring(drivePath));
+                driveInfo.Directory(true);
+                driveInfo.Size(L"");
+                driveInfo.ModifyTime(L"");
+                m_allFiles.push_back(driveInfo);
+            }
+        }
+        else {
+            KernelInstance::QueryFile(path, m_allFiles);
+        }
         LOG_INFO(__WFUNCTION__, L"Enumerated files, %d entry(s).", m_allFiles.size());
 
         co_await wil::resume_foreground(DispatcherQueue());
@@ -446,14 +815,14 @@ namespace winrt::StarlightGUI::implementation
 
         auto newFileList = winrt::multi_threaded_observable_vector<winrt::StarlightGUI::FileInfo>();
 
-        if (currentDirectory.size() > 3) {
+        if (currentDirectory != hstring(kFileHomePage)) {
             auto previousPage = winrt::make<winrt::StarlightGUI::implementation::FileInfo>();
-            previousPage.Name(L"上个文件夹");
+            previousPage.Name(currentDirectory.size() <= 3 ? L"返回此电脑" : L"上个文件夹");
             previousPage.Flag(999);
             newFileList.Append(previousPage);
         }
 
-        winrt::hstring query = SearchBox().Text();
+        winrt::hstring query = hstring(tabSearchText);
         for (size_t i = 0; i < m_allFiles.size(); ++i) {
             bool shouldRemove = query.empty() ? false : ApplyFilter(m_allFiles[i], query);
             if (shouldRemove) continue;
@@ -463,15 +832,19 @@ namespace winrt::StarlightGUI::implementation
         m_fileList = newFileList;
         FileListView().ItemsSource(m_fileList);
 
-        m_isPostLoading = true;
-        LoadMetaForCurrentList(path, loadToken);
+        if (path == kFileHomePage) {
+            m_isPostLoading = false;
+        }
+        else {
+            m_isPostLoading = true;
+            LoadMetaForCurrentList(path, loadToken);
+        }
 
         auto end = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
         std::wstringstream countText;
         countText << L"共 " << m_allFiles.size() << L" 个文件 (" << duration << " ms)";
-        FileCountText().Text(countText.str());
         LoadingRing().IsActive(false);
 
         LOG_INFO(__WFUNCTION__, L"Loaded file list, %d entry(s) in total.", m_allFiles.size());
@@ -587,7 +960,14 @@ namespace winrt::StarlightGUI::implementation
     {
         if (!file) return L"__invalid__";
         if (file.Flag() == 999) return L"__dir__";
-        if (file.Directory()) return L"__dir__";
+        if (file.Directory()) {
+            std::wstring dirPath = FixBackSplash(file.Path());
+            if (dirPath.size() >= 3 && dirPath[1] == L':' && dirPath[2] == L'\\') {
+                std::transform(dirPath.begin(), dirPath.end(), dirPath.begin(), ::towlower);
+                return L"__path__" + dirPath;
+            }
+            return L"__dir__";
+        }
 
         std::wstring name = file.Name().c_str();
         auto dot = name.find_last_of(L'.');
@@ -629,62 +1009,22 @@ namespace winrt::StarlightGUI::implementation
 
         try {
 
-        SHFILEINFO shfi{};
-        bool useFastAttrQuery = file.Directory() || cacheKey.find(L"__ext__") == 0;
-        if (useFastAttrQuery) {
-            DWORD attrs = file.Directory() ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
-            std::wstring lookup = file.Directory() ? L"folder" : cacheKey.substr(7);
-            if (!SHGetFileInfoW(lookup.c_str(), attrs, &shfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES)) {
-                if (!SHGetFileInfoW(L".", FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES)) {
-                    cleanup();
-                    co_return;
-                }
-            }
+        std::wstring itemPath = file.Path().c_str();
+        bool isDriveRoot = file.Directory() && itemPath.size() >= 3 && itemPath[1] == L':' && itemPath[2] == L'\\';
+        bool useFastAttrQuery = (file.Directory() && !isDriveRoot) || cacheKey.find(L"__ext__") == 0;
+        std::wstring lookup = file.Path().c_str();
+        if (useFastAttrQuery && cacheKey.find(L"__ext__") == 0) {
+            lookup = cacheKey.substr(7);
         }
-        else {
-            if (!SHGetFileInfoW(file.Path().c_str(), 0, &shfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON)) {
-                if (!SHGetFileInfoW(L".", FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES)) {
-                    cleanup();
-                    co_return;
-                }
-            }
+        if (file.Directory()) {
+            lookup = file.Path().c_str();
         }
 
-        ICONINFO iconInfo{};
-        if (!GetIconInfo(shfi.hIcon, &iconInfo)) {
-            DestroyIcon(shfi.hIcon);
+        auto icon = slg::GetShellIconImage(lookup, file.Directory(), 16, useFastAttrQuery, cacheKey);
+        if (!icon) {
             cleanup();
             co_return;
         }
-
-        BITMAP bmp{};
-        GetObject(iconInfo.hbmColor, sizeof(bmp), &bmp);
-        BITMAPINFOHEADER bmiHeader = { 0 };
-        bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        bmiHeader.biWidth = bmp.bmWidth;
-        bmiHeader.biHeight = bmp.bmHeight;
-        bmiHeader.biPlanes = 1;
-        bmiHeader.biBitCount = 32;
-        bmiHeader.biCompression = BI_RGB;
-
-        int dataSize = bmp.bmWidthBytes * bmp.bmHeight;
-        std::vector<BYTE> buffer(dataSize);
-        GetDIBits(hdc, iconInfo.hbmColor, 0, bmp.bmHeight, buffer.data(), reinterpret_cast<BITMAPINFO*>(&bmiHeader), DIB_RGB_COLORS);
-
-        winrt::Microsoft::UI::Xaml::Media::Imaging::WriteableBitmap writeableBitmap(bmp.bmWidth, bmp.bmHeight);
-        uint8_t* pixelData = writeableBitmap.PixelBuffer().data();
-        int rowSize = bmp.bmWidth * 4;
-        for (int i = 0; i < bmp.bmHeight; ++i) {
-            int srcOffset = i * rowSize;
-            int dstOffset = (bmp.bmHeight - 1 - i) * rowSize;
-            std::memcpy(pixelData + dstOffset, buffer.data() + srcOffset, rowSize);
-        }
-
-        DeleteObject(iconInfo.hbmColor);
-        DeleteObject(iconInfo.hbmMask);
-        DestroyIcon(shfi.hIcon);
-
-        auto icon = writeableBitmap.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>();
         iconCache.insert_or_assign(cacheKey, icon);
 
         if (!IsLoaded() || loadToken != m_currentLoadToken) {
@@ -735,28 +1075,16 @@ namespace winrt::StarlightGUI::implementation
 
     void FilePage::SearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         if (!IsLoaded()) return;
-        WaitAndReloadAsync(100);
-    }
+        if (m_isSyncingTab) return;
 
-    void FilePage::PathBox_KeyDown(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::KeyRoutedEventArgs const& e) {
-        if (e.Key() == winrt::Windows::System::VirtualKey::Enter)
-        {
-            if (m_isLoadingFiles || m_isPostLoading) {
-                e.Handled(true);
-                return;
+        auto tabId = GetCurrentTabId();
+        if (!tabId.empty()) {
+            auto stateIt = m_tabStates.find(tabId);
+            if (stateIt != m_tabStates.end()) {
+                stateIt->second.searchText = SearchBox().Text().c_str();
             }
-            try
-            {
-                fs::path path(PathBox().Text().c_str());
-                if (fs::exists(path) && fs::is_directory(path)) {
-                    currentDirectory = PathBox().Text();
-                }
-            }
-            catch (...) {}
-            PathBox().Text(currentDirectory);
-            LoadFileList();
-            e.Handled(true);
         }
+        WaitAndReloadAsync(100);
     }
 
     bool FilePage::ApplyFilter(const winrt::StarlightGUI::FileInfo& file, hstring& query) {
@@ -776,12 +1104,6 @@ namespace winrt::StarlightGUI::implementation
 
         Button clickedButton = sender.as<Button>();
         winrt::hstring columnName = clickedButton.Tag().as<winrt::hstring>();
-
-        if (columnName == L"Previous") {
-            currentDirectory = GetParentDirectory(currentDirectory.c_str());
-            LoadFileList();
-            return;
-        }
 
         struct SortBinding {
             wchar_t const* tag;
@@ -806,14 +1128,21 @@ namespace winrt::StarlightGUI::implementation
 
         auto newFileList = winrt::multi_threaded_observable_vector<winrt::StarlightGUI::FileInfo>();
 
-        if (currentDirectory.size() > 3) {
+        if (currentDirectory != hstring(kFileHomePage)) {
             auto previousPage = winrt::make<winrt::StarlightGUI::implementation::FileInfo>();
-            previousPage.Name(L"上个文件夹");
+            previousPage.Name(currentDirectory.size() <= 3 ? L"返回此电脑" : L"上个文件夹");
             previousPage.Flag(999);
             newFileList.Append(previousPage);
         }
 
-        winrt::hstring query = SearchBox().Text();
+        std::wstring tabSearchText;
+        auto tabId = GetCurrentTabId();
+        if (!tabId.empty()) {
+            auto stateIt = m_tabStates.find(tabId);
+            if (stateIt != m_tabStates.end()) tabSearchText = stateIt->second.searchText;
+        }
+
+        winrt::hstring query = hstring(tabSearchText);
         for (size_t i = 0; i < m_allFiles.size(); ++i) {
             bool shouldRemove = query.empty() ? false : ApplyFilter(m_allFiles[i], query);
             if (shouldRemove) continue;
@@ -904,6 +1233,7 @@ namespace winrt::StarlightGUI::implementation
         RefreshButton().IsEnabled(false);
 
         iconCache.clear();
+        slg::ClearShellIconCache();
         iconLoadingKeys.clear();
         iconPendingFiles.clear();
 
@@ -912,27 +1242,48 @@ namespace winrt::StarlightGUI::implementation
         co_return;
     }
 
-    slg::coroutine FilePage::NextDriveButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+    void FilePage::BackButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
-        if (m_isLoadingFiles || m_isPostLoading) co_return;
-        static std::vector<std::wstring> drives;
-        static int currentIndex = 1;
+        if (m_isLoadingFiles || m_isPostLoading) return;
 
-        if (drives.empty()) {
-            wchar_t driveBuffer[256];
-            GetLogicalDriveStrings(255, driveBuffer);
+        auto tabId = GetCurrentTabId();
+        if (tabId.empty()) return;
 
-            for (wchar_t* drive = driveBuffer; *drive; drive += wcslen(drive) + 1) {
-                drives.push_back(drive);
-            }
+        auto stateIt = m_tabStates.find(tabId);
+        if (stateIt == m_tabStates.end()) return;
+        auto& state = stateIt->second;
 
-            if (drives.empty()) drives = { L"C:\\" };
-        }
+        if (state.historyIndex <= 0) return;
+        state.historyIndex--;
+        currentDirectory = hstring(state.history[state.historyIndex]);
+        SyncCurrentTabUI();
+        LoadFileList();
+    }
 
-        currentDirectory = drives[currentIndex];
-        currentIndex = (currentIndex + 1) % drives.size();
+    void FilePage::ForwardButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+    {
+        if (m_isLoadingFiles || m_isPostLoading) return;
 
-        co_await LoadFileList();
+        auto tabId = GetCurrentTabId();
+        if (tabId.empty()) return;
+
+        auto stateIt = m_tabStates.find(tabId);
+        if (stateIt == m_tabStates.end()) return;
+        auto& state = stateIt->second;
+
+        if (state.historyIndex >= static_cast<int>(state.history.size()) - 1) return;
+        state.historyIndex++;
+        currentDirectory = hstring(state.history[state.historyIndex]);
+        SyncCurrentTabUI();
+        LoadFileList();
+    }
+
+    void FilePage::UpButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+    {
+        if (m_isLoadingFiles || m_isPostLoading) return;
+        if (currentDirectory == hstring(kFileHomePage)) return;
+        if (currentDirectory.size() <= 3) return;
+        NavigateTo(GetParentDirectory(currentDirectory.c_str()), true);
     }
 
     void FilePage::ResetState() {

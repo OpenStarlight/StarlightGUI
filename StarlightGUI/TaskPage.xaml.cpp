@@ -46,7 +46,6 @@ namespace winrt::StarlightGUI::implementation
 
     static std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource> iconCache;
     static std::unordered_map<std::wstring, winrt::hstring> descriptionCache;
-    static HDC hdc{ nullptr };
     static int safeAcceptedPID = -1;
 
     TaskPage::TaskPage() {
@@ -67,7 +66,6 @@ namespace winrt::StarlightGUI::implementation
         TaskUtils::EnsurePrivileges();
 
         this->Loaded([this](auto&&, auto&&) {
-            hdc = GetDC(NULL);
             autoRefreshTimer.Start();
             LoadProcessList();
 			});
@@ -75,7 +73,6 @@ namespace winrt::StarlightGUI::implementation
         this->Unloaded([this](auto&&, auto&&) {
             reloadTimer.Stop();
             autoRefreshTimer.Stop();
-            ReleaseDC(NULL, hdc);
             });
 
         LOG_INFO(L"TaskPage", L"TaskPage initialized.");
@@ -761,68 +758,24 @@ namespace winrt::StarlightGUI::implementation
         if (!IsLoaded() || loadToken != m_currentLoadToken) co_return;
 
         std::wstring path = process.ExecutablePath().c_str();
-        std::wstring cacheKey;
-        if (!path.empty()) {
-            cacheKey = NormalizeCacheKey(path);
-            auto cacheIt = iconCache.find(cacheKey);
-            if (cacheIt != iconCache.end()) {
-                process.Icon(cacheIt->second);
-                UpdateRealizedItemIcon(process, cacheIt->second);
-                co_return;
-            }
-        }
+        std::wstring iconPath = path;
+        std::wstring cacheKey = NormalizeCacheKey(path);
 
-        SHFILEINFO shfi{};
-        if (!path.empty()) {
-            if (!SHGetFileInfoW(path.c_str(), 0, &shfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON)) {
-                if (!SHGetFileInfoW(L"C:\\Windows\\System32\\ntoskrnl.exe", FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES)) {
-                    co_return;
-                }
-            }
-        }
-        else {
-            if (!SHGetFileInfoW(L"C:\\Windows\\System32\\ntoskrnl.exe", FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(SHFILEINFO), SHGFI_ICON | SHGFI_SMALLICON | SHGFI_USEFILEATTRIBUTES)) {
-                co_return;
-            }
-        }
-
-        ICONINFO iconInfo{};
-        if (!GetIconInfo(shfi.hIcon, &iconInfo) || !iconInfo.hbmColor) {
-            if (iconInfo.hbmMask) DeleteObject(iconInfo.hbmMask);
-            DestroyIcon(shfi.hIcon);
+        auto cacheIt = iconCache.find(cacheKey);
+        if (cacheIt != iconCache.end()) {
+            process.Icon(cacheIt->second);
+            UpdateRealizedItemIcon(process, cacheIt->second);
             co_return;
         }
 
-        BITMAP bmp{};
-        GetObject(iconInfo.hbmColor, sizeof(bmp), &bmp);
-        BITMAPINFOHEADER bmiHeader = { 0 };
-        bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-        bmiHeader.biWidth = bmp.bmWidth;
-        bmiHeader.biHeight = bmp.bmHeight;
-        bmiHeader.biPlanes = 1;
-        bmiHeader.biBitCount = 32;
-        bmiHeader.biCompression = BI_RGB;
-
-        int dataSize = bmp.bmWidthBytes * bmp.bmHeight;
-        std::vector<BYTE> buffer(dataSize);
-        GetDIBits(hdc, iconInfo.hbmColor, 0, bmp.bmHeight, buffer.data(), reinterpret_cast<BITMAPINFO*>(&bmiHeader), DIB_RGB_COLORS);
-
-        winrt::Microsoft::UI::Xaml::Media::Imaging::WriteableBitmap writeableBitmap(bmp.bmWidth, bmp.bmHeight);
-        uint8_t* data = writeableBitmap.PixelBuffer().data();
-        int rowSize = bmp.bmWidth * 4;
-        for (int i = 0; i < bmp.bmHeight; ++i) {
-            int srcOffset = i * rowSize;
-            int dstOffset = (bmp.bmHeight - 1 - i) * rowSize;
-            std::memcpy(data + dstOffset, buffer.data() + srcOffset, rowSize);
+        auto icon = slg::GetShellIconImage(iconPath, false, 16, false, cacheKey);
+        if (!icon) {
+            icon = slg::GetShellIconImage(L"C:\\Windows\\System32\\ntoskrnl.exe", false, 16, false, L"__ntoskrnl__");
+            if (!icon) co_return;
         }
-
-        DeleteObject(iconInfo.hbmColor);
-        DeleteObject(iconInfo.hbmMask);
-        DestroyIcon(shfi.hIcon);
 
         if (!IsLoaded() || loadToken != m_currentLoadToken) co_return;
 
-        auto icon = writeableBitmap.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>();
         if (!cacheKey.empty()) iconCache.insert_or_assign(cacheKey, icon);
         process.Icon(icon);
         UpdateRealizedItemIcon(process, icon);
