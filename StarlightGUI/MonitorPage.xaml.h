@@ -218,7 +218,7 @@ namespace winrt::StarlightGUI::implementation
 		int segmentedIndex = 0;
         bool m_isLoading = false;
         uint32_t m_lastDbgViewLength = 0;
-        winrt::Microsoft::UI::Xaml::DispatcherTimer reloadTimer;
+        uint64_t m_reloadRequestVersion = 0;
 		winrt::Microsoft::UI::Xaml::DispatcherTimer windbgTimer;
 
         inline static bool currentSortingOption;

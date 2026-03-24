@@ -34,8 +34,7 @@ namespace winrt::StarlightGUI::implementation
         };
 
         bool m_isLoadingKernelModules = false;
-
-        winrt::Microsoft::UI::Xaml::DispatcherTimer reloadTimer;
+        uint64_t m_reloadRequestVersion = 0;
 
         inline static bool m_isLoading = false;
         inline static bool m_isNameAscending = true;

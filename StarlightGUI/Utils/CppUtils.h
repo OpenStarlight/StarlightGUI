@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include <pdh.h>
+#include <string_view>
 
 namespace winrt::StarlightGUI::implementation {
     std::wstring GenerateRandomString(size_t length);
@@ -30,6 +31,14 @@ namespace winrt::StarlightGUI::implementation {
     bool StringToNumber(const std::wstring& input, LONG64& out);
 
     bool StringToNumber(const std::wstring& input, ULONG64& out);
+
+    std::wstring ToLowerCase(std::wstring_view input);
+
+    int CompareIgnoreCase(std::wstring_view left, std::wstring_view right);
+
+    bool LessIgnoreCase(std::wstring_view left, std::wstring_view right);
+
+    bool ContainsIgnoreCase(std::wstring_view text, std::wstring_view query);
 
     std::wstring FormatMemorySize(double bytes);
 

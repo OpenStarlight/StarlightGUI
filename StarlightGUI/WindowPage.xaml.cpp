@@ -87,7 +87,9 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
 
-        this->Unloaded([this](auto&&, auto&&) {});
+        this->Unloaded([this](auto&&, auto&&) {
+            ++m_reloadRequestVersion;
+            });
 
         LOG_INFO(L"WindowPage", L"WindowPage initialized.");
     }
@@ -823,13 +825,7 @@ namespace winrt::StarlightGUI::implementation
         auto sortActiveColumn = [&](const winrt::StarlightGUI::WindowInfo& a, const winrt::StarlightGUI::WindowInfo& b) -> bool {
             switch (activeColumn) {
             case SortColumn::Name:
-            {
-                std::wstring aName = a.Name().c_str();
-                std::wstring bName = b.Name().c_str();
-                std::transform(aName.begin(), aName.end(), aName.begin(), ::towlower);
-                std::transform(bName.begin(), bName.end(), bName.begin(), ::towlower);
-                return aName < bName;
-            }
+                return LessIgnoreCase(a.Name().c_str(), b.Name().c_str());
             case SortColumn::Band:
                 return a.Band() < b.Band();
             case SortColumn::WindowStyle:
@@ -866,20 +862,11 @@ namespace winrt::StarlightGUI::implementation
     {
         if (!IsLoaded()) return;
 
-        WaitAndReloadAsync(100);
+        WaitAndReloadAsync(250);
     }
 
     bool WindowPage::ApplyFilter(const winrt::StarlightGUI::WindowInfo& window, hstring& query) {
-        std::wstring name = window.Name().c_str();
-        std::wstring queryWStr = query.c_str();
-
-        // 不比较大小写
-        std::transform(name.begin(), name.end(), name.begin(), ::towlower);
-        std::transform(queryWStr.begin(), queryWStr.end(), queryWStr.begin(), ::towlower);
-
-        bool result = name.find(queryWStr) == std::wstring::npos;
-
-        return result;
+        return !ContainsIgnoreCase(window.Name().c_str(), query.c_str());
     }
 
 
@@ -893,14 +880,13 @@ namespace winrt::StarlightGUI::implementation
 
     winrt::Windows::Foundation::IAsyncAction WindowPage::WaitAndReloadAsync(int interval) {
         auto lifetime = get_strong();
+        auto requestVersion = ++m_reloadRequestVersion;
 
-        reloadTimer.Stop();
-        reloadTimer.Interval(std::chrono::milliseconds(interval));
-        reloadTimer.Tick([this](auto&&, auto&&) {
-            LoadWindowList();
-            reloadTimer.Stop();
-            });
-        reloadTimer.Start();
+        co_await winrt::resume_after(std::chrono::milliseconds(interval));
+        co_await wil::resume_foreground(DispatcherQueue());
+
+        if (!IsLoaded() || requestVersion != m_reloadRequestVersion) co_return;
+        LoadWindowList();
 
         co_return;
     }

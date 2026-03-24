@@ -44,7 +44,7 @@ namespace winrt::StarlightGUI::implementation
         bool m_isPostLoading = false;
         bool m_isSorting = false;
         uint64_t m_currentLoadToken = 0;
-        winrt::Microsoft::UI::Xaml::DispatcherTimer reloadTimer;
+        uint64_t m_reloadRequestVersion = 0;
         winrt::Microsoft::UI::Xaml::DispatcherTimer autoRefreshTimer;
 
         inline static bool m_isLoading = false;

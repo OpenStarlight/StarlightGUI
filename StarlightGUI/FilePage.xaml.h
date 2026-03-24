@@ -68,7 +68,7 @@ namespace winrt::StarlightGUI::implementation
             std::wstring searchText;
         };
 
-        winrt::Microsoft::UI::Xaml::DispatcherTimer reloadTimer;
+        uint64_t m_reloadRequestVersion = 0;
         std::vector<winrt::StarlightGUI::FileInfo> m_allFiles;
         bool m_isLoadingFiles = false;
         bool m_isPostLoading = false;

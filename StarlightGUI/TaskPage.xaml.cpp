@@ -40,8 +40,7 @@ namespace winrt::StarlightGUI::implementation
 {
     static std::wstring NormalizeCacheKey(std::wstring value)
     {
-        std::transform(value.begin(), value.end(), value.begin(), ::towlower);
-        return value;
+        return ToLowerCase(value);
     }
 
     static std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource> iconCache;
@@ -81,7 +80,7 @@ namespace winrt::StarlightGUI::implementation
 			});
 
         this->Unloaded([this](auto&&, auto&&) {
-            reloadTimer.Stop();
+            ++m_reloadRequestVersion;
             autoRefreshTimer.Stop();
             });
 
@@ -976,6 +975,14 @@ namespace winrt::StarlightGUI::implementation
             processes.push_back(process);
         }
 
+        std::unordered_map<int, double> cpuUsageCache;
+        if (activeColumn == SortColumn::CpuUsage) {
+            cpuUsageCache.reserve(processes.size() * 2);
+            for (auto const& process : processes) {
+                cpuUsageCache.insert_or_assign(process.Id(), parseCpu(process.CpuUsage()));
+            }
+        }
+
         if (updateHeader) {
             if (activeColumn == SortColumn::Name) NameHeaderButton().Content(box_value(isAscending ? L"进程 ↓" : L"进程 ↑"));
             if (activeColumn == SortColumn::EProcess) EProcessHeaderButton().Content(box_value(isAscending ? L"EPROCESS ↓" : L"EPROCESS ↑"));
@@ -987,15 +994,15 @@ namespace winrt::StarlightGUI::implementation
         auto sortActiveColumn = [&](const winrt::StarlightGUI::ProcessInfo& a, const winrt::StarlightGUI::ProcessInfo& b) -> bool {
             switch (activeColumn) {
             case SortColumn::Name:
-            {
-                std::wstring aName = a.Name().c_str();
-                std::wstring bName = b.Name().c_str();
-                std::transform(aName.begin(), aName.end(), aName.begin(), ::towlower);
-                std::transform(bName.begin(), bName.end(), bName.begin(), ::towlower);
-                return aName < bName;
-            }
+                return LessIgnoreCase(a.Name().c_str(), b.Name().c_str());
             case SortColumn::CpuUsage:
-                return parseCpu(a.CpuUsage()) < parseCpu(b.CpuUsage());
+            {
+                auto aIt = cpuUsageCache.find(a.Id());
+                auto bIt = cpuUsageCache.find(b.Id());
+                double aValue = (aIt != cpuUsageCache.end()) ? aIt->second : parseCpu(a.CpuUsage());
+                double bValue = (bIt != cpuUsageCache.end()) ? bIt->second : parseCpu(b.CpuUsage());
+                return aValue < bValue;
+            }
             case SortColumn::EProcess:
                 return a.EProcessULong() < b.EProcessULong();
             case SortColumn::MemoryUsage:
@@ -1071,18 +1078,11 @@ namespace winrt::StarlightGUI::implementation
     void TaskPage::ProcessSearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-        WaitAndReloadAsync(100);
+        WaitAndReloadAsync(250);
     }
 
     bool TaskPage::ApplyFilter(const winrt::StarlightGUI::ProcessInfo& process, hstring& query) {
-        std::wstring name = process.Name().c_str();
-        std::wstring queryWStr = query.c_str();
-
-        // 不比较大小写
-        std::transform(name.begin(), name.end(), name.begin(), ::towlower);
-        std::transform(queryWStr.begin(), queryWStr.end(), queryWStr.begin(), ::towlower);
-
-        return name.find(queryWStr) == std::wstring::npos;
+        return !ContainsIgnoreCase(process.Name().c_str(), query.c_str());
     }
 
 
@@ -1145,7 +1145,7 @@ namespace winrt::StarlightGUI::implementation
                     }
                 }
 
-                co_await WaitAndReloadAsync(1000);
+                WaitAndReloadAsync(1000);
             }
         }
         catch (winrt::hresult_error const& ex) {
@@ -1262,14 +1262,13 @@ namespace winrt::StarlightGUI::implementation
 
     winrt::Windows::Foundation::IAsyncAction TaskPage::WaitAndReloadAsync(int interval) {
         auto lifetime = get_strong();
+        auto requestVersion = ++m_reloadRequestVersion;
 
-        reloadTimer.Stop();
-        reloadTimer.Interval(std::chrono::milliseconds(interval));
-        reloadTimer.Tick([this](auto&&, auto&&) {
-            if (g_mainWindowInstance->m_openWindows.empty()) LoadProcessList(true);
-            reloadTimer.Stop();
-            });
-        reloadTimer.Start();
+        co_await winrt::resume_after(std::chrono::milliseconds(interval));
+        co_await wil::resume_foreground(DispatcherQueue());
+
+        if (!IsLoaded() || requestVersion != m_reloadRequestVersion) co_return;
+        if (g_mainWindowInstance->m_openWindows.empty()) LoadProcessList(true);
 
         co_return;
     }

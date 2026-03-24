@@ -113,13 +113,7 @@ namespace winrt::StarlightGUI::implementation
 
         if (result != ERROR_SUCCESS || type != REG_SZ) return false;
 
-        auto toLower = [](std::wstring text) {
-            std::transform(text.begin(), text.end(), text.begin(), [](wchar_t c) { return (wchar_t)towlower(c); });
-            return text;
-        };
-        auto current = toLower(value);
-        auto expected = toLower(GetReplaceTaskManagerCommand());
-        return current == expected
+        return CompareIgnoreCase(value, GetReplaceTaskManagerCommand()) == 0
             && ReplaceTaskManagerTaskExists()
             && std::filesystem::exists(GetConfigSidePath(replaceTaskManagerTriggerScriptName))
             && std::filesystem::exists(GetConfigSidePath(replaceTaskManagerLaunchScriptName));

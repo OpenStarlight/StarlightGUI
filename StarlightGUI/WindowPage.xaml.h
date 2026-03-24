@@ -35,8 +35,7 @@ namespace winrt::StarlightGUI::implementation
         };
 
         bool m_isLoadingWindows = false;
-
-        winrt::Microsoft::UI::Xaml::DispatcherTimer reloadTimer;
+        uint64_t m_reloadRequestVersion = 0;
 
         inline static bool m_showVisibleOnly, m_showNoTitle = false;
         inline static bool m_isLoading = false;

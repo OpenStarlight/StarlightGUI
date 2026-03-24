@@ -9,11 +9,17 @@
 #include <limits>
 #include <cwctype>
 #include <fstream>
+#include <algorithm>
 
 namespace winrt::StarlightGUI::implementation {
     const static uint64_t KB = 1024;
     const static uint64_t MB = KB * 1024;
     const static uint64_t GB = MB * 1024;
+
+    static wchar_t ToLowerChar(wchar_t c)
+    {
+        return static_cast<wchar_t>(std::towlower(static_cast<wint_t>(c)));
+    }
 
     std::wstring GenerateRandomString(size_t length) {
         const std::wstring charset =
@@ -31,10 +37,13 @@ namespace winrt::StarlightGUI::implementation {
     }
 
     int GenerateRandomNumber(size_t from, size_t to) {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::uniform_int_distribution<> dist(from, to);
-
+        if (from > to) std::swap(from, to);
+        thread_local std::mt19937 gen([] {
+            std::random_device rd;
+            std::seed_seq seed{ rd(), rd(), rd(), rd(), rd(), rd(), rd(), rd() };
+            return std::mt19937(seed);
+            }());
+        std::uniform_int_distribution<int> dist(static_cast<int>(from), static_cast<int>(to));
         return dist(gen);
     }
 
@@ -250,6 +259,49 @@ namespace winrt::StarlightGUI::implementation {
 
         out = value;
         return true;
+    }
+
+    std::wstring ToLowerCase(std::wstring_view input)
+    {
+        std::wstring result(input);
+        std::transform(result.begin(), result.end(), result.begin(), [](wchar_t c) {
+            return ToLowerChar(c);
+            });
+        return result;
+    }
+
+    int CompareIgnoreCase(std::wstring_view left, std::wstring_view right)
+    {
+        auto minSize = std::min(left.size(), right.size());
+        for (size_t i = 0; i < minSize; ++i) {
+            auto lc = ToLowerChar(left[i]);
+            auto rc = ToLowerChar(right[i]);
+            if (lc < rc) return -1;
+            if (lc > rc) return 1;
+        }
+
+        if (left.size() < right.size()) return -1;
+        if (left.size() > right.size()) return 1;
+        return 0;
+    }
+
+    bool LessIgnoreCase(std::wstring_view left, std::wstring_view right)
+    {
+        return CompareIgnoreCase(left, right) < 0;
+    }
+
+    bool ContainsIgnoreCase(std::wstring_view text, std::wstring_view query)
+    {
+        if (query.empty()) return true;
+        if (text.size() < query.size()) return false;
+
+        auto it = std::search(
+            text.begin(), text.end(),
+            query.begin(), query.end(),
+            [](wchar_t a, wchar_t b) {
+                return ToLowerChar(a) == ToLowerChar(b);
+            });
+        return it != text.end();
     }
 
     std::wstring FormatMemorySize(double bytes)

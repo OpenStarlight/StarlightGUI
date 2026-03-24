@@ -88,12 +88,8 @@ namespace winrt::StarlightGUI::implementation
 		winrt::Microsoft::UI::Xaml::Application::Current().Resources().MergedDictionaries();
 
 		Unloaded([this](auto&&, auto&&) {
+			++m_reloadRequestVersion;
 			windbgTimer.Stop();
-			});
-
-		reloadTimer.Tick([this](auto&&, auto&&) {
-			RefreshButton_Click(nullptr, nullptr);
-			reloadTimer.Stop();
 			});
 
 		windbgTimer.Interval(std::chrono::seconds(1));
@@ -1052,12 +1048,7 @@ namespace winrt::StarlightGUI::implementation
 		m_itemList.Clear();
 
 		std::sort(partitions.begin(), partitions.end(), [](auto a, auto b) {
-			std::wstring aName = a.Path().c_str();
-			std::wstring bName = b.Path().c_str();
-			std::transform(aName.begin(), aName.end(), aName.begin(), ::towlower);
-			std::transform(bName.begin(), bName.end(), bName.begin(), ::towlower);
-
-			return aName < bName;
+			return LessIgnoreCase(a.Path().c_str(), b.Path().c_str());
 			});
 
 		for (const auto& partition : partitions) {
@@ -1074,20 +1065,11 @@ namespace winrt::StarlightGUI::implementation
 	void MonitorPage::SearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
 	{
 		if (!IsLoaded()) return;
-		WaitAndReloadAsync(100);
+		WaitAndReloadAsync(250);
 	}
 
 	bool MonitorPage::ApplyFilter(const hstring& target, const hstring& query) {
-		std::wstring name = target.c_str();
-		std::wstring queryWStr = query.c_str();
-
-		// 不比较大小写
-		std::transform(name.begin(), name.end(), name.begin(), ::towlower);
-		std::transform(queryWStr.begin(), queryWStr.end(), queryWStr.begin(), ::towlower);
-
-		bool result = name.find(queryWStr) == std::wstring::npos;
-
-		return result;
+		return !ContainsIgnoreCase(target.c_str(), query.c_str());
 	}
 
 	slg::coroutine MonitorPage::RefreshButton_Click(IInspectable const&, RoutedEventArgs const&)
@@ -1188,10 +1170,13 @@ namespace winrt::StarlightGUI::implementation
 
 	winrt::Windows::Foundation::IAsyncAction MonitorPage::WaitAndReloadAsync(int interval) {
 		auto lifetime = get_strong();
+		auto requestVersion = ++m_reloadRequestVersion;
 
-		reloadTimer.Stop();
-		reloadTimer.Interval(std::chrono::milliseconds(interval));
-		reloadTimer.Start();
+		co_await winrt::resume_after(std::chrono::milliseconds(interval));
+		co_await wil::resume_foreground(DispatcherQueue());
+
+		if (!IsLoaded() || requestVersion != m_reloadRequestVersion) co_return;
+		RefreshButton_Click(nullptr, nullptr);
 
 		co_return;
 	}

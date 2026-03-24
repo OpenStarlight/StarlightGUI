@@ -32,7 +32,7 @@ namespace winrt::StarlightGUI::implementation
     // 这些拓展名只缓存一次，因为图标通常不变
     static bool IsFastIconCacheExtension(std::wstring ext)
     {
-        std::transform(ext.begin(), ext.end(), ext.begin(), ::towlower);
+        ext = ToLowerCase(ext);
         static const std::unordered_set<std::wstring> fastExts = {
             L".txt", L".log", L".ini", L".inf", L".cfg", L".conf",
             L".json", L".xml", L".yaml", L".yml", L".csv",
@@ -70,6 +70,7 @@ namespace winrt::StarlightGUI::implementation
             });
 
         this->Unloaded([this](auto&&, auto&&) {
+            ++m_reloadRequestVersion;
             if (g_filePageInstance == this) g_filePageInstance = nullptr;
             });
 
@@ -903,8 +904,7 @@ namespace winrt::StarlightGUI::implementation
         metaMap.reserve(m_allFiles.size() * 2);
 
         auto normalize = [](std::wstring str) {
-            std::transform(str.begin(), str.end(), str.begin(), ::towlower);
-            return str;
+            return ToLowerCase(str);
             };
 
         do {
@@ -962,7 +962,7 @@ namespace winrt::StarlightGUI::implementation
         if (file.Directory()) {
             std::wstring dirPath = FixBackSplash(file.Path());
             if (dirPath.size() >= 3 && dirPath[1] == L':' && dirPath[2] == L'\\') {
-                std::transform(dirPath.begin(), dirPath.end(), dirPath.begin(), ::towlower);
+                dirPath = ToLowerCase(dirPath);
                 return L"__path__" + dirPath;
             }
             return L"__dir__";
@@ -973,13 +973,13 @@ namespace winrt::StarlightGUI::implementation
         if (dot != std::wstring::npos) {
             std::wstring ext = name.substr(dot);
             if (IsFastIconCacheExtension(ext)) {
-                std::transform(ext.begin(), ext.end(), ext.begin(), ::towlower);
+                ext = ToLowerCase(ext);
                 return L"__ext__" + ext;
             }
         }
 
         std::wstring path = file.Path().c_str();
-        std::transform(path.begin(), path.end(), path.begin(), ::towlower);
+        path = ToLowerCase(path);
         return L"__path__" + path;
     }
 
@@ -1083,18 +1083,11 @@ namespace winrt::StarlightGUI::implementation
                 stateIt->second.searchText = SearchBox().Text().c_str();
             }
         }
-        WaitAndReloadAsync(100);
+        WaitAndReloadAsync(250);
     }
 
     bool FilePage::ApplyFilter(const winrt::StarlightGUI::FileInfo& file, hstring& query) {
-        std::wstring name = file.Name().c_str();
-        std::wstring queryWStr = query.c_str();
-
-        // 不比较大小写
-        std::transform(name.begin(), name.end(), name.begin(), ::towlower);
-        std::transform(queryWStr.begin(), queryWStr.end(), queryWStr.begin(), ::towlower);
-
-        return name.find(queryWStr) == std::wstring::npos;
+        return !ContainsIgnoreCase(file.Name().c_str(), query.c_str());
     }
 
     void FilePage::ColumnHeader_Click(IInspectable const& sender, RoutedEventArgs const& e)
@@ -1200,13 +1193,7 @@ namespace winrt::StarlightGUI::implementation
         auto sortActiveColumn = [&](const winrt::StarlightGUI::FileInfo& a, const winrt::StarlightGUI::FileInfo& b) -> bool {
             switch (activeColumn) {
             case SortColumn::Name:
-            {
-                std::wstring aName = a.Name().c_str();
-                std::wstring bName = b.Name().c_str();
-                std::transform(aName.begin(), aName.end(), aName.begin(), ::towlower);
-                std::transform(bName.begin(), bName.end(), bName.begin(), ::towlower);
-                return aName < bName;
-            }
+                return LessIgnoreCase(a.Name().c_str(), b.Name().c_str());
             case SortColumn::ModifyTime:
                 return a.ModifyTimeULong() < b.ModifyTimeULong();
             case SortColumn::Size:
@@ -1293,14 +1280,13 @@ namespace winrt::StarlightGUI::implementation
 
     winrt::Windows::Foundation::IAsyncAction FilePage::WaitAndReloadAsync(int interval) {
         auto lifetime = get_strong();
+        auto requestVersion = ++m_reloadRequestVersion;
 
-        reloadTimer.Stop();
-        reloadTimer.Interval(std::chrono::milliseconds(interval));
-        reloadTimer.Tick([this](auto&&, auto&&) {
-            LoadFileList();
-            reloadTimer.Stop();
-            });
-        reloadTimer.Start();
+        co_await winrt::resume_after(std::chrono::milliseconds(interval));
+        co_await wil::resume_foreground(DispatcherQueue());
+
+        if (!IsLoaded() || requestVersion != m_reloadRequestVersion) co_return;
+        LoadFileList();
 
         co_return;
     }
