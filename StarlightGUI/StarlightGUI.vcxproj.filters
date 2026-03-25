@@ -148,6 +148,9 @@
     <ClCompile Include="Utils\HandleInfo.cpp">
       <Filter>Utils\Types</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\I18n.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
     <ClCompile Include="Utils\KCTInfo.cpp">
       <Filter>Utils\Types</Filter>
     </ClCompile>
@@ -219,6 +222,9 @@
     </ClInclude>
     <ClInclude Include="Utils\FileInfo.h">
       <Filter>Utils\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\I18n.h">
+      <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Console.h">
       <Filter>Utils</Filter>

@@ -61,7 +61,7 @@ namespace winrt::StarlightGUI::implementation
 
         MenuFlyout menuFlyout;
 
-        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", slg::GetLocalizedString(L"ProcHandle_Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", GetLocalizedString(L"ProcHandle_Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             LoadHandleList();
             co_return;
             });
@@ -69,12 +69,12 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separatorR;
 
         // 选项1.1
-        auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", slg::GetLocalizedString(L"ProcHandle_CopyInfo").c_str());
-        auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", slg::GetLocalizedString(L"ProcHandle_Type").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", GetLocalizedString(L"ProcHandle_CopyInfo").c_str());
+        auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", GetLocalizedString(L"ProcHandle_Type").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Type().c_str())) {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), slg::GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
             }
-            else slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), (slg::GetLocalizedString(L"Msg_CopyFailed") + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Msg_CopyFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
             co_return;
             });
         item1_1.Items().Append(item1_1_sub1);
@@ -98,7 +98,7 @@ namespace winrt::StarlightGUI::implementation
         if (!processForInfoWindow) co_return;
         // 跳过内核进程，获取可能导致异常或蓝屏
         if (processForInfoWindow.Name() == L"Idle" || processForInfoWindow.Name() == L"System" || processForInfoWindow.Name() == L"Registry" || processForInfoWindow.Name() == L"Memory Compression" || processForInfoWindow.Name() == L"Secure System" || processForInfoWindow.Name() == L"Unknown") {
-            slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Warning").c_str(), slg::GetLocalizedString(L"ProcHandle_NoInfo").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"ProcHandle_NoInfo").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
             co_return;
         }
 
@@ -122,7 +122,7 @@ namespace winrt::StarlightGUI::implementation
         co_await wil::resume_foreground(DispatcherQueue());
 
         if (handles.size() >= 1000) {
-            slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Warning").c_str(), slg::GetLocalizedString(L"ProcHandle_TooManyHandles").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"ProcHandle_TooManyHandles").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
         }
 
         for (const auto& handle : handles) {
@@ -134,12 +134,13 @@ namespace winrt::StarlightGUI::implementation
 
         // 更新句柄数量文本
         std::wstringstream countText;
-        countText << slg::GetLocalizedString(L"ProcHandle_CountPrefix").c_str() << L" " << m_handleList.Size() << L" " << slg::GetLocalizedString(L"ProcHandle_CountSuffix").c_str() << L" (" << duration.count() << " ms)";
+        countText << GetLocalizedString(L"ProcHandle_CountPrefix").c_str() << L" " << m_handleList.Size() << L" " << GetLocalizedString(L"ProcHandle_CountSuffix").c_str() << L" (" << duration.count() << " ms)";
         HandleCountText().Text(countText.str());
         LoadingRing().IsActive(false);
 
         LOG_INFO(__WFUNCTION__, L"Loaded handle list, %d entry(s) in total.", m_handleList.Size());
     }
 }
+
 
 

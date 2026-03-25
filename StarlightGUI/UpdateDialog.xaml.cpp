@@ -11,24 +11,24 @@ namespace winrt::StarlightGUI::implementation
 {
     UpdateDialog::UpdateDialog() {
         InitializeComponent();
-        DontShowAgainCheckBox().Content(winrt::box_value(slg::GetLocalizedString(L"Update_DontShow")));
+        DontShowAgainCheckBox().Content(tbox(L"Update_DontShow"));
 
         this->Loaded([this](auto&&, auto&&) {
             if (IsUpdate()) {
-                Title(winrt::box_value(slg::GetLocalizedString(L"Update_Found")));
+                Title(tbox(L"Update_Found"));
                 LatestVersionText().Text(LatestVersion());
-                PrimaryButtonText(slg::GetLocalizedString(L"Update_Download"));
-                SecondaryButtonText(slg::GetLocalizedString(L"Update_Cancel"));
+                PrimaryButtonText(GetLocalizedString(L"Update_Download"));
+                SecondaryButtonText(GetLocalizedString(L"Update_Cancel"));
 				UpdateStackPanel().Visibility(Visibility::Visible);
 				AnnouncementStackPanel().Visibility(Visibility::Collapsed);
             }
             else {
-                Title(winrt::box_value(slg::GetLocalizedString(L"Update_Announcement")));
+                Title(tbox(L"Update_Announcement"));
                 UpdateTimeText().Text(LatestVersion());
                 AnnouncementLine1().Text(GetAnLine(1));
                 AnnouncementLine2().Text(GetAnLine(2));
                 AnnouncementLine3().Text(GetAnLine(3));
-                PrimaryButtonText(slg::GetLocalizedString(L"Update_Confirm"));
+                PrimaryButtonText(GetLocalizedString(L"Update_Confirm"));
                 UpdateStackPanel().Visibility(Visibility::Collapsed);
                 AnnouncementStackPanel().Visibility(Visibility::Visible);
             }
@@ -48,3 +48,6 @@ namespace winrt::StarlightGUI::implementation
         deferral.Complete();
     }
 }
+
+
+

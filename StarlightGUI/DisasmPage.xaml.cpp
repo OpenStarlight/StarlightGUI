@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "DisasmPage.xaml.h"
 #if __has_include("DisasmPage.g.cpp")
 #include "DisasmPage.g.cpp"
@@ -20,15 +20,15 @@ namespace winrt::StarlightGUI::implementation
     {
         InitializeComponent();
 
-        DisasmTitleUid().Text(slg::GetLocalizedString(L"Disasm_Title.Text"));
-        DisasmModeReadUid().Content(winrt::box_value(slg::GetLocalizedString(L"Disasm_ModeRead.Content")));
-        DisasmModeReadDisasmUid().Content(winrt::box_value(slg::GetLocalizedString(L"Disasm_ModeReadDisasm.Content")));
-        DisasmModeWriteUid().Content(winrt::box_value(slg::GetLocalizedString(L"Disasm_ModeWrite.Content")));
-        DisasmExecuteUid().Text(slg::GetLocalizedString(L"Disasm_Execute.Text"));
-        AddressBox().Header(winrt::box_value(slg::GetLocalizedString(L"Disasm_AddressBox.Header")));
-        SizeBox().Header(winrt::box_value(slg::GetLocalizedString(L"Disasm_SizeBox.Header")));
-        ValueBox().Header(winrt::box_value(slg::GetLocalizedString(L"Disasm_ValueBox.Header")));
-        HexText().Text(slg::GetLocalizedString(L"Disasm_None.Text"));
+        DisasmTitleUid().Text(GetLocalizedString(L"Disasm_Title.Text"));
+        DisasmModeReadUid().Content(tbox(L"Disasm_ModeRead.Content"));
+        DisasmModeReadDisasmUid().Content(tbox(L"Disasm_ModeReadDisasm.Content"));
+        DisasmModeWriteUid().Content(tbox(L"Disasm_ModeWrite.Content"));
+        DisasmExecuteUid().Text(GetLocalizedString(L"Disasm_Execute.Text"));
+        AddressBox().Header(tbox(L"Disasm_AddressBox.Header"));
+        SizeBox().Header(tbox(L"Disasm_SizeBox.Header"));
+        ValueBox().Header(tbox(L"Disasm_ValueBox.Header"));
+        HexText().Text(GetLocalizedString(L"Disasm_None.Text"));
     }
 
     slg::coroutine DisasmPage::Button_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
@@ -38,7 +38,7 @@ namespace winrt::StarlightGUI::implementation
         if (mode == 0 || mode == 1) {
             ULONG64 address = 0, size = 0;
             if (!HexStringToULong(AddressBox().Text().c_str(), address) || !StringToNumber(SizeBox().Text().c_str(), size)) {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Error").c_str(), slg::GetLocalizedString(L"Disasm_InvalidInput").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Disasm_InvalidInput").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
                 co_return;
             }
 
@@ -76,8 +76,8 @@ namespace winrt::StarlightGUI::implementation
                     cs_err a = cs_open(CS_ARCH_X86, CS_MODE_64, &handle);
                     if (a != CS_ERR_OK) {
                         slg::CreateInfoBarAndDisplay(
-                            slg::GetLocalizedString(L"Msg_Error").c_str(),
-                            slg::GetLocalizedString(L"Disasm_CapstoneInitFailed").c_str() + to_hstring((int)a),
+                            GetLocalizedString(L"Msg_Error").c_str(),
+                            GetLocalizedString(L"Disasm_CapstoneInitFailed").c_str() + to_hstring((int)a),
                             InfoBarSeverity::Error,
                             g_mainWindowInstance
                         );
@@ -122,8 +122,8 @@ namespace winrt::StarlightGUI::implementation
                     }
                     else {
                         slg::CreateInfoBarAndDisplay(
-                            slg::GetLocalizedString(L"Msg_Warning").c_str(),
-                            slg::GetLocalizedString(L"Disasm_NoInstructions").c_str(),
+                            GetLocalizedString(L"Msg_Warning").c_str(),
+                            GetLocalizedString(L"Disasm_NoInstructions").c_str(),
                             InfoBarSeverity::Warning,
                             g_mainWindowInstance
                         );
@@ -131,20 +131,20 @@ namespace winrt::StarlightGUI::implementation
 
                     cs_close(&handle);
                 }
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), slg::GetLocalizedString(L"Disasm_QuerySuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Disasm_QuerySuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
             }
             else
             {
-                HexText().Text(slg::GetLocalizedString(L"Disasm_NA"));
-                CharText().Text(slg::GetLocalizedString(L"Disasm_NA"));
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Error").c_str(), slg::GetLocalizedString(L"Disasm_QueryFailed").c_str() + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+                HexText().Text(GetLocalizedString(L"Disasm_NA"));
+                CharText().Text(GetLocalizedString(L"Disasm_NA"));
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Disasm_QueryFailed").c_str() + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             }
         }
         else {
             if (!confirmed) {
                 slg::CreateInfoBarAndDisplay(
-                    slg::GetLocalizedString(L"Msg_Warning").c_str(),
-                    slg::GetLocalizedString(L"Disasm_WriteWarning").c_str(),
+                    GetLocalizedString(L"Msg_Warning").c_str(),
+                    GetLocalizedString(L"Disasm_WriteWarning").c_str(),
                     InfoBarSeverity::Warning,
                     g_mainWindowInstance
                 );
@@ -153,7 +153,7 @@ namespace winrt::StarlightGUI::implementation
 			}
             ULONG64 address = 0, size = 0, data = 0;
             if (!HexStringToULong(AddressBox().Text().c_str(), address) || !StringToNumber(SizeBox().Text().c_str(), size) || !StringToNumber(ValueBox().Text().c_str(), data)) {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Error").c_str(), slg::GetLocalizedString(L"Disasm_InvalidInput").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Disasm_InvalidInput").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
                 co_return;
             }
 
@@ -165,12 +165,15 @@ namespace winrt::StarlightGUI::implementation
 
             if (result)
             {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), slg::GetLocalizedString(L"Disasm_WriteSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Disasm_WriteSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
             }
             else
             {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Error").c_str(), slg::GetLocalizedString(L"Disasm_WriteFailed").c_str() + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Disasm_WriteFailed").c_str() + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             }
         }
     }
 }
+
+
+

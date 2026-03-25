@@ -64,7 +64,7 @@ namespace winrt::StarlightGUI::implementation
 
         MenuFlyout menuFlyout;
 
-        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", slg::GetLocalizedString(L"ProcThread_Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", GetLocalizedString(L"ProcThread_Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             LoadThreadList();
             co_return;
             });
@@ -72,37 +72,37 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separatorR;
 
         // 选项1.1
-        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", slg::GetLocalizedString(L"ProcThread_Terminate").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", GetLocalizedString(L"ProcThread_Terminate").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::_TerminateThread(item.Id())) {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), (slg::GetLocalizedString(L"ProcThread_TerminateSuccess") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"ProcThread_TerminateSuccess") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
                 LoadThreadList();
             }
-            else slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), (slg::GetLocalizedString(L"ProcThread_TerminateFailed") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")" + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"ProcThread_TerminateFailed") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
             co_return;
             });
 
         // 选项1.2
-        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue8f0", slg::GetLocalizedString(L"ProcThread_TerminateKernel").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue8f0", GetLocalizedString(L"ProcThread_TerminateKernel").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::_ZwTerminateThread(item.Id())) {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), (slg::GetLocalizedString(L"ProcThread_TerminateSuccess") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"ProcThread_TerminateSuccess") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
                 LoadThreadList();
             }
-            else slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), (slg::GetLocalizedString(L"ProcThread_TerminateFailed") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")" + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"ProcThread_TerminateFailed") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
             co_return;
             });
 
         // 选项1.3
-        auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", slg::GetLocalizedString(L"ProcThread_TerminateMurder").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", GetLocalizedString(L"ProcThread_TerminateMurder").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (safeAcceptedPID == item.Id() || !dangerous_confirm) {
                 if (KernelInstance::MurderThread(item.Id())) {
-                    slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), (slg::GetLocalizedString(L"ProcThread_TerminateSuccess") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
+                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"ProcThread_TerminateSuccess") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
                     LoadThreadList();
                 }
-                else slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), (slg::GetLocalizedString(L"ProcThread_TerminateFailed") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")" + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
+                else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"ProcThread_TerminateFailed") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
             }
             else {
                 safeAcceptedPID = item.Id();
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Warning").c_str(), slg::GetLocalizedString(L"ProcThread_DangerousWarning").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"ProcThread_DangerousWarning").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
             }
             co_return;
             });
@@ -111,22 +111,22 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator1;
 
         // 选项2.1
-        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue912", slg::GetLocalizedString(L"ProcThread_SetState").c_str());
-        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue769", slg::GetLocalizedString(L"ProcThread_Suspend").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue912", GetLocalizedString(L"ProcThread_SetState").c_str());
+        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue769", GetLocalizedString(L"ProcThread_Suspend").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::_SuspendThread(item.Id())) {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), (slg::GetLocalizedString(L"ProcThread_SuspendSuccess") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"ProcThread_SuspendSuccess") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
                 LoadThreadList();
             }
-            else slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), (slg::GetLocalizedString(L"ProcThread_SuspendFailed") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")" + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"ProcThread_SuspendFailed") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
             co_return;
             });
         item2_1.Items().Append(item2_1_sub1);
-        auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ue768", slg::GetLocalizedString(L"ProcThread_Resume").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ue768", GetLocalizedString(L"ProcThread_Resume").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::_ResumeThread(item.Id())) {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), (slg::GetLocalizedString(L"ProcThread_ResumeSuccess") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"ProcThread_ResumeSuccess") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
                 LoadThreadList();
             }
-            else slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), (slg::GetLocalizedString(L"ProcThread_ResumeFailed") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")" + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"ProcThread_ResumeFailed") + L": " + item.Address() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
             co_return;
             });
         item2_1.Items().Append(item2_1_sub2);
@@ -135,28 +135,28 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator2;
 
         // 选项3.1
-        auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", slg::GetLocalizedString(L"ProcThread_CopyInfo").c_str());
+        auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", GetLocalizedString(L"ProcThread_CopyInfo").c_str());
         auto item3_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", L"TID", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(std::to_wstring(item.Id()))) {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), slg::GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
             }
-            else slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), (slg::GetLocalizedString(L"Msg_CopyFailed") + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Msg_CopyFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
             co_return;
             });
         item3_1.Items().Append(item3_1_sub1);
         auto item3_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", L"ETHREAD", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.EThread().c_str())) {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), slg::GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
             }
-            else slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), (slg::GetLocalizedString(L"Msg_CopyFailed") + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Msg_CopyFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
             co_return;
             });
         item3_1.Items().Append(item3_1_sub2);
-        auto item3_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", slg::GetLocalizedString(L"ProcThread_Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", GetLocalizedString(L"ProcThread_Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Address().c_str())) {
-                slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), slg::GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_infoWindowInstance);
             }
-            else slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), (slg::GetLocalizedString(L"Msg_CopyFailed") + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Msg_CopyFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_infoWindowInstance);
             co_return;
             });
         item3_1.Items().Append(item3_1_sub3);
@@ -205,7 +205,7 @@ namespace winrt::StarlightGUI::implementation
         co_await wil::resume_foreground(DispatcherQueue());
 
         for (const auto& thread : threads) {
-            if (thread.ModuleInfo().empty()) thread.ModuleInfo(slg::GetLocalizedString(L"ProcThread_Unknown"));
+            if (thread.ModuleInfo().empty()) thread.ModuleInfo(GetLocalizedString(L"ProcThread_Unknown"));
 
             m_threadList.Append(thread);
         }
@@ -217,7 +217,7 @@ namespace winrt::StarlightGUI::implementation
 
         // 更新线程数量文本
         std::wstringstream countText;
-        countText << slg::GetLocalizedString(L"ProcThread_CountPrefix").c_str() << L" " << m_threadList.Size() << L" " << slg::GetLocalizedString(L"ProcThread_CountSuffix").c_str() << L" (" << duration.count() << " ms)";
+        countText << GetLocalizedString(L"ProcThread_CountPrefix").c_str() << L" " << m_threadList.Size() << L" " << GetLocalizedString(L"ProcThread_CountSuffix").c_str() << L" (" << duration.count() << " ms)";
         ThreadCountText().Text(countText.str());
         LoadingRing().IsActive(false);
 
@@ -287,13 +287,13 @@ namespace winrt::StarlightGUI::implementation
         if (updateHeader) {
             IdHeaderButton().Content(box_value(L"TID"));
             EThreadHeaderButton().Content(box_value(L"ETHREAD"));
-            AddressHeaderButton().Content(box_value(slg::GetLocalizedString(L"ProcThread_HeaderAddress")));
-            PriorityHeaderButton().Content(box_value(slg::GetLocalizedString(L"ProcThread_HeaderPriority")));
+            AddressHeaderButton().Content(tbox(L"ProcThread_HeaderAddress"));
+            PriorityHeaderButton().Content(tbox(L"ProcThread_HeaderPriority"));
 
             if (activeColumn == SortColumn::Id) IdHeaderButton().Content(box_value(isAscending ? L"TID \u2193" : L"TID \u2191"));
             if (activeColumn == SortColumn::EThread) EThreadHeaderButton().Content(box_value(isAscending ? L"ETHREAD \u2193" : L"ETHREAD \u2191"));
-            if (activeColumn == SortColumn::Address) AddressHeaderButton().Content(box_value(isAscending ? slg::GetLocalizedString(L"ProcThread_HeaderAddress") + L" \u2193" : slg::GetLocalizedString(L"ProcThread_HeaderAddress") + L" \u2191"));
-            if (activeColumn == SortColumn::Priority) PriorityHeaderButton().Content(box_value(isAscending ? slg::GetLocalizedString(L"ProcThread_HeaderPriority") + L" \u2193" : slg::GetLocalizedString(L"ProcThread_HeaderPriority") + L" \u2191"));
+            if (activeColumn == SortColumn::Address) AddressHeaderButton().Content(box_value(isAscending ? GetLocalizedString(L"ProcThread_HeaderAddress") + L" \u2193" : GetLocalizedString(L"ProcThread_HeaderAddress") + L" \u2191"));
+            if (activeColumn == SortColumn::Priority) PriorityHeaderButton().Content(box_value(isAscending ? GetLocalizedString(L"ProcThread_HeaderPriority") + L" \u2193" : GetLocalizedString(L"ProcThread_HeaderPriority") + L" \u2191"));
         }
 
         std::vector<winrt::StarlightGUI::ThreadInfo> sortedThreads;
@@ -348,5 +348,8 @@ namespace winrt::StarlightGUI::implementation
         }
     }
 }
+
+
+
 
 

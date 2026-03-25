@@ -12,7 +12,8 @@
         <essential:RevealFocusPanel x:Name="RevealFocusPanel">
             <StackPanel>
                 <TextBlock
-                    x:Name="SettingsFeatureUid" Padding="10"
+                    x:Name="SettingsFeatureUid"
+                    Padding="10"
                     HorizontalAlignment="Left"
                     FontSize="14"
                     FontWeight="Bold"
@@ -127,7 +128,8 @@
                 </essential:SettingsCard>
 
                 <TextBlock
-                    x:Name="SettingsMainUid" Padding="10"
+                    x:Name="SettingsMainUid"
+                    Padding="10"
                     HorizontalAlignment="Left"
                     FontSize="14"
                     FontWeight="Bold"
@@ -214,7 +216,8 @@
                 </essential:SettingsCard>
 
                 <TextBlock
-                    x:Name="SettingsAppearanceUid" Padding="10"
+                    x:Name="SettingsAppearanceUid"
+                    Padding="10"
                     HorizontalAlignment="Left"
                     FontSize="14"
                     FontWeight="Bold"
@@ -300,7 +303,10 @@
                             Header="导入背景"
                             IsActionIconVisible="False"
                             IsClickEnabled="True">
-                            <Button x:Name="SettingsImportImageUid" Click="SetImageButton_Click" Content="导入" />
+                            <Button
+                                x:Name="SettingsImportImageUid"
+                                Click="SetImageButton_Click"
+                                Content="导入" />
                         </essential:SettingsCard>
                         <essential:SettingsCard
                             x:Name="ClearImageCard"
@@ -308,7 +314,10 @@
                             Header="清除背景"
                             IsActionIconVisible="False"
                             IsClickEnabled="True">
-                            <Button x:Name="SettingsClearImageUid" Click="ClearImageButton_Click" Content="清除" />
+                            <Button
+                                x:Name="SettingsClearImageUid"
+                                Click="ClearImageButton_Click"
+                                Content="清除" />
                         </essential:SettingsCard>
                         <essential:SettingsCard
                             x:Name="ImageStretchCard"
@@ -343,7 +352,10 @@
                                     Minimum="0"
                                     ValueChanged="ImageOpacitySlider_ValueChanged"
                                     Value="20" />
-                                <Button x:Name="SettingsImageRefreshUid" Click="RefreshOpacityButton_Click" Content="刷新" />
+                                <Button
+                                    x:Name="SettingsImageRefreshUid"
+                                    Click="RefreshOpacityButton_Click"
+                                    Content="刷新" />
                             </StackPanel>
                         </essential:SettingsCard>
                     </essential:SettingsExpander.Items>
@@ -375,9 +387,25 @@
                     </ComboBox>
                 </essential:SettingsCard>
 
-                <TextBlock x:Name="SettingsLanguageUid" Padding="0,20,0,10" Text="语言" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                <essential:SettingsCard x:Name="LanguageCard" Header="语言" Description="应用程序显示语言（需要重启）">
-                    <ComboBox x:Name="LanguageComboBox" essential:ComboBoxHelper.AcrylicWorkaround="True" ItemContainerStyle="{StaticResource ComboBoxItemStyle}" SelectionChanged="LanguageComboBox_SelectionChanged">
+                <essential:SettingsCard
+                    x:Name="LanguageCard"
+                    Margin="0,0,0,10"
+                    essential:RevealFocusPanel.AttachToPanel="{x:Bind RevealFocusPanel}"
+                    Description="应用程序显示的语言"
+                    Header="语言"
+                    IsActionIconVisible="False"
+                    IsClickEnabled="True">
+                    <essential:SettingsCard.HeaderIcon>
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="16"
+                            Glyph="&#xf2b7;" />
+                    </essential:SettingsCard.HeaderIcon>
+                    <ComboBox
+                        x:Name="LanguageComboBox"
+                        essential:ComboBoxHelper.AcrylicWorkaround="True"
+                        ItemContainerStyle="{StaticResource ComboBoxItemStyle}"
+                        SelectionChanged="LanguageComboBox_SelectionChanged">
                         <ComboBoxItem Content="System" IsSelected="True" />
                         <ComboBoxItem Content="中文" />
                         <ComboBoxItem Content="English" />
@@ -385,7 +413,8 @@
                 </essential:SettingsCard>
 
                 <TextBlock
-                    x:Name="SettingsOtherUid" Padding="10"
+                    x:Name="SettingsOtherUid"
+                    Padding="10"
                     HorizontalAlignment="Left"
                     FontSize="14"
                     FontWeight="Bold"
@@ -446,7 +475,10 @@
                             FontSize="16"
                             Glyph="&#xe70b;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <Button x:Name="SettingsLogUid" Click="LogButton_Click" Content="切换" />
+                    <Button
+                        x:Name="SettingsLogUid"
+                        Click="LogButton_Click"
+                        Content="切换" />
                 </essential:SettingsCard>
 
                 <essential:SettingsCard
@@ -463,7 +495,10 @@
                             FontSize="16"
                             Glyph="&#xe90f;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <Button x:Name="SettingsFixUid" Click="FixButton_Click" Content="修复" />
+                    <Button
+                        x:Name="SettingsFixUid"
+                        Click="FixButton_Click"
+                        Content="修复" />
                 </essential:SettingsCard>
             </StackPanel>
         </essential:RevealFocusPanel>

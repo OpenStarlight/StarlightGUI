@@ -281,6 +281,7 @@
     <ClInclude Include="Utils\Elevator.h" />
     <ClInclude Include="Utils\FileInfo.h" />
     <ClInclude Include="Utils\HandleInfo.h" />
+    <ClInclude Include="Utils\I18n.h" />
     <ClInclude Include="Utils\KCTInfo.h" />
     <ClInclude Include="Utils\KernelBase.h" />
     <ClInclude Include="Utils\KernelModuleInfo.h" />
@@ -478,6 +479,7 @@
     <ClCompile Include="Utils\FileInfo.cpp" />
     <ClCompile Include="Utils\GeneralEntry.cpp" />
     <ClCompile Include="Utils\HandleInfo.cpp" />
+    <ClCompile Include="Utils\I18n.cpp" />
     <ClCompile Include="Utils\KCTInfo.cpp" />
     <ClCompile Include="Utils\KernelBase.cpp" />
     <ClCompile Include="Utils\KernelInstance.cpp" />
@@ -653,6 +655,14 @@
     </None>
     <None Include="packages.config" />
     <None Include="StarlightGUI_TemporaryKey.pfx" />
+    <None Include="Strings\en-US\Resources.json">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </None>
+    <None Include="Strings\zh-CN\Resources.json">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </None>
     <None Include="WindowTopMost.dll">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>

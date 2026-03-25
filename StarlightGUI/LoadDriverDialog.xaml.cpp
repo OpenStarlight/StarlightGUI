@@ -16,9 +16,9 @@ namespace winrt::StarlightGUI::implementation
     LoadDriverDialog::LoadDriverDialog() {
         InitializeComponent();
 
-        this->Title(winrt::box_value(slg::GetLocalizedString(L"LoadDriver_Dialog.Title")));
+        this->Title(tbox(L"LoadDriver_Dialog.Title"));
 
-        if (hypervisor_mode) BypassCheckBox().Content(box_value(slg::GetLocalizedString(L"LoadDriver_BypassDSE")));
+        if (hypervisor_mode) BypassCheckBox().Content(tbox(L"LoadDriver_BypassDSE"));
     }
 
     void LoadDriverDialog::OnPrimaryButtonClick(ContentDialog const& sender,
@@ -61,11 +61,14 @@ namespace winrt::StarlightGUI::implementation
                 DriverPathTextBox().Text(file.Path());
             }
             else {
-                ErrorText().Text(slg::GetLocalizedString(L"LoadDriver_NotSYS"));
+                ErrorText().Text(GetLocalizedString(L"LoadDriver_NotSYS"));
             }
         }
         else {
-            ErrorText().Text(slg::GetLocalizedString(L"LoadDriver_FileNotExist"));
+            ErrorText().Text(GetLocalizedString(L"LoadDriver_FileNotExist"));
         }
     }
 }
+
+
+

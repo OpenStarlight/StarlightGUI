@@ -5,6 +5,8 @@
 #include <codecvt>
 #include <locale>
 
+using winrt::StarlightGUI::implementation::GetLocalizedString;
+
 static Console* g_instance = nullptr;
 static std::mutex g_instanceMutex;
 
@@ -60,8 +62,8 @@ bool Console::InitializeLogFile() {
     }
 
     m_logFile << L"========= Starlight GUI Log =========\n";
-    m_logFile << slg::GetLocalizedString(L"Console_CreatedAt").c_str() << FormatTimestamp(std::chrono::system_clock::now()) << L"\n";
-    m_logFile << slg::GetLocalizedString(L"Console_Version").c_str() << winrt::unbox_value<hstring>(Application::Current().Resources().TryLookup(box_value(L"Version"))) << L"\n";
+    m_logFile << GetLocalizedString(L"Console_CreatedAt").c_str() << FormatTimestamp(std::chrono::system_clock::now()) << L"\n";
+    m_logFile << GetLocalizedString(L"Console_Version").c_str() << winrt::unbox_value<hstring>(Application::Current().Resources().TryLookup(box_value(L"Version"))) << L"\n";
     m_logFile << L"=====================================\n\n";
     m_logFile.flush();
 
@@ -441,3 +443,4 @@ HWND Console::GetConsoleHandle() {
 void Console::SetShowTimestamp(bool show) { m_showTimestamp = show; }
 void Console::SetShowLogLevel(bool show) { m_showLogLevel = show; }
 void Console::SetShowSource(bool show) { m_showSource = show; }
+

@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "UtilityPage.xaml.h"
 #if __has_include("UtilityPage.g.cpp")
 #include "UtilityPage.g.cpp"
@@ -16,73 +16,72 @@ namespace winrt::StarlightGUI::implementation{
 		InitializeComponent();
 
 		// SettingsCard Header+Description must be set in code (x:Uid on IInspectable DPs crashes).
-		auto bv = [](winrt::hstring s) { return winrt::box_value(s); };
-		HVMCard().Header(bv(slg::t("Utility_HVM_Card.Header")));
-		HVMCard().Description(bv(slg::t("Utility_HVM_Card.Description")));
-		CreateProcessCard().Header(bv(slg::t("Utility_CreateProcess_Card.Header")));
-		CreateProcessCard().Description(bv(slg::t("Utility_CreateProcess_Card.Description")));
-		CreateFileCard().Header(bv(slg::t("Utility_CreateFile_Card.Header")));
-		CreateFileCard().Description(bv(slg::t("Utility_CreateFile_Card.Description")));
-		LoadDrvCard().Header(bv(slg::t("Utility_LoadDrv_Card.Header")));
-		LoadDrvCard().Description(bv(slg::t("Utility_LoadDrv_Card.Description")));
-		UnloadDrvCard().Header(bv(slg::t("Utility_UnloadDrv_Card.Header")));
-		UnloadDrvCard().Description(bv(slg::t("Utility_UnloadDrv_Card.Description")));
-		ModifyRegCard().Header(bv(slg::t("Utility_ModifyReg_Card.Header")));
-		ModifyRegCard().Description(bv(slg::t("Utility_ModifyReg_Card.Description")));
-		ModifyBootsecCard().Header(bv(slg::t("Utility_ModifyBootsec_Card.Header")));
-		ModifyBootsecCard().Description(bv(slg::t("Utility_ModifyBootsec_Card.Description")));
-		ObjRegCbCard().Header(bv(slg::t("Utility_ObjRegCb_Card.Header")));
-		ObjRegCbCard().Description(bv(slg::t("Utility_ObjRegCb_Card.Description")));
-		CmRegCbCard().Header(bv(slg::t("Utility_CmRegCb_Card.Header")));
-		CmRegCbCard().Description(bv(slg::t("Utility_CmRegCb_Card.Description")));
-		DSECard().Header(bv(slg::t("Utility_DSE_Card.Header")));
-		DSECard().Description(bv(slg::t("Utility_DSE_Card.Description")));
-		LKDCard().Header(bv(slg::t("Utility_LKD_Card.Header")));
-		LKDCard().Description(bv(slg::t("Utility_LKD_Card.Description")));
-		PowerCard().Header(bv(slg::t("Utility_Power_Card.Header")));
-		PowerCard().Description(bv(slg::t("Utility_Power_Card.Description")));
-		BSODCard().Header(bv(slg::t("Utility_BSOD_Card.Header")));
-		BSODCard().Description(bv(slg::t("Utility_BSOD_Card.Description")));
-		PGCard().Header(bv(slg::t("Utility_PG_Card.Header")));
-		PGCard().Description(bv(slg::t("Utility_PG_Card.Description")));
+		HVMCard().Header(tbox("Utility_HVM_Card.Header"));
+		HVMCard().Description(tbox("Utility_HVM_Card.Description"));
+		CreateProcessCard().Header(tbox("Utility_CreateProcess_Card.Header"));
+		CreateProcessCard().Description(tbox("Utility_CreateProcess_Card.Description"));
+		CreateFileCard().Header(tbox("Utility_CreateFile_Card.Header"));
+		CreateFileCard().Description(tbox("Utility_CreateFile_Card.Description"));
+		LoadDrvCard().Header(tbox("Utility_LoadDrv_Card.Header"));
+		LoadDrvCard().Description(tbox("Utility_LoadDrv_Card.Description"));
+		UnloadDrvCard().Header(tbox("Utility_UnloadDrv_Card.Header"));
+		UnloadDrvCard().Description(tbox("Utility_UnloadDrv_Card.Description"));
+		ModifyRegCard().Header(tbox("Utility_ModifyReg_Card.Header"));
+		ModifyRegCard().Description(tbox("Utility_ModifyReg_Card.Description"));
+		ModifyBootsecCard().Header(tbox("Utility_ModifyBootsec_Card.Header"));
+		ModifyBootsecCard().Description(tbox("Utility_ModifyBootsec_Card.Description"));
+		ObjRegCbCard().Header(tbox("Utility_ObjRegCb_Card.Header"));
+		ObjRegCbCard().Description(tbox("Utility_ObjRegCb_Card.Description"));
+		CmRegCbCard().Header(tbox("Utility_CmRegCb_Card.Header"));
+		CmRegCbCard().Description(tbox("Utility_CmRegCb_Card.Description"));
+		DSECard().Header(tbox("Utility_DSE_Card.Header"));
+		DSECard().Description(tbox("Utility_DSE_Card.Description"));
+		LKDCard().Header(tbox("Utility_LKD_Card.Header"));
+		LKDCard().Description(tbox("Utility_LKD_Card.Description"));
+		PowerCard().Header(tbox("Utility_Power_Card.Header"));
+		PowerCard().Description(tbox("Utility_Power_Card.Description"));
+		BSODCard().Header(tbox("Utility_BSOD_Card.Header"));
+		BSODCard().Description(tbox("Utility_BSOD_Card.Description"));
+		PGCard().Header(tbox("Utility_PG_Card.Header"));
+		PGCard().Description(tbox("Utility_PG_Card.Description"));
 
 		if (hypervisor_mode) {
-			ObjRegCbCard().Header(bv(slg::GetLocalizedString(L"Utility_ObjRegCb_HVM")));
-			DSECard().Header(bv(slg::GetLocalizedString(L"Utility_DSE_HVM")));
+			ObjRegCbCard().Header(tbox(L"Utility_ObjRegCb_HVM"));
+			DSECard().Header(tbox(L"Utility_DSE_HVM"));
 		}
 
 		// Localize section headers and buttons
-		UtilityHypervisorUid().Text(slg::GetLocalizedString(L"Utility_Hypervisor.Text"));
-		UtilityHVMEnableUid().Content(bv(slg::GetLocalizedString(L"Utility_HVM_Enable.Content")));
-		UtilitySysBehaviorUid().Text(slg::GetLocalizedString(L"Utility_SysBehavior.Text"));
-		UtilitySysOpUid().Text(slg::GetLocalizedString(L"Utility_SysOp.Text"));
-		UtilitySysOpWarningUid().Text(slg::GetLocalizedString(L"Utility_SysOpWarning.Text"));
-		UtilityPowerShutdownUid().Content(bv(slg::GetLocalizedString(L"Utility_PowerShutdown.Content")));
-		UtilityPowerRebootUid().Content(bv(slg::GetLocalizedString(L"Utility_PowerReboot.Content")));
-		UtilityPowerForceRebootUid().Content(bv(slg::GetLocalizedString(L"Utility_PowerForceReboot.Content")));
-		UtilityBSODDefaultUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Default.Content")));
-		UtilityBSODRedUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Red.Content")));
-		UtilityBSODGreenUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Green.Content")));
-		UtilityBSODBlueUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Blue.Content")));
-		UtilityBSODYellowUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Yellow.Content")));
-		UtilityBSODCyanUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Cyan.Content")));
-		UtilityBSODMagentaUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Magenta.Content")));
-		UtilityBSODBlackUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Black.Content")));
-		UtilityBSODWhiteUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_White.Content")));
-		UtilityBSODOrangeUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Orange.Content")));
-		UtilityBSODPurpleUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Purple.Content")));
-		UtilityBSODPinkUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Pink.Content")));
-		UtilityBSODGrayUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Gray.Content")));
-		UtilityBSODBrownUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Brown.Content")));
-		UtilityBSODGoldUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Gold.Content")));
-		UtilityBSODSilverUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Silver.Content")));
-		UtilityBSODCrashUid().Content(bv(slg::GetLocalizedString(L"Utility_BSOD_Crash.Content")));
-		UtilityPGAutoUid().Content(bv(slg::GetLocalizedString(L"Utility_PG_Auto.Content")));
-		UtilityPGDisableUid().Content(bv(slg::GetLocalizedString(L"Utility_PG_Disable.Content")));
+		UtilityHypervisorUid().Text(GetLocalizedString(L"Utility_Hypervisor.Text"));
+		UtilityHVMEnableUid().Content(tbox(L"Utility_HVM_Enable.Content"));
+		UtilitySysBehaviorUid().Text(GetLocalizedString(L"Utility_SysBehavior.Text"));
+		UtilitySysOpUid().Text(GetLocalizedString(L"Utility_SysOp.Text"));
+		UtilitySysOpWarningUid().Text(GetLocalizedString(L"Utility_SysOpWarning.Text"));
+		UtilityPowerShutdownUid().Content(tbox(L"Utility_PowerShutdown.Content"));
+		UtilityPowerRebootUid().Content(tbox(L"Utility_PowerReboot.Content"));
+		UtilityPowerForceRebootUid().Content(tbox(L"Utility_PowerForceReboot.Content"));
+		UtilityBSODDefaultUid().Content(tbox(L"Utility_BSOD_Default.Content"));
+		UtilityBSODRedUid().Content(tbox(L"Utility_BSOD_Red.Content"));
+		UtilityBSODGreenUid().Content(tbox(L"Utility_BSOD_Green.Content"));
+		UtilityBSODBlueUid().Content(tbox(L"Utility_BSOD_Blue.Content"));
+		UtilityBSODYellowUid().Content(tbox(L"Utility_BSOD_Yellow.Content"));
+		UtilityBSODCyanUid().Content(tbox(L"Utility_BSOD_Cyan.Content"));
+		UtilityBSODMagentaUid().Content(tbox(L"Utility_BSOD_Magenta.Content"));
+		UtilityBSODBlackUid().Content(tbox(L"Utility_BSOD_Black.Content"));
+		UtilityBSODWhiteUid().Content(tbox(L"Utility_BSOD_White.Content"));
+		UtilityBSODOrangeUid().Content(tbox(L"Utility_BSOD_Orange.Content"));
+		UtilityBSODPurpleUid().Content(tbox(L"Utility_BSOD_Purple.Content"));
+		UtilityBSODPinkUid().Content(tbox(L"Utility_BSOD_Pink.Content"));
+		UtilityBSODGrayUid().Content(tbox(L"Utility_BSOD_Gray.Content"));
+		UtilityBSODBrownUid().Content(tbox(L"Utility_BSOD_Brown.Content"));
+		UtilityBSODGoldUid().Content(tbox(L"Utility_BSOD_Gold.Content"));
+		UtilityBSODSilverUid().Content(tbox(L"Utility_BSOD_Silver.Content"));
+		UtilityBSODCrashUid().Content(tbox(L"Utility_BSOD_Crash.Content"));
+		UtilityPGAutoUid().Content(tbox(L"Utility_PG_Auto.Content"));
+		UtilityPGDisableUid().Content(tbox(L"Utility_PG_Disable.Content"));
 
 		// Localize all Enable/Disable buttons (they share Tag-based handlers, no x:Name)
-		auto enableText = bv(slg::GetLocalizedString(L"Utility_Enable.Content"));
-		auto disableText = bv(slg::GetLocalizedString(L"Utility_Disable.Content"));
+		auto enableText = tbox(L"Utility_Enable.Content");
+		auto disableText = tbox(L"Utility_Disable.Content");
 		auto localizeButtons = [&](auto card) {
 			auto panel = card.Content().as<winrt::Microsoft::UI::Xaml::Controls::StackPanel>();
 			if (panel && panel.Children().Size() >= 2) {
@@ -111,8 +110,8 @@ namespace winrt::StarlightGUI::implementation{
 
 		if (safeAcceptedTag != tag) {
 			safeAcceptedTag = tag;
-			slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Warning").c_str(), slg::GetLocalizedString(L"Utility_ConfirmAction").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
-			slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Warning").c_str(), slg::GetLocalizedString(L"Utility_ConfirmAction2").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"Utility_ConfirmAction").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"Utility_ConfirmAction2").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
 			co_return;
 		}
 
@@ -197,27 +196,27 @@ namespace winrt::StarlightGUI::implementation{
 		}
 		else {
 			co_await wil::resume_foreground(DispatcherQueue());
-			slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Error").c_str(), slg::GetLocalizedString(L"Utility_UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Utility_UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
 		}
 
 		co_await wil::resume_foreground(DispatcherQueue());
 
 		if (result) {
-			slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), slg::GetLocalizedString(L"Utility_ActionSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Utility_ActionSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
 		}
 		else {
 			if (GetLastError() == 0) {
-				slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), slg::GetLocalizedString(L"Utility_ActionFailedAlready").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+				slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Utility_ActionFailedAlready").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
 			}
 			else {
-				slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), slg::GetLocalizedString(L"Utility_ActionFailed").c_str() + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+				slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Utility_ActionFailed").c_str() + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
 			}
 		}
 
 		if (hypervisor_mode) {
-			ObjRegCbCard().Header(box_value(slg::GetLocalizedString(L"Utility_ObjRegCb_HVM")));
-			DSECard().Header(box_value(slg::GetLocalizedString(L"Utility_DSE_HVM")));
+			ObjRegCbCard().Header(tbox(L"Utility_ObjRegCb_HVM"));
+			DSECard().Header(tbox(L"Utility_DSE_HVM"));
 		}
 
 		co_return;
@@ -244,19 +243,23 @@ namespace winrt::StarlightGUI::implementation{
 			result = KernelInstance::RebootForce();
 		}
 		else {
-			slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Error").c_str(), slg::GetLocalizedString(L"Utility_UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Utility_UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
 		}
 
 		co_await wil::resume_foreground(DispatcherQueue());
 
 		if (result) {
-			slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Success").c_str(), slg::GetLocalizedString(L"Utility_ActionSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Utility_ActionSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
 		}
 		else {
-			slg::CreateInfoBarAndDisplay(slg::GetLocalizedString(L"Msg_Failure").c_str(), slg::GetLocalizedString(L"Utility_ActionFailed").c_str() + slg::GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Utility_ActionFailed").c_str() + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
 		}
 
 		co_return;
 	}
 }
+
+
+
+
