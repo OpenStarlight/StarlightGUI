@@ -1,8 +1,0 @@
-namespace StarlightGUI
-{
-    [default_interface]
-    runtimeclass LogConsolePage : Microsoft.UI.Xaml.Controls.Page
-    {
-        LogConsolePage();
-    }
-}

@@ -124,11 +124,6 @@
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe943;" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="NavLogConsoleUid" Content="日志控制台" Tag="LogConsole">
-                        <NavigationViewItem.Icon>
-                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe756;" />
-                        </NavigationViewItem.Icon>
-                    </NavigationViewItem>
                 </NavigationView.MenuItems>
 
                 <!--  从上到下  -->

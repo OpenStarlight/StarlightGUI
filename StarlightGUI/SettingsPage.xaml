@@ -465,7 +465,7 @@
                     x:Name="LogCard"
                     Margin="0,0,0,10"
                     essential:RevealFocusPanel.AttachToPanel="{x:Bind RevealFocusPanel}"
-                    Description="打开或关闭控制台日志窗口"
+                    Description="打开或关闭日志窗口"
                     Header="日志"
                     IsActionIconVisible="False"
                     IsClickEnabled="True">

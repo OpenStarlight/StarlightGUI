@@ -20,7 +20,6 @@
 #include "resource.h"
 #include "UpdateDialog.xaml.h"
 #include "FilePage.xaml.h"
-#include "LogConsolePage.xaml.h"
 
 using namespace winrt;
 using namespace WinUI3Package;
@@ -55,7 +54,6 @@ namespace winrt::StarlightGUI::implementation
         NavUtilityUid().Content(tbox(L"Nav_Utility.Content"));
         NavMonitorUid().Content(tbox(L"Nav_Monitor.Content"));
         NavDisasmUid().Content(tbox(L"Nav_Disasm.Content"));
-        NavLogConsoleUid().Content(tbox(L"Nav_LogConsole.Content"));
         NavHelpUid().Content(tbox(L"Nav_Help.Content"));
 
         auto windowNative{ this->try_as<::IWindowNative>() };
@@ -286,10 +284,6 @@ namespace winrt::StarlightGUI::implementation
         else if (invokedItem == L"Disasm") {
             MainFrame().Navigate(xaml_typename<StarlightGUI::DisasmPage>());
             RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(7));
-        }
-        else if (invokedItem == L"LogConsole") {
-            MainFrame().Navigate(xaml_typename<StarlightGUI::LogConsolePage>());
-            RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(8));
         }
         else if (invokedItem == L"Deuterium") {
             MainFrame().Navigate(xaml_typename<StarlightGUI::DeuteriumPage>());

@@ -72,9 +72,6 @@
     <Page Include="DisasmPage.xaml">
       <Filter>Pages</Filter>
     </Page>
-    <Page Include="LogConsolePage.xaml">
-      <Filter>Pages</Filter>
-    </Page>
   </ItemGroup>
   <ItemGroup>
     <Midl Include="MainWindow.idl" />
@@ -116,12 +113,6 @@
     </Midl>
     <Midl Include="Utils\GeneralEntry.idl">
       <Filter>Utils\Types</Filter>
-    </Midl>
-    <Midl Include="Utils\LogEntryInfo.idl">
-      <Filter>Utils\Types</Filter>
-    </Midl>
-    <Midl Include="LogConsolePage.idl">
-      <Filter>Pages</Filter>
     </Midl>
   </ItemGroup>
   <ItemGroup>
@@ -182,9 +173,6 @@
       <Filter>Utils\Types</Filter>
     </ClCompile>
     <ClCompile Include="Utils\GeneralEntry.cpp">
-      <Filter>Utils\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\LogEntryInfo.cpp">
       <Filter>Utils\Types</Filter>
     </ClCompile>
   </ItemGroup>
@@ -252,9 +240,6 @@
       <Filter>Utils\Advanced</Filter>
     </ClInclude>
     <ClInclude Include="Utils\GeneralEntry.h">
-      <Filter>Utils\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\LogEntryInfo.h">
       <Filter>Utils\Types</Filter>
     </ClInclude>
   </ItemGroup>
