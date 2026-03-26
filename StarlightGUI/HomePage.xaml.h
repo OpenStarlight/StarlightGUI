@@ -26,6 +26,7 @@ namespace winrt::StarlightGUI::implementation
     struct HomePage : public HomePageT<HomePage>
     {
         HomePage();
+		void SetupLocalization();
 
         slg::coroutine SetGreetingText();
         slg::coroutine SetUserProfile();
