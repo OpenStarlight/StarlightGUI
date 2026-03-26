@@ -15,13 +15,13 @@ namespace winrt::StarlightGUI::implementation
     {
         InitializeComponent();
 
-        this->Title(tbox(L"RunProcess_Dialog.Title"));
-        this->PrimaryButtonText(t(L"RunProcess_Dialog.PrimaryButtonText"));
-        this->SecondaryButtonText(t(L"RunProcess_Dialog.SecondaryButtonText"));
-        RunProcessDescriptionText().Text(t(L"RunProcess_Description.Text"));
-        ProcessPathTextBox().PlaceholderText(t(L"RunProcess_Path.PlaceholderText"));
-        PermissionComboBox().Text(t(L"RunProcess_Permission.Text"));
-        FullPrivilegesCheckBox().Content(tbox(L"RunProcess_FullPrivileges.Content"));
+        this->Title(tbox(L"RunProcess.Title"));
+        this->PrimaryButtonText(t(L"RunProcess.ButtonPrimary"));
+        this->SecondaryButtonText(t(L"RunProcess.ButtonSecondary"));
+        RunProcessDescriptionText().Text(t(L"RunProcess.Desc"));
+        ProcessPathTextBox().PlaceholderText(t(L"RunProcess.Placeholder"));
+        PermissionComboBox().Text(t(L"RunProcess.Permission"));
+        FullPrivilegesCheckBox().Content(tbox(L"RunProcess.FullPrivileges"));
     }
 
     void RunProcessDialog::OnPrimaryButtonClick(ContentDialog const& sender,

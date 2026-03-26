@@ -497,12 +497,12 @@ namespace winrt::StarlightGUI::implementation
 
 				// 快速对于常见报错码进行判断，减少用户困惑
 
-                if (DriverUtils::LoadKernelDriver(kernelPath.c_str(), unused)) {
+                if (DriverUtils::LoadKernelDriver(kernelPath.c_str())) {
                     LOG_INFO(L"Driver", L"kernel.sys initializated successfully.");
                 }
                 else {
                     failedCount++;
-                    LOG_INFO(L"Driver", L"kernel.sys initialization result: %s, GetLastError() = %d", unused.c_str(), GetLastError());
+                    LOG_INFO(L"Driver", L"kernel.sys initialization failed, GetLastError() = %d", GetLastError());
 
                     if (GetLastError() == 2 || GetLastError() == 98) {
                         co_await wil::resume_foreground(DispatcherQueue());
@@ -517,12 +517,12 @@ namespace winrt::StarlightGUI::implementation
                 }
 
 
-                if (DriverUtils::LoadDriver(astralPath.c_str(), L"AstralX", unused)) {
+                if (DriverUtils::LoadDriver(astralPath.c_str(), L"AstralX")) {
                     LOG_INFO(L"Driver", L"AstralX.sys initializated successfully.");
                 }
                 else {
                     failedCount++;
-                    LOG_INFO(L"Driver", L"AstralX.sys initialization result: %s, GetLastError() = %d", unused.c_str(), GetLastError());
+                    LOG_INFO(L"Driver", L"AstralX.sys initialization failed, GetLastError() = %d", GetLastError());
 
                     if (GetLastError() == 2 || GetLastError() == 98) {
                         co_await wil::resume_foreground(DispatcherQueue());

@@ -7,6 +7,8 @@ namespace winrt::StarlightGUI::implementation
     struct HelpPage : HelpPageT<HelpPage>
     {
         HelpPage();
+        void SetupLocalization();
+
         void GithubButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e); // Starlight GUI
         void Github2Button_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e); // WinUI Essentials
         void GithubUserButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e); // Stars

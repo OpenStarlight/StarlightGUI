@@ -336,7 +336,7 @@ namespace winrt::StarlightGUI::implementation
         if (SetTaskManagerReplaceState(enabled)) {
             replace_taskmgr = enabled;
             SaveConfig("replace_taskmgr", replace_taskmgr);
-            auto msg = enabled ? t(L"Msg_ReplaceTaskMgrEnabled") : t(L"Msg_ReplaceTaskMgrDisabled");
+            auto msg = enabled ? t(L"Msg.ReplaceTaskMgrEnabled") : t(L"Msg.ReplaceTaskMgrDisabled");
             slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance, 2500);
         }
         else {

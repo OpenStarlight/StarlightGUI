@@ -38,12 +38,7 @@ namespace winrt::StarlightGUI::implementation
 {
     Process_ModulePage::Process_ModulePage() {
         InitializeComponent();
-
-        ModuleTitleText().Text(t(L"ProcModule_Title.Text"));
-        ModuleCountText().Text(t(L"ProcModule_Loading.Text"));
-        ModuleNameHeaderButton().Content(tbox(L"ProcModule_HeaderName.Content"));
-        AddressHeaderButton().Content(tbox(L"ProcModule_HeaderAddress.Content"));
-        SizeHeaderButton().Content(tbox(L"ProcModule_HeaderSize.Content"));
+        SetupLocalization();
 
         ModuleListView().ItemsSource(m_moduleList);
         ModuleListView().SizeChanged([weak = get_weak()](auto&&, auto&&) {
@@ -78,7 +73,7 @@ namespace winrt::StarlightGUI::implementation
 
         MenuFlyout menuFlyout;
 
-        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", t(L"ProcModule_Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", t(L"Common.Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             LoadModuleList();
             co_return;
             });
@@ -86,8 +81,8 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separatorR;
 
         // 选项1.1
-        auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"ProcModule_CopyInfo").c_str());
-        auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"ProcModule_Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
+        auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Name().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
             }
@@ -95,7 +90,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item1_1.Items().Append(item1_1_sub1);
-        auto item1_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", t(L"ProcModule_Path").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", t(L"Common.Path").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Path().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
             }
@@ -103,7 +98,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item1_1.Items().Append(item1_1_sub2);
-        auto item1_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"ProcModule_Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Common.Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Address().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
             }
@@ -153,7 +148,7 @@ namespace winrt::StarlightGUI::implementation
         if (!processForInfoWindow) co_return;
         // 跳过内核进程，获取可能导致异常或蓝屏
         if (processForInfoWindow.Name() == L"Idle" || processForInfoWindow.Name() == L"System" || processForInfoWindow.Name() == L"Registry" || processForInfoWindow.Name() == L"Memory Compression" || processForInfoWindow.Name() == L"Secure System" || processForInfoWindow.Name() == L"Unknown") {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcModule_NoInfo").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcModule.Msg.NoInfo").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
             co_return;
         }
 
@@ -177,12 +172,12 @@ namespace winrt::StarlightGUI::implementation
         co_await wil::resume_foreground(DispatcherQueue());
 
         if (modules.size() >= 1000) {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcModule_TooManyModules").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcModule.Msg.TooManyModules").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
         }
 
         for (const auto& module : modules) {
-            if (module.Name().empty()) module.Name(t(L"ProcModule_Unknown"));
-            if (module.Path().empty()) module.Path(t(L"ProcModule_Unknown"));
+            if (module.Name().empty()) module.Name(t(L"Common.Unknown"));
+            if (module.Path().empty()) module.Path(t(L"Common.Unknown"));
 
             m_moduleList.Append(module);
         }
@@ -191,7 +186,7 @@ namespace winrt::StarlightGUI::implementation
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         // 更新模块数量文本
-    ModuleCountText().Text(t(L"ProcModule_Count", static_cast<size_t>(m_moduleList.Size()), static_cast<long long>(duration.count())));
+        ModuleCountText().Text(t(L"ProcModule.Detail", static_cast<size_t>(m_moduleList.Size()), static_cast<long long>(duration.count())));
         LoadingRing().IsActive(false);
         slg::UpdateVisibleListViewMarqueeByNames(
             ModuleListView(),
@@ -202,6 +197,15 @@ namespace winrt::StarlightGUI::implementation
 
         LOG_INFO(__WFUNCTION__, L"Loaded module list, %d entry(s) in total.", m_moduleList.Size());
     }
+
+    void Process_ModulePage::SetupLocalization()
+    {
+        ModuleTitleText().Text(t(L"ProcModule.Title"));
+        ModuleCountText().Text(t(L"Common.Loading"));
+        ModuleNameHeaderButton().Content(tbox(L"Common.Name"));
+        AddressHeaderButton().Content(tbox(L"Common.Address"));
+        SizeHeaderButton().Content(tbox(L"Common.Size"));
+	}
 }
 
 

@@ -18,12 +18,12 @@ namespace winrt::StarlightGUI::implementation
     {
         InitializeComponent();
 
-        this->Title(tbox(L"InjectDLL_Dialog.Title"));
-        this->PrimaryButtonText(t(L"InjectDLL_Dialog.PrimaryButtonText"));
-        this->SecondaryButtonText(t(L"InjectDLL_Dialog.SecondaryButtonText"));
-        InjectDLLDescriptionText().Text(t(L"InjectDLL_Description.Text"));
-        DLLPathTextBox().PlaceholderText(t(L"InjectDLL_Path.PlaceholderText"));
-        ExploreButton().Content(tbox(L"InjectDLL_Browse.Content"));
+        this->Title(tbox(L"InjectDLL.Title"));
+        this->PrimaryButtonText(t(L"InjectDLL.ButtonPrimary"));
+        this->SecondaryButtonText(t(L"InjectDLL.ButtonSecondary"));
+        InjectDLLDescriptionText().Text(t(L"InjectDLL.Desc"));
+        DLLPathTextBox().PlaceholderText(t(L"InjectDLL.Placeholder"));
+        ExploreButton().Content(tbox(L"InjectDLL.Browse"));
     }
 
     void InjectDLLDialog::OnPrimaryButtonClick(ContentDialog const& sender,
@@ -65,11 +65,11 @@ namespace winrt::StarlightGUI::implementation
                 DLLPathTextBox().Text(file.Path());
             }
             else {
-                ErrorText().Text(t(L"InjectDLL_NotDLL"));
+                ErrorText().Text(t(L"InjectDLL.NotDLL"));
             }
         }
         else {
-            ErrorText().Text(t(L"InjectDLL_FileNotExist"));
+            ErrorText().Text(t(L"InjectDLL.FileNotExist"));
         }
     }
 }

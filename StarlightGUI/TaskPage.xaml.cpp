@@ -303,7 +303,7 @@ namespace winrt::StarlightGUI::implementation
             });
 
         // 选项3.2
-        auto item3_2 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Task.Menu.CopyInfo").c_str());
+        auto item3_2 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
         auto item3_2_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue8ac", t(L"Common.Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Name().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -1289,7 +1289,7 @@ namespace winrt::StarlightGUI::implementation
     void TaskPage::SetupLocalization() {
         TaskTitleUid().Text(t(L"Task.Title"));
         ProcessCountText().Text(t(L"Task.Loading"));
-        ProcessSearchBox().PlaceholderText(t(L"Task.PlaceholderText"));
+        ProcessSearchBox().PlaceholderText(t(L"Task.Placeholder"));
         RefreshProcessListButton().Label(t(L"Common.Refresh"));
         TaskRunUid().Label(t(L"Task.Button.Run"));
         TerminateProcessButton().Label(t(L"Task.Button.Terminate"));

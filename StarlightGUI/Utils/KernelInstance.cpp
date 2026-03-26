@@ -213,7 +213,7 @@ namespace winrt::StarlightGUI::implementation {
 				pi.EProcessULong((ULONG64)data.Eprocess);
 				pi.ExecutablePath(to_hstring(data.ImagePath));
 				pi.MemoryUsageByte(data.WorkingSetPrivateSize);
-				pi.Status(t(L"Kernel_StatusRunning"));
+				pi.Status(t(L"Msg.StatusRunning"));
 				targetList.push_back(pi);
 			}
 		}
@@ -253,7 +253,7 @@ namespace winrt::StarlightGUI::implementation {
 				pi.EProcess(ULongToHexString((ULONG64)data.pvoidaddressdata1));
 				pi.EProcessULong((ULONG64)data.pvoidaddressdata1);
 				pi.ExecutablePath(to_hstring(data.Module1));
-				pi.Status(t(L"Kernel_StatusRunning"));
+				pi.Status(t(L"Msg.StatusRunning"));
 				targetList.push_back(pi);
 			}
 		}
@@ -299,43 +299,43 @@ namespace winrt::StarlightGUI::implementation {
 				switch (data.ulongdata1)
 				{
 				case ThreadState_Initialized:
-					threadInfo.Status(t(L"Kernel_ThreadInitialized"));
+					threadInfo.Status(t(L"Msg.Thread.Initialized"));
 					break;
 
 				case ThreadState_Ready:
-					threadInfo.Status(t(L"Kernel_ThreadReady"));
+					threadInfo.Status(t(L"Msg.Thread.Ready"));
 					break;
 
 				case ThreadState_Running:
-					threadInfo.Status(t(L"Kernel_StatusRunning"));
+					threadInfo.Status(t(L"Msg.Thread.Running"));
 					break;
 
 				case ThreadState_Standby:
-					threadInfo.Status(t(L"Kernel_ThreadStandby"));
+					threadInfo.Status(t(L"Msg.Thread.Standby"));
 					break;
 
 				case ThreadState_Terminated:
-					threadInfo.Status(t(L"Kernel_ThreadTerminated"));
+					threadInfo.Status(t(L"Msg.Thread.Terminated"));
 					break;
 
 				case ThreadState_Waiting:
-					threadInfo.Status(t(L"Kernel_ThreadWaiting"));
+					threadInfo.Status(t(L"Msg.Thread.Waiting"));
 					break;
 
 				case ThreadState_Transition:
-					threadInfo.Status(L"Transition");
+					threadInfo.Status(L"Msg.Thread.Transition");
 					break;
 
 				case ThreadState_DeferredReady:
-					threadInfo.Status(L"Deferred Ready");
+					threadInfo.Status(L"Msg.Thread.DeferredReady");
 					break;
 
 				case ThreadState_GateWait:
-					threadInfo.Status(L"Gate Wait");
+					threadInfo.Status(L"Msg.Thread.GateWait");
 					break;
 
 				default:
-					threadInfo.Status(t(L"Kernel_ThreadUnknown"));
+					threadInfo.Status(t(L"Msg.Thread.Unknown"));
 					break;
 				}
 				threads.push_back(threadInfo);
@@ -1219,7 +1219,7 @@ namespace winrt::StarlightGUI::implementation {
 			}
 			else
 			{
-				entry.CreationTime(t(L"Msg_Unknown"));
+				entry.CreationTime(t(L"Msg.Unknown"));
 			}
 
 			ULONG bufferLength = 0;
@@ -2225,7 +2225,7 @@ namespace winrt::StarlightGUI::implementation {
 	*/
 	BOOL KernelInstance::GetDriverDevice() noexcept {
 		if (driverDevice != NULL) return TRUE;
-		if (!DriverUtils::LoadKernelDriver(kernelPath.c_str(), unused)) return FALSE;
+		if (!DriverUtils::LoadKernelDriver(kernelPath.c_str())) return FALSE;
 
 		HANDLE device = CreateFile(L"\\\\.\\ArkDrv64", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
@@ -2237,7 +2237,7 @@ namespace winrt::StarlightGUI::implementation {
 
 	BOOL KernelInstance::GetDriverDevice2() noexcept {
 		if (driverDevice2 != NULL) return TRUE;
-		if (!DriverUtils::LoadKernelDriver(astralPath.c_str(), unused)) return FALSE;
+		if (!DriverUtils::LoadKernelDriver(astralPath.c_str())) return FALSE;
 
 		HANDLE device = CreateFile(L"\\\\.\\AstralX", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 

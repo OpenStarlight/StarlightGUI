@@ -10,6 +10,7 @@ namespace winrt::StarlightGUI::implementation
     struct InfoWindow : InfoWindowT<InfoWindow>
     {
         InfoWindow();
+        void SetupLocalization();
 
         HWND GetWindowHandle();
 

@@ -46,7 +46,7 @@ namespace winrt::StarlightGUI::implementation
 
     static std::wstring BuildTabTitle(std::wstring const& path)
     {
-        if (path.empty() || path == kFileHomePage) return std::wstring(t(L"File_ThisPC"));
+        if (path.empty() || path == kFileHomePage) return std::wstring(t(L"File.ThisPC"));
         fs::path p(path);
         auto name = p.filename().wstring();
         if (!name.empty()) return name;
@@ -310,7 +310,7 @@ namespace winrt::StarlightGUI::implementation
         for (uint32_t i = 0; i <= index; ++i) {
             std::wstring part = unbox_value<hstring>(m_breadcrumbItems.GetAt(i)).c_str();
             if (i == 0) {
-                if (part == t(L"File_ThisPC")) {
+                if (part == t(L"File.ThisPC")) {
                     newPath = kFileHomePage;
                     continue;
                 }
@@ -422,6 +422,8 @@ namespace winrt::StarlightGUI::implementation
 
         for (const auto& file : list) {
             auto item = file.as<winrt::StarlightGUI::FileInfo>();
+            // 如果是盘符，不展示右键菜单
+            if (item.Flag() == 666) return;
             // 跳过"上个文件夹"选项
             if (item.Flag() == 999) continue;
             if ((item.Name() == L"Windows" || item.Name() == L"Boot" || item.Name() == L"System32" || item.Name() == L"SysWOW64" || item.Name() == L"Microsoft") &&
@@ -456,7 +458,7 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator1;
 
         // 选项2.1
-        auto item2_1 = slg::CreateMenuItem(flyoutStyles, L"\ue74d", t(L"FileMenu.Delete").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
+        auto item2_1 = slg::CreateMenuItem(flyoutStyles, L"\ue74d", t(L"File.Menu.Delete").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
             for (const auto& item : selectedFiles) {
                 if (KernelInstance::DeleteFileAuto(item.Path().c_str())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -507,8 +509,8 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator2;
 
         // 选项3.1
-        auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"File.Menu.CopyInfo").c_str());
-        auto item3_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue8ac", t(L"FileMenu_Name").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
+        auto item3_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue8ac", t(L"FileMenu.Name").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(selectedFiles[0].Name().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
@@ -796,6 +798,7 @@ namespace winrt::StarlightGUI::implementation
                 std::wstring drivePath = drive;
                 driveInfo.Name(hstring(drivePath.substr(0, 2)));
                 driveInfo.Path(hstring(drivePath));
+                driveInfo.Flag(666);
                 driveInfo.Directory(true);
                 driveInfo.Size(L"");
                 driveInfo.ModifyTime(L"");
@@ -1344,7 +1347,7 @@ namespace winrt::StarlightGUI::implementation
     }
 
     void FilePage::SetupLocalization() {
-        SearchBox().PlaceholderText(t(L"File.PlaceholderText"));
+        SearchBox().PlaceholderText(t(L"File.Placeholder"));
         NameHeaderButton().Content(tbox(L"Common.File"));
         ModifyTimeHeaderButton().Content(tbox(L"File.Header.ModifyTime"));
         SizeHeaderButton().Content(tbox(L"Common.Size"));

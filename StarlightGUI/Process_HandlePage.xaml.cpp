@@ -37,14 +37,7 @@ namespace winrt::StarlightGUI::implementation
 {
     Process_HandlePage::Process_HandlePage() {
         InitializeComponent();
-
-        HandleTitleText().Text(t(L"ProcHandle_Title.Text"));
-        HandleCountText().Text(t(L"ProcHandle_Loading.Text"));
-        TypeHeaderButton().Content(tbox(L"ProcHandle_HeaderType.Content"));
-        ObjectHeaderButton().Content(tbox(L"ProcHandle_HeaderObject.Content"));
-        HandleHeaderButton().Content(tbox(L"ProcHandle_HeaderHandle.Content"));
-        AccessHeaderButton().Content(tbox(L"ProcHandle_HeaderAccess.Content"));
-        AttributesHeaderButton().Content(tbox(L"ProcHandle_HeaderAttributes.Content"));
+        SetupLocalization();
 
         HandleListView().ItemsSource(m_handleList);
 
@@ -69,7 +62,7 @@ namespace winrt::StarlightGUI::implementation
 
         MenuFlyout menuFlyout;
 
-        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", t(L"ProcHandle_Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", t(L"Common.Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             LoadHandleList();
             co_return;
             });
@@ -77,8 +70,8 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separatorR;
 
         // 选项1.1
-        auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"ProcHandle_CopyInfo").c_str());
-        auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"ProcHandle_Type").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
+        auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Type").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Type().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
             }
@@ -106,7 +99,7 @@ namespace winrt::StarlightGUI::implementation
         if (!processForInfoWindow) co_return;
         // 跳过内核进程，获取可能导致异常或蓝屏
         if (processForInfoWindow.Name() == L"Idle" || processForInfoWindow.Name() == L"System" || processForInfoWindow.Name() == L"Registry" || processForInfoWindow.Name() == L"Memory Compression" || processForInfoWindow.Name() == L"Secure System" || processForInfoWindow.Name() == L"Unknown") {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcHandle_NoInfo").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcHandle.Msg.NoInfo").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
             co_return;
         }
 
@@ -130,7 +123,7 @@ namespace winrt::StarlightGUI::implementation
         co_await wil::resume_foreground(DispatcherQueue());
 
         if (handles.size() >= 1000) {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcHandle_TooManyHandles").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcHandle.Msg.TooManyHandles").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
         }
 
         for (const auto& handle : handles) {
@@ -141,10 +134,20 @@ namespace winrt::StarlightGUI::implementation
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         // 更新句柄数量文本
-    HandleCountText().Text(t(L"ProcHandle_Count", static_cast<size_t>(m_handleList.Size()), static_cast<long long>(duration.count())));
+        HandleCountText().Text(t(L"ProcHandle.Detail", static_cast<size_t>(m_handleList.Size()), static_cast<long long>(duration.count())));
         LoadingRing().IsActive(false);
 
         LOG_INFO(__WFUNCTION__, L"Loaded handle list, %d entry(s) in total.", m_handleList.Size());
+    }
+
+    void Process_HandlePage::SetupLocalization() {
+        HandleTitleText().Text(t(L"ProcHandle.Title"));
+        HandleCountText().Text(t(L"Msg.Loading"));
+        TypeHeaderButton().Content(tbox(L"Common.Type"));
+        ObjectHeaderButton().Content(tbox(L"ProcHandle.Header.Object"));
+        HandleHeaderButton().Content(tbox(L"Common.Handle"));
+        AccessHeaderButton().Content(tbox(L"ProcHandle.Header.Access"));
+        AttributesHeaderButton().Content(tbox(L"ProcHandle.Header.Attributes"));
     }
 }
 

@@ -11,32 +11,32 @@ namespace winrt::StarlightGUI::implementation
 {
     UpdateDialog::UpdateDialog() {
         InitializeComponent();
-        NewVersionAvailableText().Text(t(L"Update_NewVersionAvailable.Text"));
-        CurrentVersionLabelRun().Text(t(L"Update_CurrentVersion.Text"));
-        LatestVersionLabelRun().Text(t(L"Update_LatestVersion.Text"));
-        UpdateDescriptionText().Text(t(L"Update_Description.Text"));
-        UpdateTipText().Text(t(L"Update_Tip.Text"));
-        QuarkCodeText().Text(t(L"Update_QuarkCode.Text"));
-        NoDirectLinkText().Text(t(L"Update_NoDirectLink.Text"));
-        UpdateTimeLabelRun().Text(t(L"Update_UpdateTimeLabel.Text"));
-        DontShowAgainCheckBox().Content(tbox(L"Update_DontShow.Content"));
+        NewVersionAvailableText().Text(t(L"Update.Text.NewVersionAvailable"));
+        CurrentVersionLabelRun().Text(t(L"Update.Text.CurrentVersion"));
+        LatestVersionLabelRun().Text(t(L"Update.Text.LatestVersion"));
+        UpdateDescriptionText().Text(t(L"Update.Text.Desc"));
+        UpdateTipText().Text(t(L"Update.Text.Tip"));
+        QuarkCodeText().Text(t(L"Update.Text.QuarkCode"));
+        NoDirectLinkText().Text(t(L"Update.Text.NoDirectLink"));
+        UpdateTimeLabelRun().Text(t(L"Update.Text.UpdateTimeLabel"));
+        DontShowAgainCheckBox().Content(tbox(L"Update.Text.DontShow"));
 
         this->Loaded([this](auto&&, auto&&) {
             if (IsUpdate()) {
-                Title(tbox(L"Update_Found"));
+                Title(tbox(L"Update.Found"));
                 LatestVersionText().Text(LatestVersion());
-                PrimaryButtonText(t(L"Update_Download"));
-                SecondaryButtonText(t(L"Update_Cancel"));
+                PrimaryButtonText(t(L"Update.Download"));
+                SecondaryButtonText(t(L"Update.Cancel"));
 				UpdateStackPanel().Visibility(Visibility::Visible);
 				AnnouncementStackPanel().Visibility(Visibility::Collapsed);
             }
             else {
-                Title(tbox(L"Update_Announcement"));
+                Title(tbox(L"Update.Announcement"));
                 UpdateTimeText().Text(LatestVersion());
                 AnnouncementLine1().Text(GetAnLine(1));
                 AnnouncementLine2().Text(GetAnLine(2));
                 AnnouncementLine3().Text(GetAnLine(3));
-                PrimaryButtonText(t(L"Update_Confirm"));
+                PrimaryButtonText(t(L"Update.Confirm"));
                 UpdateStackPanel().Visibility(Visibility::Collapsed);
                 AnnouncementStackPanel().Visibility(Visibility::Visible);
             }

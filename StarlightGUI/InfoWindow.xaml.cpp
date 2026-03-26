@@ -34,6 +34,7 @@ namespace winrt::StarlightGUI::implementation
 
     InfoWindow::InfoWindow() {
         InitializeComponent();
+        SetupLocalization();
 
         auto windowNative{ this->try_as<::IWindowNative>() };
         HWND hWnd{ 0 };
@@ -239,4 +240,12 @@ namespace winrt::StarlightGUI::implementation
         }
         return DefSubclassProc(hWnd, uMsg, wParam, lParam);
     }
+
+    void InfoWindow::SetupLocalization()
+    {
+        NavHandleUid().Content(tbox(L"Nav.Handle"));
+		NavKCTUid().Content(tbox(L"Nav.KCT"));
+		NavModuleUid().Content(tbox(L"Nav.Module"));
+		NavThreadUid().Content(tbox(L"Nav.Thread"));
+	}
 }

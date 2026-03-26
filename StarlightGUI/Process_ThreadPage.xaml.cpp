@@ -40,13 +40,7 @@ namespace winrt::StarlightGUI::implementation
 
     Process_ThreadPage::Process_ThreadPage() {
         InitializeComponent();
-
-        ThreadTitleText().Text(t(L"ProcThread_Title.Text"));
-        ThreadCountText().Text(t(L"ProcThread_Loading.Text"));
-        AddressHeaderButton().Content(tbox(L"ProcThread_HeaderAddress.Content"));
-        StatusHeaderButton().Content(tbox(L"ProcThread_HeaderStatus.Content"));
-        PriorityHeaderButton().Content(tbox(L"ProcThread_HeaderPriority.Content"));
-        ModuleHeaderButton().Content(tbox(L"ProcThread_HeaderModule.Content"));
+        SetupLocalization();
 
         ThreadListView().ItemsSource(m_threadList);
 
@@ -71,7 +65,7 @@ namespace winrt::StarlightGUI::implementation
 
         MenuFlyout menuFlyout;
 
-        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", t(L"ProcThread_Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", t(L"Common.Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             LoadThreadList();
             co_return;
             });
@@ -79,7 +73,7 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separatorR;
 
         // 选项1.1
-        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"ProcThread_Terminate").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"ProcThread.Menu.Terminate").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::_TerminateThread(item.Id())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
                 LoadThreadList();
@@ -89,7 +83,7 @@ namespace winrt::StarlightGUI::implementation
             });
 
         // 选项1.2
-        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue8f0", t(L"ProcThread_TerminateKernel").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue8f0", t(L"ProcThread.Menu.TerminateKernel").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::_ZwTerminateThread(item.Id())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
                 LoadThreadList();
@@ -99,7 +93,7 @@ namespace winrt::StarlightGUI::implementation
             });
 
         // 选项1.3
-        auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", t(L"ProcThread_TerminateMurder").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", t(L"ProcThread.Menu.TerminateMurder").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (safeAcceptedPID == item.Id() || !dangerous_confirm) {
                 if (KernelInstance::MurderThread(item.Id())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
@@ -109,7 +103,7 @@ namespace winrt::StarlightGUI::implementation
             }
             else {
                 safeAcceptedPID = item.Id();
-                slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcThread_DangerousWarning").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcThread.Msg.MurderWarning").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
             }
             co_return;
             });
@@ -118,8 +112,8 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator1;
 
         // 选项2.1
-        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue912", t(L"ProcThread_SetState").c_str());
-        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue769", t(L"ProcThread_Suspend").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue912", t(L"ProcThread.Menu.SetState").c_str());
+        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue769", t(L"ProcThread.Menu.Suspend").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::_SuspendThread(item.Id())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
                 LoadThreadList();
@@ -128,7 +122,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item2_1.Items().Append(item2_1_sub1);
-        auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ue768", t(L"ProcThread_Resume").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ue768", t(L"ProcThread.Menu.Resume").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::_ResumeThread(item.Id())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
                 LoadThreadList();
@@ -142,7 +136,7 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator2;
 
         // 选项3.1
-        auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"ProcThread_CopyInfo").c_str());
+        auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
         auto item3_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", L"TID", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(std::to_wstring(item.Id()))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
@@ -159,7 +153,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item3_1.Items().Append(item3_1_sub2);
-        auto item3_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"ProcThread_Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Common.Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Address().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
             }
@@ -212,7 +206,7 @@ namespace winrt::StarlightGUI::implementation
         co_await wil::resume_foreground(DispatcherQueue());
 
         for (const auto& thread : threads) {
-            if (thread.ModuleInfo().empty()) thread.ModuleInfo(t(L"ProcThread_Unknown"));
+            if (thread.ModuleInfo().empty()) thread.ModuleInfo(t(L"Common.Unknown"));
 
             m_threadList.Append(thread);
         }
@@ -223,7 +217,7 @@ namespace winrt::StarlightGUI::implementation
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         // 更新线程数量文本
-    ThreadCountText().Text(t(L"ProcThread_Count", static_cast<size_t>(m_threadList.Size()), static_cast<long long>(duration.count())));
+        ThreadCountText().Text(t(L"ProcThread.Detail", static_cast<size_t>(m_threadList.Size()), static_cast<long long>(duration.count())));
         LoadingRing().IsActive(false);
 
         LOG_INFO(__WFUNCTION__, L"Loaded thread list, %d entry(s) in total.", m_threadList.Size());
@@ -292,13 +286,13 @@ namespace winrt::StarlightGUI::implementation
         if (updateHeader) {
             IdHeaderButton().Content(box_value(L"TID"));
             EThreadHeaderButton().Content(box_value(L"ETHREAD"));
-            AddressHeaderButton().Content(tbox(L"ProcThread_HeaderAddress.Content"));
-            PriorityHeaderButton().Content(tbox(L"ProcThread_HeaderPriority.Content"));
+            AddressHeaderButton().Content(tbox(L"Common.Address"));
+            PriorityHeaderButton().Content(tbox(L"ProcThread.Header.Priority"));
 
             if (activeColumn == SortColumn::Id) IdHeaderButton().Content(box_value(isAscending ? L"TID ↓" : L"TID ↑"));
             if (activeColumn == SortColumn::EThread) EThreadHeaderButton().Content(box_value(isAscending ? L"ETHREAD ↓" : L"ETHREAD ↑"));
-            if (activeColumn == SortColumn::Address) AddressHeaderButton().Content(box_value(isAscending ? t(L"ProcThread_HeaderAddress.Content") + L" ↓" : t(L"ProcThread_HeaderAddress.Content") + L" ↑"));
-            if (activeColumn == SortColumn::Priority) PriorityHeaderButton().Content(box_value(isAscending ? t(L"ProcThread_HeaderPriority.Content") + L" ↓" : t(L"ProcThread_HeaderPriority.Content") + L" ↑"));
+            if (activeColumn == SortColumn::Address) AddressHeaderButton().Content(box_value(isAscending ? t(L"Common.Address") + L" ↓" : t(L"Common.Address") + L" ↑"));
+            if (activeColumn == SortColumn::Priority) PriorityHeaderButton().Content(box_value(isAscending ? t(L"ProcThread.Header.Priority") + L" ↓" : t(L"ProcThread.Header.Priority") + L" ↑"));
         }
 
         std::vector<winrt::StarlightGUI::ThreadInfo> sortedThreads;
@@ -351,6 +345,16 @@ namespace winrt::StarlightGUI::implementation
         for (auto& thread : sortedThreads) {
             m_threadList.Append(thread);
         }
+    }
+
+    void Process_ThreadPage::SetupLocalization()
+    {
+        ThreadTitleText().Text(t(L"ProcThread.Title"));
+        ThreadCountText().Text(t(L"Common.Loading"));
+        AddressHeaderButton().Content(tbox(L"Common.Address"));
+        StatusHeaderButton().Content(tbox(L"Common.Status"));
+        PriorityHeaderButton().Content(tbox(L"ProcThread.Header.Priority"));
+        ModuleHeaderButton().Content(tbox(L"Common.Module"));
     }
 }
 

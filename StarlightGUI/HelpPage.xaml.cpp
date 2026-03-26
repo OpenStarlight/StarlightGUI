@@ -21,24 +21,6 @@ namespace winrt::StarlightGUI::implementation
     HelpPage::HelpPage() {
         InitializeComponent();
 
-        HelpAboutUid().Text(t(L"Help_About.Text"));
-        HelpStarsDescUid().Text(t(L"Help_Stars_Desc.Text"));
-        HelpBilibiliButtonUid().Content(tbox(L"Help_BilibiliButton.Content"));
-        HelpGithubDescUid().Text(t(L"Help_Github_Desc.Text"));
-        HelpGithubUserButtonUid().Content(tbox(L"Help_GithubUserButton.Content"));
-        HelpGithubRepoButtonUid().Content(tbox(L"Help_GithubRepoButton.Content"));
-        HelpAcknowledgementUid().Text(t(L"Help_Acknowledgement.Text"));
-        HelpWinUIDescUid().Text(t(L"Help_WinUI_Desc.Text"));
-        HelpWinUIButtonUid().Content(tbox(L"Help_WinUIButton.Content"));
-        HelpWinUIEssentialsDescUid().Text(t(L"Help_WinUIEssentials_Desc.Text"));
-        HelpKALIDescUid().Text(t(L"Help_KALI_Desc.Text"));
-        HelpMuLinDescUid().Text(t(L"Help_MuLin_Desc.Text"));
-        HelpWormwakerDescUid().Text(t(L"Help_Wormwaker_Desc.Text"));
-        HelpSponsorsUid().Text(t(L"Help_Sponsors.Text"));
-        HelpSponsorButtonUid().Content(tbox(L"Help_SponsorButton.Content"));
-        HelpSponsorIntroUid().Text(t(L"Help_SponsorIntro.Text"));
-        SponsorListText().Text(t(L"Help_Loading.Text"));
-
         this->Loaded([this](auto&&, auto&&) -> winrt::Windows::Foundation::IAsyncAction {
             auto weak_this = get_weak();
             if (sponsorList.empty()) {
@@ -140,18 +122,38 @@ namespace winrt::StarlightGUI::implementation
         }
         catch (const hresult_error& e) {
             LOG_ERROR(__WFUNCTION__, L"Failed to get sponsor list! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-            sponsorList = t(L"Help_FetchFailed");
+            sponsorList = t(L"Help.FetchFailed");
         }
         co_return;
     }
 
     void HelpPage::SetSponsorList() {
         if (sponsorList.empty()) {
-            SponsorListText().Text(t(L"Help_FetchFailed"));
+            SponsorListText().Text(t(L"Help.FetchFailed"));
         }
         else {
             SponsorListText().Text(sponsorList);
         }
+    }
+
+    void HelpPage::SetupLocalization() {
+        HelpAboutUid().Text(t(L"Help.Header.About"));
+        HelpStarsDescUid().Text(t(L"Help.Text.Stars.Desc"));
+        HelpBilibiliButtonUid().Content(tbox(L"Help.Button.Bilibili"));
+        HelpGithubDescUid().Text(t(L"Help.Text.Github.Desc"));
+        HelpGithubUserButtonUid().Content(tbox(L"Help.Button.GithubUser"));
+        HelpGithubRepoButtonUid().Content(tbox(L"Help.Button.GithubRepo"));
+        HelpAcknowledgementUid().Text(t(L"Help.Header.Acknowledgement"));
+        HelpWinUIDescUid().Text(t(L"Help.Text.WinUI.Desc"));
+        HelpWinUIButtonUid().Content(tbox(L"Help.Button.WinUI"));
+        HelpWinUIEssentialsDescUid().Text(t(L"Help.Text.WinUIEssentials.Desc"));
+        HelpKALIDescUid().Text(t(L"Help.Text.KALI.Desc"));
+        HelpMuLinDescUid().Text(t(L"Help.Text.MuLin.Desc"));
+        HelpWormwakerDescUid().Text(t(L"Help.Text.Wormwaker.Desc"));
+        HelpSponsorsUid().Text(t(L"Help.Header.Sponsors"));
+        HelpSponsorButtonUid().Content(tbox(L"Help.Button.Sponsor"));
+        HelpSponsorIntroUid().Text(t(L"Help.Text.SponsorIntro"));
+        SponsorListText().Text(t(L"Msg.Loading"));
     }
 }
 

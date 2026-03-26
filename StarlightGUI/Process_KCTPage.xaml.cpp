@@ -37,11 +37,7 @@ namespace winrt::StarlightGUI::implementation
 {
     Process_KCTPage::Process_KCTPage() {
         InitializeComponent();
-
-        KCTTitleText().Text(t(L"ProcKCT_Title.Text"));
-        KCTCountText().Text(t(L"ProcKCT_Loading.Text"));
-        FunctionHeaderButton().Content(tbox(L"ProcKCT_HeaderFunction.Content"));
-        AddressHeaderButton().Content(tbox(L"ProcKCT_HeaderAddress.Content"));
+        SetupLocalization();
 
         KCTListView().ItemsSource(m_kctList);
 
@@ -66,7 +62,7 @@ namespace winrt::StarlightGUI::implementation
 
         MenuFlyout menuFlyout;
 
-        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", t(L"ProcKCT_Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto itemRefresh = slg::CreateMenuItem(flyoutStyles, L"\ue72c", t(L"Common.Refresh").c_str(), [this](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             LoadKCTList();
             co_return;
             });
@@ -74,8 +70,8 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separatorR;
 
         // 选项1.1
-        auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"ProcKCT_CopyInfo").c_str());
-        auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"ProcKCT_Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
+        auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Name().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
             }
@@ -83,7 +79,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item1_1.Items().Append(item1_1_sub1);
-        auto item1_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"ProcKCT_Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Common.Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Address().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
             }
@@ -111,7 +107,7 @@ namespace winrt::StarlightGUI::implementation
         if (!processForInfoWindow) co_return;
         // 跳过内核进程，获取可能导致异常或蓝屏
         if (processForInfoWindow.Name() == L"Idle" || processForInfoWindow.Name() == L"System" || processForInfoWindow.Name() == L"Registry" || processForInfoWindow.Name() == L"Memory Compression" || processForInfoWindow.Name() == L"Secure System" || processForInfoWindow.Name() == L"Unknown") {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcKCT_NoInfo").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcKCT.Msg.NoInfo").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
             co_return;
         }
 
@@ -135,12 +131,12 @@ namespace winrt::StarlightGUI::implementation
         co_await wil::resume_foreground(DispatcherQueue());
 
         if (kcts.size() >= 1000) {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcKCT_TooManyRecords").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcKCT.Msg.TooManyRecords").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
         }
 
         for (const auto& kct : kcts) {
-            if (kct.Name().empty()) kct.Name(t(L"ProcKCT_Unknown"));
-            if (kct.Address().empty()) kct.Address(t(L"ProcKCT_Unknown"));
+            if (kct.Name().empty()) kct.Name(t(L"Common.Unknown"));
+            if (kct.Address().empty()) kct.Address(t(L"Common.Unknown"));
 
             m_kctList.Append(kct);
         }
@@ -149,11 +145,19 @@ namespace winrt::StarlightGUI::implementation
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         // 更新模块数量文本
-    KCTCountText().Text(t(L"ProcKCT_Count", static_cast<size_t>(m_kctList.Size()), static_cast<long long>(duration.count())));
+        KCTCountText().Text(t(L"ProcKCT.Detail", static_cast<size_t>(m_kctList.Size()), static_cast<long long>(duration.count())));
         LoadingRing().IsActive(false);
 
         LOG_INFO(__WFUNCTION__, L"Loaded kernel callback table list, %d entry(s) in total.", m_kctList.Size());
     }
+
+    void Process_KCTPage::SetupLocalization()
+    {
+        KCTTitleText().Text(t(L"ProcKCT.Title"));
+        KCTCountText().Text(t(L"Common.Loading"));
+        FunctionHeaderButton().Content(tbox(L"ProcKCT.Header.Function"));
+        AddressHeaderButton().Content(tbox(L"Common.Address"));
+	}
 }
 
 

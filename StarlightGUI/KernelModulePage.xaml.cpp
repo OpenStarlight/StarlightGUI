@@ -85,7 +85,7 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyout menuFlyout;
 
         // 选项1.1
-        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\uec91", t(L"KernelModule.Unload").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\uec91", t(L"KernelModule.Menu.Unload").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::UnloadDriver(item.DriverObjectULong())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
@@ -95,7 +95,7 @@ namespace winrt::StarlightGUI::implementation
             });
 
         // 选项1.2
-        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ued1a", t(L"KernelModule.Hide").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ued1a", t(L"KernelModule.Menu.Hide").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::HideDriver(item.DriverObjectULong())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
@@ -108,8 +108,8 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator1;
 
         // 选项2.1
-        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"KernelModule.CopyInfo").c_str());
-        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"KModule_Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
+        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Name().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
@@ -398,7 +398,7 @@ namespace winrt::StarlightGUI::implementation
                     KernelInstance::DisableDSE();
                 }
 
-                bool status = DriverUtils::LoadDriver(driverPath.c_str(), file.Name().c_str(), unused);
+                bool status = DriverUtils::LoadDriver(driverPath.c_str(), file.Name().c_str());
 
                 if (bypass) {
                     KernelInstance::EnableDSE();
@@ -459,7 +459,7 @@ namespace winrt::StarlightGUI::implementation
         RefreshKernelModuleListButton().Label(t(L"Common.Refresh"));
         LoadDriverButton().Label(t(L"KernelModule.Button.LoadDriver"));
         UnloadModuleButton().Label(t(L"KernelModule.Button.UnloadModule"));
-        KernelModuleSearchBox().PlaceholderText(t(L"KernelModule.PlaceholderText"));
+        KernelModuleSearchBox().PlaceholderText(t(L"KernelModule.Placeholder"));
         NameHeaderButton().Content(tbox(L"Common.Module"));
         ImageBaseHeaderButton().Content(tbox(L"Common.Base"));
         DriverObjectHeaderButton().Content(tbox(L"KernelModule.Header.DriverObj"));

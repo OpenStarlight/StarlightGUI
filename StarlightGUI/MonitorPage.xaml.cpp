@@ -150,9 +150,9 @@ namespace winrt::StarlightGUI::implementation
 			bool shouldRemove = lowerQuery.empty() ? false : !ContainsIgnoreCaseLowerQuery(object.Name().c_str(), lowerQuery);
 			if (shouldRemove) continue;
 
-			if (object.Name().empty()) object.Name(t(L"Msg_Unknown"));
-			if (object.Type().empty()) object.Type(t(L"Msg_Unknown"));
-			if (object.CreationTime().empty()) object.CreationTime(t(L"Msg_Unknown"));
+			if (object.Name().empty()) object.Name(t(L"Msg.Unknown"));
+			if (object.Type().empty()) object.Type(t(L"Msg.Unknown"));
+			if (object.CreationTime().empty()) object.CreationTime(t(L"Msg.Unknown"));
 			if (!object.Link().empty()) object.Path(object.Link());
 
 			m_objectList.Append(object);
@@ -330,12 +330,12 @@ namespace winrt::StarlightGUI::implementation
 			}
 			if (shouldRemove) continue;
 
-			if (entry.String1().empty()) entry.String1(t(L"Msg_Unknown"));
-			if (entry.String2().empty()) entry.String2(t(L"Msg_Unknown"));
-			if (entry.String3().empty()) entry.String3(t(L"Msg_Unknown"));
-			if (entry.String4().empty()) entry.String4(t(L"Msg_Unknown"));
-			if (entry.String5().empty()) entry.String5(t(L"Msg_Unknown"));
-			if (entry.String6().empty()) entry.String6(t(L"Msg_Unknown"));
+			if (entry.String1().empty()) entry.String1(t(L"Msg.Unknown"));
+			if (entry.String2().empty()) entry.String2(t(L"Msg.Unknown"));
+			if (entry.String3().empty()) entry.String3(t(L"Msg.Unknown"));
+			if (entry.String4().empty()) entry.String4(t(L"Msg.Unknown"));
+			if (entry.String5().empty()) entry.String5(t(L"Msg.Unknown"));
+			if (entry.String6().empty()) entry.String6(t(L"Msg.Unknown"));
 
 			m_generalList.Append(entry);
 		}
@@ -588,7 +588,7 @@ namespace winrt::StarlightGUI::implementation
 		MenuFlyoutSeparator separator1;
 
 		// 选项2.1
-		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Monitor.Menu.CopyInfo").c_str());
+		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
 		auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Type").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
 			if (TaskUtils::CopyToClipboard(item.String2().c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -657,7 +657,7 @@ namespace winrt::StarlightGUI::implementation
 		MenuFlyoutSeparator separator1;
 
 		// 选项2.1
-		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Monitor.Menu.CopyInfo").c_str());
+		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
 		auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", L"IRP", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
 			if (TaskUtils::CopyToClipboard(item.String2().c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -734,7 +734,7 @@ namespace winrt::StarlightGUI::implementation
 		MenuFlyoutSeparator separator1;
 
 		// 选项2.1
-		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Monitor.Menu.CopyInfo").c_str());
+		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
 		auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Monitor.Menu.Driver").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
 			if (TaskUtils::CopyToClipboard(item.String2().c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -821,7 +821,7 @@ namespace winrt::StarlightGUI::implementation
 		MenuFlyoutSeparator separator1;
 
 		// 选项2.1
-		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Monitor.Menu.CopyInfo").c_str());
+		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
 		auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
 			if (TaskUtils::CopyToClipboard(item.String2().c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -899,7 +899,7 @@ namespace winrt::StarlightGUI::implementation
 		MenuFlyoutSeparator separator1;
 
 		// 选项2.1
-		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Monitor.Menu.CopyInfo").c_str());
+		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
 		auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
 			if (TaskUtils::CopyToClipboard(item.String1().c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -976,7 +976,7 @@ namespace winrt::StarlightGUI::implementation
 		MenuFlyoutSeparator separator1;
 
 		// 选项2.1
-		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Monitor.Menu.CopyInfo").c_str());
+		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
 		auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", t(L"Common.Module").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
 			if (TaskUtils::CopyToClipboard(item.String1().c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -1024,7 +1024,7 @@ namespace winrt::StarlightGUI::implementation
 		MenuFlyout menuFlyout;
 
 		// 选项1.1
-		auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Monitor.Menu.CopyInfo").c_str());
+		auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
 		auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
 			if (TaskUtils::CopyToClipboard(item.String1().c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -1357,7 +1357,7 @@ namespace winrt::StarlightGUI::implementation
 		MonitorSegPiDDBUid().Text(t(L"Monitor.Seg.PiDDB"));
 		MonitorSegHALDPTUid().Text(t(L"Monitor.Seg.HALDPT"));
 		MonitorSegHALPDPTUid().Text(t(L"Monitor.Seg.HALPDPT"));
-		SearchBox().PlaceholderText(t(L"Monitor.PlaceholderText"));
+		SearchBox().PlaceholderText(t(L"Monitor.Placeholder"));
 		DefaultText().Text(t(L"Monitor.DefaultText"));
 		RefreshButton().Label(t(L"Common.Refresh"));
 		DbgViewButton().Content(tbox(L"Monitor.Open"));

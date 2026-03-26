@@ -134,7 +134,7 @@ namespace winrt::StarlightGUI::implementation
         else {
             if (!confirmed) {
                 slg::CreateInfoBarAndDisplay(
-                    t(L"Msg_Warning").c_str(),
+                    t(L"Msg.Warning").c_str(),
                     t(L"Disasm.Msg.WriteWarning").c_str(),
                     InfoBarSeverity::Warning,
                     g_mainWindowInstance

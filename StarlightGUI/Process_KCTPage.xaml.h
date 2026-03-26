@@ -10,6 +10,7 @@ namespace winrt::StarlightGUI::implementation
     struct Process_KCTPage : Process_KCTPageT<Process_KCTPage>
     {
         Process_KCTPage();
+        void SetupLocalization();
 
         void KCTListView_RightTapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
         void KCTListView_ContainerContentChanging(

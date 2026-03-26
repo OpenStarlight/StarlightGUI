@@ -10,6 +10,7 @@ namespace winrt::StarlightGUI::implementation
     struct Process_ModulePage : Process_ModulePageT<Process_ModulePage>
     {
         Process_ModulePage();
+        void SetupLocalization();
 
         void ModuleListView_RightTapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
         void ModuleListView_ContainerContentChanging(

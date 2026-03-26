@@ -3,12 +3,11 @@
 #include <shellapi.h>
 
 namespace winrt::StarlightGUI::implementation {
-	bool DriverUtils::LoadKernelDriver(LPCWSTR kernelPath, std::wstring& dbgMsg) noexcept {
+	bool DriverUtils::LoadKernelDriver(LPCWSTR kernelPath) noexcept {
 		SC_HANDLE hSCM, hService;
 
 		hSCM = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 		if (!hSCM) {
-			dbgMsg = t(L"Driver_CannotOpenSCManager");
 			return false;
 		}
 
@@ -19,7 +18,6 @@ namespace winrt::StarlightGUI::implementation {
 			if (!QueryServiceStatus(hService, &serviceStatus)) {
 				CloseServiceHandle(hService);
 				CloseServiceHandle(hSCM);
-				dbgMsg = t(L"Driver_CannotQueryService");
 				return false;
 			}
 
@@ -28,12 +26,10 @@ namespace winrt::StarlightGUI::implementation {
 				if (!StartServiceW(hService, 0, nullptr)) {
 					CloseServiceHandle(hService);
 					CloseServiceHandle(hSCM);
-					dbgMsg = t(L"Driver_CannotStartService");
 					return false;
 				}
 			}
 
-			dbgMsg = t(L"Msg_Success");
 			CloseServiceHandle(hService);
 			CloseServiceHandle(hSCM);
 			return true;
@@ -47,7 +43,6 @@ namespace winrt::StarlightGUI::implementation {
 
 			if (!hService) {
 				CloseServiceHandle(hSCM);
-				dbgMsg = t(L"Driver_CannotCreateService");
 				return false;
 			}
 
@@ -56,11 +51,9 @@ namespace winrt::StarlightGUI::implementation {
 			if (!StartServiceW(hService, 0, nullptr)) {
 				CloseServiceHandle(hService);
 				CloseServiceHandle(hSCM);
-				dbgMsg = t(L"Driver_CannotStartService");
 				return false;
 			}
 
-			dbgMsg = t(L"Msg_Success");
 			CloseServiceHandle(hService);
 			CloseServiceHandle(hSCM);
 			return true;
@@ -68,12 +61,11 @@ namespace winrt::StarlightGUI::implementation {
 		return false;
 	}
 
-	bool DriverUtils::LoadDriver(LPCWSTR kernelPath, LPCWSTR fileName, std::wstring& dbgMsg) noexcept {
+	bool DriverUtils::LoadDriver(LPCWSTR kernelPath, LPCWSTR fileName) noexcept {
 		SC_HANDLE hSCM, hService;
 
 		hSCM = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 		if (!hSCM) {
-			dbgMsg = t(L"Driver_CannotOpenSCManager");
 			return false;
 		}
 
@@ -84,7 +76,6 @@ namespace winrt::StarlightGUI::implementation {
 			if (!QueryServiceStatus(hService, &serviceStatus)) {
 				CloseServiceHandle(hService);
 				CloseServiceHandle(hSCM);
-				dbgMsg = t(L"Driver_CannotQueryService");
 				return false;
 			}
 
@@ -93,12 +84,10 @@ namespace winrt::StarlightGUI::implementation {
 				if (!StartServiceW(hService, 0, nullptr)) {
 					CloseServiceHandle(hService);
 					CloseServiceHandle(hSCM);
-					dbgMsg = t(L"Driver_CannotStartService");
 					return false;
 				}
 			}
 
-			dbgMsg = t(L"Msg_Success");
 			CloseServiceHandle(hService);
 			CloseServiceHandle(hSCM);
 			return true;
@@ -112,7 +101,6 @@ namespace winrt::StarlightGUI::implementation {
 
 			if (!hService) {
 				CloseServiceHandle(hSCM);
-				dbgMsg = t(L"Driver_CannotCreateService");
 				return false;
 			}
 
@@ -121,11 +109,9 @@ namespace winrt::StarlightGUI::implementation {
 			if (!StartServiceW(hService, 0, nullptr)) {
 				CloseServiceHandle(hService);
 				CloseServiceHandle(hSCM);
-				dbgMsg = t(L"Driver_CannotStartService");
 				return false;
 			}
 
-			dbgMsg = t(L"Msg_Success");
 			CloseServiceHandle(hService);
 			CloseServiceHandle(hSCM);
 			return true;
@@ -148,13 +134,11 @@ namespace winrt::StarlightGUI::implementation {
 			DWORD processId = GetProcessId(sei.hProcess);
 			CloseHandle(sei.hProcess);
 			CloseHandle(sei.hIcon);
-			std::wstring content = std::wstring(t(L"Driver_ScriptSuccess").c_str()) + L" PID: " + std::to_wstring(processId);
-			slg::CreateInfoBarAndDisplay(t(L"Common.Success"), content.c_str(),
+			slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"),
 				InfoBarSeverity::Success, g_mainWindowInstance);
 		}
 		else {
-			std::wstring content = std::wstring(t(L"Driver_ScriptFailed").c_str()) + std::wstring(t(L"Msg_ErrorCode").c_str()) + std::to_wstring(GetLastError());
-			slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), content.c_str(),
+			slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()),
 				InfoBarSeverity::Error, g_mainWindowInstance);
 		}
 	}

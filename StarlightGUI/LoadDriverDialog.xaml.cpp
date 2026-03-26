@@ -16,15 +16,13 @@ namespace winrt::StarlightGUI::implementation
     LoadDriverDialog::LoadDriverDialog() {
         InitializeComponent();
 
-        this->Title(tbox(L"LoadDriver_Dialog.Title"));
-        this->PrimaryButtonText(t(L"LoadDriver_Dialog.PrimaryButtonText"));
-        this->SecondaryButtonText(t(L"LoadDriver_Dialog.SecondaryButtonText"));
-        LoadDriverDescriptionText().Text(t(L"LoadDriver_Description.Text"));
-        DriverPathTextBox().PlaceholderText(t(L"LoadDriver_Path.PlaceholderText"));
-        ExploreButton().Content(tbox(L"LoadDriver_Browse.Content"));
-        BypassCheckBox().Content(tbox(L"LoadDriver_Bypass.Content"));
-
-        if (hypervisor_mode) BypassCheckBox().Content(tbox(L"LoadDriver_BypassDSE"));
+        this->Title(tbox(L"LoadDriver.Title"));
+        this->PrimaryButtonText(t(L"LoadDriver.ButtonPrimary"));
+        this->SecondaryButtonText(t(L"LoadDriver.ButtonSecondary"));
+        LoadDriverDescriptionText().Text(t(L"LoadDriver.Desc"));
+        DriverPathTextBox().PlaceholderText(t(L"LoadDriver.Placeholder"));
+        ExploreButton().Content(tbox(L"LoadDriver.Browse"));
+        BypassCheckBox().Content(tbox(L"LoadDriver.Bypass"));
     }
 
     void LoadDriverDialog::OnPrimaryButtonClick(ContentDialog const& sender,
@@ -67,11 +65,11 @@ namespace winrt::StarlightGUI::implementation
                 DriverPathTextBox().Text(file.Path());
             }
             else {
-                ErrorText().Text(t(L"LoadDriver_NotSYS"));
+                ErrorText().Text(t(L"LoadDriver.Msg.NotSYS"));
             }
         }
         else {
-            ErrorText().Text(t(L"LoadDriver_FileNotExist"));
+            ErrorText().Text(t(L"Msg.FileNotFound"));
         }
     }
 }

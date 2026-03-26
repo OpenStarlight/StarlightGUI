@@ -10,6 +10,7 @@ namespace winrt::StarlightGUI::implementation
     struct Process_HandlePage : Process_HandlePageT<Process_HandlePage>
     {
         Process_HandlePage();
+        void SetupLocalization();
 
         void HandleListView_RightTapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
         void HandleListView_ContainerContentChanging(

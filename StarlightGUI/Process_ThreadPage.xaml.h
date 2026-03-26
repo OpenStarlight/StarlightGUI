@@ -10,6 +10,7 @@ namespace winrt::StarlightGUI::implementation
     struct Process_ThreadPage : Process_ThreadPageT<Process_ThreadPage>
     {
         Process_ThreadPage();
+        void SetupLocalization();
 
         void ThreadListView_RightTapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
         void ThreadListView_ContainerContentChanging(

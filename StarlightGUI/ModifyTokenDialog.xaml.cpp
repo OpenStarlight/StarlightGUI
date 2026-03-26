@@ -7,20 +7,17 @@
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
 
-// 了解更多 WinUI、WinUI 项目结构与项目模板，请参见：
-// http://aka.ms/winui-project-info.
-
 namespace winrt::StarlightGUI::implementation
 {
     ModifyTokenDialog::ModifyTokenDialog()
     {
         InitializeComponent();
 
-        this->Title(tbox(L"ModifyToken_Dialog.Title"));
-        this->PrimaryButtonText(t(L"ModifyToken_Dialog.PrimaryButtonText"));
-        this->SecondaryButtonText(t(L"ModifyToken_Dialog.SecondaryButtonText"));
-        ModifyTokenDescriptionText().Text(t(L"ModifyToken_Description.Text"));
-        TokenComboBox().Text(t(L"ModifyToken_Token.Text"));
+        this->Title(tbox(L"ModifyToken.Title"));
+        this->PrimaryButtonText(t(L"ModifyToken.ButtonPrimary"));
+        this->SecondaryButtonText(t(L"ModifyToken.ButtonSecondary"));
+        ModifyTokenDescriptionText().Text(t(L"ModifyToken.Desc"));
+        TokenComboBox().Text(t(L"ModifyToken.Token"));
     }
 
     void ModifyTokenDialog::OnPrimaryButtonClick(ContentDialog const& sender,

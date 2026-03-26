@@ -615,7 +615,7 @@ namespace winrt::StarlightGUI::implementation
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
         // 更新窗口数量文本
-        WindowCountText().Text(t(L"Window_Count", static_cast<size_t>(m_windowList.Size()), static_cast<long long>(duration)));
+        WindowCountText().Text(t(L"Window.Detail", m_windowList.Size(), duration));
 
         LoadingRing().IsActive(false);
         slg::UpdateVisibleListViewMarqueeByNames(
@@ -899,7 +899,7 @@ namespace winrt::StarlightGUI::implementation
         ShowNoTitleCheckBox().Content(tbox(L"Window.ShowNoTitle"));
         ShowVisibleOnlyCheckBox().Content(tbox(L"Window.ShowVisibleOnly"));
         RefreshButton().Label(t(L"Common.Refresh"));
-        SearchBox().PlaceholderText(t(L"Window.PlaceholderText"));
+        SearchBox().PlaceholderText(t(L"Window.Placeholder"));
         NameHeaderButton().Content(tbox(L"Common.Window"));
         WindowStyleHeaderButton().Content(tbox(L"Window.Header.Style"));
     }
