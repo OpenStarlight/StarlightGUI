@@ -17,10 +17,10 @@ namespace winrt::StarlightGUI::implementation
         InitializeComponent();
 
         this->Title(tbox(L"LoadDriver_Dialog.Title"));
-        this->PrimaryButtonText(GetLocalizedString(L"LoadDriver_Dialog.PrimaryButtonText"));
-        this->SecondaryButtonText(GetLocalizedString(L"LoadDriver_Dialog.SecondaryButtonText"));
-        LoadDriverDescriptionText().Text(GetLocalizedString(L"LoadDriver_Description.Text"));
-        DriverPathTextBox().PlaceholderText(GetLocalizedString(L"LoadDriver_Path.PlaceholderText"));
+        this->PrimaryButtonText(t(L"LoadDriver_Dialog.PrimaryButtonText"));
+        this->SecondaryButtonText(t(L"LoadDriver_Dialog.SecondaryButtonText"));
+        LoadDriverDescriptionText().Text(t(L"LoadDriver_Description.Text"));
+        DriverPathTextBox().PlaceholderText(t(L"LoadDriver_Path.PlaceholderText"));
         ExploreButton().Content(tbox(L"LoadDriver_Browse.Content"));
         BypassCheckBox().Content(tbox(L"LoadDriver_Bypass.Content"));
 
@@ -67,11 +67,11 @@ namespace winrt::StarlightGUI::implementation
                 DriverPathTextBox().Text(file.Path());
             }
             else {
-                ErrorText().Text(GetLocalizedString(L"LoadDriver_NotSYS"));
+                ErrorText().Text(t(L"LoadDriver_NotSYS"));
             }
         }
         else {
-            ErrorText().Text(GetLocalizedString(L"LoadDriver_FileNotExist"));
+            ErrorText().Text(t(L"LoadDriver_FileNotExist"));
         }
     }
 }

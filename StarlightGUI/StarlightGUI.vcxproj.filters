@@ -66,9 +66,6 @@
     <Page Include="MonitorPage.xaml">
       <Filter>Pages</Filter>
     </Page>
-    <Page Include="DeuteriumPage.xaml">
-      <Filter>Pages</Filter>
-    </Page>
     <Page Include="DisasmPage.xaml">
       <Filter>Pages</Filter>
     </Page>
@@ -298,6 +295,12 @@
     <Filter Include="Strings">
       <UniqueIdentifier>{c7b9ce89-4b1d-4784-9a3f-2b4f4d7e6670}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Strings\zh-CN">
+      <UniqueIdentifier>{db1fe67d-3142-4798-a92d-2f15e660c377}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Strings\en-US">
+      <UniqueIdentifier>{7126c4af-1a4c-463c-9147-cfa3113705fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="app.manifest" />
@@ -305,12 +308,6 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="StarlightGUI_TemporaryKey.pfx" />
-    <None Include="Strings\en-US\Resources.json">
-      <Filter>Strings</Filter>
-    </None>
-    <None Include="Strings\zh-CN\Resources.json">
-      <Filter>Strings</Filter>
-    </None>
     <None Include="Assets\kernel.sys">
       <Filter>Assets</Filter>
     </None>
@@ -339,5 +336,13 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="StarlightGUI.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Strings\zh-CN\Resources.json">
+      <Filter>Strings\zh-CN</Filter>
+    </Text>
+    <Text Include="Strings\en-US\Resources.json">
+      <Filter>Strings\en-US</Filter>
+    </Text>
   </ItemGroup>
 </Project>

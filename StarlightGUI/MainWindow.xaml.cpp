@@ -45,16 +45,7 @@ namespace winrt::StarlightGUI::implementation
     MainWindow::MainWindow()
     {
         InitializeComponent();
-
-        NavHomeUid().Content(tbox(L"Nav_Home.Content"));
-        NavTaskUid().Content(tbox(L"Nav_Task.Content"));
-        NavKernelModuleUid().Content(tbox(L"Nav_KernelModule.Content"));
-        NavFileUid().Content(tbox(L"Nav_File.Content"));
-        NavWindowUid().Content(tbox(L"Nav_Window.Content"));
-        NavUtilityUid().Content(tbox(L"Nav_Utility.Content"));
-        NavMonitorUid().Content(tbox(L"Nav_Monitor.Content"));
-        NavDisasmUid().Content(tbox(L"Nav_Disasm.Content"));
-        NavHelpUid().Content(tbox(L"Nav_Help.Content"));
+        SetupLocalization();
 
         auto windowNative{ this->try_as<::IWindowNative>() };
         HWND hWnd{ 0 };
@@ -98,7 +89,7 @@ namespace winrt::StarlightGUI::implementation
                 RootNavigation().IsEnabled(false);
                 loaded = true;
                 // 加载模块
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Info").c_str(), GetLocalizedString(L"MainWindow_LoadingModules").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Driver.Loading"), InfoBarSeverity::Informational, g_mainWindowInstance);
                 co_await LoadModules();
 
                 // 进入主页
@@ -219,9 +210,9 @@ namespace winrt::StarlightGUI::implementation
         HMENU hMenu = CreatePopupMenu();
         if (!hMenu) return;
 
-        AppendMenuW(hMenu, MF_STRING, TRAY_CMD_RESTORE, GetLocalizedString(L"MainWindow_OpenMainWindow").c_str());
+        AppendMenuW(hMenu, MF_STRING, TRAY_CMD_RESTORE, t(L"MainWindow.Tray.Open").c_str());
         AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
-        AppendMenuW(hMenu, MF_STRING, TRAY_CMD_EXIT, GetLocalizedString(L"MainWindow_Exit").c_str());
+        AppendMenuW(hMenu, MF_STRING, TRAY_CMD_EXIT, t(L"Common.Exit").c_str());
 
         POINT point{};
         GetCursorPos(&point);
@@ -284,10 +275,6 @@ namespace winrt::StarlightGUI::implementation
         else if (invokedItem == L"Disasm") {
             MainFrame().Navigate(xaml_typename<StarlightGUI::DisasmPage>());
             RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(7));
-        }
-        else if (invokedItem == L"Deuterium") {
-            MainFrame().Navigate(xaml_typename<StarlightGUI::DeuteriumPage>());
-            RootNavigation().SelectedItem(RootNavigation().FooterMenuItems().GetAt(0));
         }
         else if (invokedItem == L"Help") {
             MainFrame().Navigate(xaml_typename<StarlightGUI::HelpPage>());
@@ -449,15 +436,15 @@ namespace winrt::StarlightGUI::implementation
 
                 if (latestBuildNumber == 0) {
                     LOG_WARNING(L"Updater", L"Latest = 0, check failed.");
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"MainWindow_CheckUpdateFailed").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"MainWindow.Updater.Failed"), InfoBarSeverity::Warning, g_mainWindowInstance);
                 }
                 else if (latestBuildNumber == currentBuildNumber) {
                     LOG_INFO(L"Updater", L"Latest = current, we are on the latest version.");
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Info").c_str(), GetLocalizedString(L"MainWindow_LatestVersion").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Updater.Latest"), InfoBarSeverity::Informational, g_mainWindowInstance);
                 }
                 else if (latestBuildNumber > currentBuildNumber) {
                     LOG_INFO(L"Updater", L"Latest > current, new version avaliable. Calling up update dialog.");
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Info").c_str(), GetLocalizedString(L"MainWindow_NewVersionAvailable").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Updater.New"), InfoBarSeverity::Informational, g_mainWindowInstance);
                     auto dialog = winrt::make<winrt::StarlightGUI::implementation::UpdateDialog>();
                     dialog.IsUpdate(true);
                     dialog.LatestVersion(json.GetNamedString(L"version"));
@@ -470,16 +457,16 @@ namespace winrt::StarlightGUI::implementation
                         auto result = co_await Launcher::LaunchUriAsync(target);
 
                         if (result) {
-                            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"MainWindow_OpenedInBrowser").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                            slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.OpenInBrowser.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                         }
                         else {
-                            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"MainWindow_OpenBrowserFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                            slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.OpenInBrowser.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
                         }
                     }
                 }
                 else if (latestBuildNumber < currentBuildNumber) {
                     LOG_INFO(L"Updater", L"Latest < current, maybe we are on a dev environment.", kernelPath.c_str());
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Info").c_str(), GetLocalizedString(L"MainWindow_DevVersion").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Updater.Dev"), InfoBarSeverity::Informational, g_mainWindowInstance);
                 }
             }
         } 
@@ -519,12 +506,12 @@ namespace winrt::StarlightGUI::implementation
 
                     if (GetLastError() == 2 || GetLastError() == 98) {
                         co_await wil::resume_foreground(DispatcherQueue());
-                        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"MainWindow_FailedHelp1").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.FailedHelp1"), InfoBarSeverity::Error, g_mainWindowInstance);
                         co_await winrt::resume_background();
                     }
                     else if (GetLastError() == 193) {
                         co_await wil::resume_foreground(DispatcherQueue());
-                        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"MainWindow_FailedHelp2").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.FailedHelp2"), InfoBarSeverity::Error, g_mainWindowInstance);
                         co_await winrt::resume_background();
                     }
                 }
@@ -539,11 +526,11 @@ namespace winrt::StarlightGUI::implementation
 
                     if (GetLastError() == 2 || GetLastError() == 98) {
                         co_await wil::resume_foreground(DispatcherQueue());
-                        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"MainWindow_FailedHelp1").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.FailedHelp1"), InfoBarSeverity::Error, g_mainWindowInstance);
                     }
                     else if (GetLastError() == 193) {
                         co_await wil::resume_foreground(DispatcherQueue());
-                        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"MainWindow_FailedHelp2").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.FailedHelp2"), InfoBarSeverity::Error, g_mainWindowInstance);
                     }
                 }
 
@@ -551,16 +538,16 @@ namespace winrt::StarlightGUI::implementation
 
                 if (failedCount > 0) {
                     LOG_ERROR(L"Driver", L"%d module(s) failed to load.", failedCount);
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"MainWindow_ModuleLoadFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
                 }
                 else {
                     LOG_INFO(L"Driver", L"Modules loaded successfully.", kernelPath.c_str());
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"MainWindow_ModuleLoadSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"MainWindow.Driver.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 }
             }
             catch (const hresult_error& e) {
                 LOG_ERROR(L"Driver", L"Failed to load modules! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"MainWindow_ModuleLoadFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
             }
         }
     }
@@ -667,6 +654,18 @@ namespace winrt::StarlightGUI::implementation
         }
         }
         return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+    }
+
+    void MainWindow::SetupLocalization() {
+        NavHomeUid().Content(tbox(L"Nav.Home"));
+        NavTaskUid().Content(tbox(L"Nav.Task"));
+        NavKernelModuleUid().Content(tbox(L"Nav.KernelModule"));
+        NavFileUid().Content(tbox(L"Nav.File"));
+        NavWindowUid().Content(tbox(L"Nav.Window"));
+        NavUtilityUid().Content(tbox(L"Nav.Utility"));
+        NavMonitorUid().Content(tbox(L"Nav.Monitor"));
+        NavDisasmUid().Content(tbox(L"Nav.Disasm"));
+        NavHelpUid().Content(tbox(L"Nav.Help"));
     }
 }
 

@@ -14,6 +14,7 @@ namespace winrt::StarlightGUI::implementation
     {
         MainWindow();
         ~MainWindow();
+        void SetupLocalization();
 
         void RootNavigation_ItemInvoked(Microsoft::UI::Xaml::Controls::NavigationView sender, Microsoft::UI::Xaml::Controls::NavigationViewItemInvokedEventArgs args);
 

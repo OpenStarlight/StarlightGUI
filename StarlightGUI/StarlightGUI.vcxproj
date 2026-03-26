@@ -181,10 +181,6 @@
       <DependentUpon>CopyFileDialog.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClInclude>
-    <ClInclude Include="DeuteriumPage.xaml.h">
-      <DependentUpon>DeuteriumPage.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClInclude>
     <ClInclude Include="DisasmPage.xaml.h">
       <DependentUpon>DisasmPage.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -303,9 +299,6 @@
     <Page Include="CopyFileDialog.xaml">
       <SubType>Designer</SubType>
     </Page>
-    <Page Include="DeuteriumPage.xaml">
-      <SubType>Designer</SubType>
-    </Page>
     <Page Include="DisasmPage.xaml">
       <SubType>Designer</SubType>
     </Page>
@@ -375,10 +368,6 @@
     <ClCompile Include="Console.cpp" />
     <ClCompile Include="CopyFileDialog.xaml.cpp">
       <DependentUpon>CopyFileDialog.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </ClCompile>
-    <ClCompile Include="DeuteriumPage.xaml.cpp">
-      <DependentUpon>DeuteriumPage.xaml</DependentUpon>
       <SubType>Code</SubType>
     </ClCompile>
     <ClCompile Include="DisasmPage.xaml.cpp">
@@ -498,10 +487,6 @@
   <ItemGroup>
     <Midl Include="CopyFileDialog.idl">
       <DependentUpon>CopyFileDialog.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Midl>
-    <Midl Include="DeuteriumPage.idl">
-      <DependentUpon>DeuteriumPage.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Midl>
     <Midl Include="DisasmPage.idl">

@@ -178,13 +178,13 @@ namespace winrt::StarlightGUI::implementation
 		DisasmCountSlider().Value(disasm_count);
         LanguageComboBox().SelectedIndex((language == "zh-CN") ? 1 : (language == "en-US") ? 2 : 0);
 
-        SettingsFeatureUid().Text(GetLocalizedString(L"Settings_Feature.Text"));
-        SettingsMainUid().Text(GetLocalizedString(L"Settings_Main.Text"));
-        SettingsAppearanceUid().Text(GetLocalizedString(L"Settings_Appearance.Text"));
+        SettingsFeatureUid().Text(t(L"Settings_Feature.Text"));
+        SettingsMainUid().Text(t(L"Settings_Main.Text"));
+        SettingsAppearanceUid().Text(t(L"Settings_Appearance.Text"));
         SettingsImportImageUid().Content(tbox(L"Settings_ImportImage.Content"));
         SettingsClearImageUid().Content(tbox(L"Settings_ClearImage.Content"));
         SettingsImageRefreshUid().Content(tbox(L"Settings_ImageRefresh.Content"));
-        SettingsOtherUid().Text(GetLocalizedString(L"Settings_Other.Text"));
+        SettingsOtherUid().Text(t(L"Settings_Other.Text"));
         SettingsLogUid().Content(tbox(L"Settings_Log.Content"));
         SettingsFixUid().Content(tbox(L"Settings_Fix.Content"));
         EnumFileModeCard().Header(tbox("Settings_EnumFileMode_Card.Header"));
@@ -307,7 +307,7 @@ namespace winrt::StarlightGUI::implementation
     void SettingsPage::ElevatedRunButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Info").c_str(), GetLocalizedString(L"Msg_RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
+        slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"Msg_RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
         elevated_run = ElevatedRunButton().IsOn();
         SaveConfig("elevated_run", elevated_run);
     }
@@ -322,7 +322,7 @@ namespace winrt::StarlightGUI::implementation
     void SettingsPage::CheckUpdateButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-		slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Info").c_str(), GetLocalizedString(L"Msg_RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
+		slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"Msg_RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
         check_update = CheckUpdateButton().IsOn();
         SaveConfig("check_update", check_update);
     }
@@ -353,7 +353,7 @@ namespace winrt::StarlightGUI::implementation
             if (UpdateAutoStartTask(true)) {
                 auto_start = true;
                 SaveConfig("auto_start", true);
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_AutoStartEnabled").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg_AutoStartEnabled").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
             }
             else {
                 autoStartChanging = true;
@@ -362,14 +362,14 @@ namespace winrt::StarlightGUI::implementation
 
                 auto_start = false;
                 SaveConfig("auto_start", false);
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Msg_AutoStartEnableFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance, 2500);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg_AutoStartEnableFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance, 2500);
             }
         }
         else {
             if (UpdateAutoStartTask(false)) {
                 auto_start = false;
                 SaveConfig("auto_start", false);
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_AutoStartDisabled").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg_AutoStartDisabled").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
             }
             else {
                 autoStartChanging = true;
@@ -378,7 +378,7 @@ namespace winrt::StarlightGUI::implementation
 
                 auto_start = true;
                 SaveConfig("auto_start", true);
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Msg_AutoStartDisableFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg_AutoStartDisableFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             }
         }
     }
@@ -392,8 +392,8 @@ namespace winrt::StarlightGUI::implementation
         if (SetTaskManagerReplaceState(enabled)) {
             replace_taskmgr = enabled;
             SaveConfig("replace_taskmgr", replace_taskmgr);
-            auto msg = enabled ? GetLocalizedString(L"Msg_ReplaceTaskMgrEnabled") : GetLocalizedString(L"Msg_ReplaceTaskMgrDisabled");
-            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), msg.c_str(), InfoBarSeverity::Success, g_mainWindowInstance, 2500);
+            auto msg = enabled ? t(L"Msg_ReplaceTaskMgrEnabled") : t(L"Msg_ReplaceTaskMgrDisabled");
+            slg::CreateInfoBarAndDisplay(t(L"Common.Success"), msg.c_str(), InfoBarSeverity::Success, g_mainWindowInstance, 2500);
         }
         else {
             replaceTaskManagerChanging = true;
@@ -402,7 +402,7 @@ namespace winrt::StarlightGUI::implementation
 
             replace_taskmgr = !enabled;
             SaveConfig("replace_taskmgr", replace_taskmgr);
-            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Msg_ReplaceTaskMgrFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance, 2500);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg_ReplaceTaskMgrFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance, 2500);
         }
     }
 
@@ -472,7 +472,7 @@ namespace winrt::StarlightGUI::implementation
     void SettingsPage::FixButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Info").c_str(), GetLocalizedString(L"Msg_RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
+        slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"Msg_RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
         DriverUtils::FixServices();
     }
 
@@ -496,7 +496,7 @@ namespace winrt::StarlightGUI::implementation
         int idx = (int)LanguageComboBox().SelectedIndex();
         std::string lang = (idx == 0) ? "system" : (idx == 1) ? "zh-CN" : "en-US";
         SaveConfig("language", lang);
-        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Info").c_str(), GetLocalizedString(L"Msg_RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
+        slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"Msg_RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
     }
 }
 

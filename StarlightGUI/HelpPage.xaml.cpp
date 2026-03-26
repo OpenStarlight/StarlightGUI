@@ -21,23 +21,23 @@ namespace winrt::StarlightGUI::implementation
     HelpPage::HelpPage() {
         InitializeComponent();
 
-        HelpAboutUid().Text(GetLocalizedString(L"Help_About.Text"));
-        HelpStarsDescUid().Text(GetLocalizedString(L"Help_Stars_Desc.Text"));
+        HelpAboutUid().Text(t(L"Help_About.Text"));
+        HelpStarsDescUid().Text(t(L"Help_Stars_Desc.Text"));
         HelpBilibiliButtonUid().Content(tbox(L"Help_BilibiliButton.Content"));
-        HelpGithubDescUid().Text(GetLocalizedString(L"Help_Github_Desc.Text"));
+        HelpGithubDescUid().Text(t(L"Help_Github_Desc.Text"));
         HelpGithubUserButtonUid().Content(tbox(L"Help_GithubUserButton.Content"));
         HelpGithubRepoButtonUid().Content(tbox(L"Help_GithubRepoButton.Content"));
-        HelpAcknowledgementUid().Text(GetLocalizedString(L"Help_Acknowledgement.Text"));
-        HelpWinUIDescUid().Text(GetLocalizedString(L"Help_WinUI_Desc.Text"));
+        HelpAcknowledgementUid().Text(t(L"Help_Acknowledgement.Text"));
+        HelpWinUIDescUid().Text(t(L"Help_WinUI_Desc.Text"));
         HelpWinUIButtonUid().Content(tbox(L"Help_WinUIButton.Content"));
-        HelpWinUIEssentialsDescUid().Text(GetLocalizedString(L"Help_WinUIEssentials_Desc.Text"));
-        HelpKALIDescUid().Text(GetLocalizedString(L"Help_KALI_Desc.Text"));
-        HelpMuLinDescUid().Text(GetLocalizedString(L"Help_MuLin_Desc.Text"));
-        HelpWormwakerDescUid().Text(GetLocalizedString(L"Help_Wormwaker_Desc.Text"));
-        HelpSponsorsUid().Text(GetLocalizedString(L"Help_Sponsors.Text"));
+        HelpWinUIEssentialsDescUid().Text(t(L"Help_WinUIEssentials_Desc.Text"));
+        HelpKALIDescUid().Text(t(L"Help_KALI_Desc.Text"));
+        HelpMuLinDescUid().Text(t(L"Help_MuLin_Desc.Text"));
+        HelpWormwakerDescUid().Text(t(L"Help_Wormwaker_Desc.Text"));
+        HelpSponsorsUid().Text(t(L"Help_Sponsors.Text"));
         HelpSponsorButtonUid().Content(tbox(L"Help_SponsorButton.Content"));
-        HelpSponsorIntroUid().Text(GetLocalizedString(L"Help_SponsorIntro.Text"));
-        SponsorListText().Text(GetLocalizedString(L"Help_Loading.Text"));
+        HelpSponsorIntroUid().Text(t(L"Help_SponsorIntro.Text"));
+        SponsorListText().Text(t(L"Help_Loading.Text"));
 
         this->Loaded([this](auto&&, auto&&) -> winrt::Windows::Foundation::IAsyncAction {
             auto weak_this = get_weak();
@@ -108,10 +108,10 @@ namespace winrt::StarlightGUI::implementation
         auto result = co_await Launcher::LaunchUriAsync(target);
 
         if (result) {
-            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_BrowserOpened").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg_BrowserOpened").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
         }
         else {
-            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Msg_BrowserFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg_BrowserFailed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
         }
     }
 
@@ -140,14 +140,14 @@ namespace winrt::StarlightGUI::implementation
         }
         catch (const hresult_error& e) {
             LOG_ERROR(__WFUNCTION__, L"Failed to get sponsor list! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-            sponsorList = GetLocalizedString(L"Help_FetchFailed");
+            sponsorList = t(L"Help_FetchFailed");
         }
         co_return;
     }
 
     void HelpPage::SetSponsorList() {
         if (sponsorList.empty()) {
-            SponsorListText().Text(GetLocalizedString(L"Help_FetchFailed"));
+            SponsorListText().Text(t(L"Help_FetchFailed"));
         }
         else {
             SponsorListText().Text(sponsorList);

@@ -49,16 +49,7 @@ namespace winrt::StarlightGUI::implementation
 
     TaskPage::TaskPage() {
         InitializeComponent();
-
-        TaskTitleUid().Text(GetLocalizedString(L"Task_Title.Text"));
-        ProcessCountText().Text(GetLocalizedString(L"Task_Loading.Text"));
-        RefreshProcessListButton().Label(GetLocalizedString(L"Task_Refresh.Label"));
-        TaskRunUid().Label(GetLocalizedString(L"Task_Run.Label"));
-        TerminateProcessButton().Label(GetLocalizedString(L"Task_Terminate.Label"));
-        ProcessSearchBox().PlaceholderText(GetLocalizedString(L"Task_SearchBox.PlaceholderText"));
-        NameHeaderButton().Content(tbox(L"Task_ColProcess.Content"));
-        MemoryHeaderButton().Content(tbox(L"Task_ColMemory.Content"));
-        StatusHeaderButton().Content(tbox(L"Task_ColStatus.Content"));
+        SetupLocalization();
 
         ProcessListView().ItemsSource(m_processList);
         ProcessListView().SizeChanged([weak = get_weak()](auto&&, auto&&) {
@@ -109,44 +100,44 @@ namespace winrt::StarlightGUI::implementation
         auto flyoutStyles = slg::GetStyles();
 
         if (item.Name() == L"StarlightGUI.exe") {
-            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"Msg_WhatAreYouDoing").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Msg.EditSelfWarning"), InfoBarSeverity::Warning, g_mainWindowInstance);
             return;
         }
 
         MenuFlyout menuFlyout;
 
         // 选项1.1
-        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", GetLocalizedString(L"TaskMenu_Terminate").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"Task.Menu.Terminate"), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::_TerminateProcess(item.Id())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Task_TerminateSuccess") + item.Name() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"终止进程"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_TerminateFailed") + item.Name() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"终止进程", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
         // 选项1.2
-        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue8f0", GetLocalizedString(L"TaskMenu_TerminateKernel").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue8f0", t(L"Task.Menu.TerminateKernel"), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::_ZwTerminateProcess(item.Id())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Task_TerminateSuccess") + item.Name() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"终止进程"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_TerminateFailed") + item.Name() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"终止进程", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
         // 选项1.3
-        auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", GetLocalizedString(L"TaskMenu_TerminateMurder").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", t(L"Task.Menu.TerminateMurder").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (safeAcceptedPID == item.Id() || !dangerous_confirm) {
                 if (KernelInstance::MurderProcess(item.Id())) {
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Task_TerminateSuccess") + item.Name() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"终止进程"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
-                else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_TerminateFailed") + item.Name() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"终止进程", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             }
             else {
                 safeAcceptedPID = item.Id();
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"Task_MurderWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Task.Msg.MurderWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
             }
             co_return;
             });
@@ -155,148 +146,148 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator1;
 
         // 选项2.1
-        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue912", GetLocalizedString(L"TaskMenu_SetStatus").c_str());
-        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue769", GetLocalizedString(L"TaskMenu_Suspend").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue912", t(L"Task.Menu.SetStatus").c_str());
+        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue769", t(L"Task.Menu.Suspend").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::_SuspendProcess(item.Id())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Task_SuspendSuccess") + item.Name() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"暂停进程"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_SuspendFailed") + item.Name() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"暂停进程", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_1.Items().Append(item2_1_sub1);
-        auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ue768", GetLocalizedString(L"TaskMenu_Resume").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ue768", t(L"Task.Menu.Resume").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::_ResumeProcess(item.Id())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Task_ResumeSuccess") + item.Name() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"恢复进程"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_ResumeFailed") + item.Name() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"恢复进程", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_1.Items().Append(item2_1_sub2);
 
         // 选项2.2
-        auto item2_2 = slg::CreateMenuItem(flyoutStyles, L"\ued1a", GetLocalizedString(L"TaskMenu_Hide").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_2 = slg::CreateMenuItem(flyoutStyles, L"\ued1a", t(L"Task.Menu.Hide").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::HideProcess(item.Id())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Task_HideSuccess") + item.Name() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"隐藏进程"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_HideFailed") + item.Name() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"隐藏进程", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
         // 选项2.3
-        auto item2_3 = slg::CreateMenuSubItem(flyoutStyles, L"\uea18", GetLocalizedString(L"TaskMenu_SetPPL").c_str());
+        auto item2_3 = slg::CreateMenuSubItem(flyoutStyles, L"\uea18", t(L"Task.Menu.SetPPL").c_str());
         
         // PPL等级
         auto item2_3_sub1 = slg::CreateMenuItem(flyoutStyles, L"None", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::SetPPL(item.Id(), PPL_None)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_SetPPLSuccess_None").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"设置 PPL 为 None"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_SetPPLFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"设置 PPL 为 None", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub1);
         auto item2_3_sub2 = slg::CreateMenuItem(flyoutStyles, L"Authenticode", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::SetPPL(item.Id(), PPL_Authenticode)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_SetPPLSuccess_Authenticode").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"设置 PPL 为 Authenticode"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_SetPPLFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"设置 PPL 为 Authenticode", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub2);
         auto item2_3_sub3 = slg::CreateMenuItem(flyoutStyles, L"Codegen", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::SetPPL(item.Id(), PPL_Codegen)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_SetPPLSuccess_Codegen").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"设置 PPL 为 Codegen"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_SetPPLFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"设置 PPL 为 Codegen", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub3);
         auto item2_3_sub4 = slg::CreateMenuItem(flyoutStyles, L"Antimalware", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::SetPPL(item.Id(), PPL_Antimalware)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_SetPPLSuccess_Antimalware").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"设置 PPL 为 Antimalware"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_SetPPLFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"设置 PPL 为 Antimalware", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub4);
         auto item2_3_sub5 = slg::CreateMenuItem(flyoutStyles, L"Lsa", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::SetPPL(item.Id(), PPL_Lsa)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_SetPPLSuccess_Lsa").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"设置 PPL 为 Lsa"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_SetPPLFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"设置 PPL 为 Lsa", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub5);
         auto item2_3_sub6 = slg::CreateMenuItem(flyoutStyles, L"Windows", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::SetPPL(item.Id(), PPL_Windows)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_SetPPLSuccess_Windows").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"设置 PPL 为 Windows"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_SetPPLFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"设置 PPL 为 Windows", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub6);
         auto item2_3_sub7 = slg::CreateMenuItem(flyoutStyles, L"WinTcb", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::SetPPL(item.Id(), PPL_WinTcb)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_SetPPLSuccess_WinTcb").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"设置 PPL 为 WinTcb"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_SetPPLFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"设置 PPL 为 WinTcb", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub7);
         auto item2_3_sub8 = slg::CreateMenuItem(flyoutStyles, L"WinSystem", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (KernelInstance::SetPPL(item.Id(), PPL_WinSystem)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_SetPPLSuccess_WinSystem").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"设置 PPL 为 WinSystem"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_SetPPLFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"设置 PPL 为 WinSystem", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub8);
 
         // 选项2.4
-        auto item2_4 = slg::CreateMenuItem(flyoutStyles, L"\ue8c9", GetLocalizedString(L"TaskMenu_SetCritical").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_4 = slg::CreateMenuItem(flyoutStyles, L"\ue8c9", t(L"Task.Menu.SetCritical").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (safeAcceptedPID == item.Id() || !dangerous_confirm) {
                 if (KernelInstance::SetCriticalProcess(item.Id())) {
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Task_SetCriticalSuccess") + item.Name() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"设置关键进程"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
-                else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_SetCriticalFailed") + item.Name() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"设置关键进程", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             }
             else {
                 safeAcceptedPID = item.Id();
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"Task_SetCriticalWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Task.Msg.SetCriticalWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
             }
             co_return;
             });
 
         // 选项2.5
-        auto item2_5 = slg::CreateMenuItem(flyoutStyles, L"\uebe8", GetLocalizedString(L"TaskMenu_InjectDLL").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_5 = slg::CreateMenuItem(flyoutStyles, L"\uebe8", t(L"Task.Menu.InjectDLL").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             InjectDLL(item.Id());
             co_return;
             });
 
         // 选项2.6
-        auto item2_6 = slg::CreateMenuItem(flyoutStyles, L"\ue70f", GetLocalizedString(L"TaskMenu_ModifyToken").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_6 = slg::CreateMenuItem(flyoutStyles, L"\ue70f", t(L"Task.Menu.ModifyToken").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             ModifyToken(item.Id());
             co_return;
             });
 
         // 选项2.7
-        auto item2_7 = slg::CreateMenuItem(flyoutStyles, L"\uf1e8", GetLocalizedString(L"TaskMenu_EfficiencyMode").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_7 = slg::CreateMenuItem(flyoutStyles, L"\uf1e8", t(L"Task.Menu.EfficiencyMode").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::EnableProcessPerformanceMode(item)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Task_EfficiencyModeSuccess") + item.Name() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"开启效率模式"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_EfficiencyModeFailed") + item.Name() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"开启效率模式", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
@@ -304,7 +295,7 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator2;
 
         // 选项3.1
-        auto item3_1 = slg::CreateMenuItem(flyoutStyles, L"\ue946", GetLocalizedString(L"TaskMenu_MoreInfo").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1 = slg::CreateMenuItem(flyoutStyles, L"\ue946", t(L"Task.Menu.MoreInfo").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             processForInfoWindow = item;
             auto infoWindow = winrt::make<InfoWindow>();
             infoWindow.Activate();
@@ -312,55 +303,55 @@ namespace winrt::StarlightGUI::implementation
             });
 
         // 选项3.2
-        auto item3_2 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", GetLocalizedString(L"TaskMenu_CopyInfo").c_str());
-        auto item3_2_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue8ac", GetLocalizedString(L"TaskMenu_CopyName").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_2 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Task.Menu.CopyInfo").c_str());
+        auto item3_2_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue8ac", t(L"Common.Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Name().c_str())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Msg_CopyFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_2.Items().Append(item3_2_sub1);
         auto item3_2_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ue943", L"PID", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(std::to_wstring(item.Id()))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Msg_CopyFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_2.Items().Append(item3_2_sub2);
-        auto item3_2_sub3 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", GetLocalizedString(L"TaskMenu_CopyPath").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_2_sub3 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", t(L"Common.Path").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.ExecutablePath().c_str())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Msg_CopyFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_2.Items().Append(item3_2_sub3);
         auto item3_2_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", L"EPROCESS", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.EProcess().c_str())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Msg_CopiedToClipboard").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Msg_CopyFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_2.Items().Append(item3_2_sub4);
 
         // 选项3.3
-        auto item3_3 = slg::CreateMenuItem(flyoutStyles, L"\uec50", GetLocalizedString(L"TaskMenu_OpenFileLocation").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_3 = slg::CreateMenuItem(flyoutStyles, L"\uec50", t(L"Task.Menu.OpenFileLocation").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::OpenFolderAndSelectFile(item.ExecutablePath().c_str())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_OpenFolderSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"打开文件位置"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_OpenFolderFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"打开文件位置", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
         // 选项3.4
-        auto item3_4 = slg::CreateMenuItem(flyoutStyles, L"\ue8ec", GetLocalizedString(L"TaskMenu_Properties").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_4 = slg::CreateMenuItem(flyoutStyles, L"\ue8ec", t(L"Task.Menu.Properties").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::OpenFileProperties(item.ExecutablePath().c_str())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_OpenPropertiesSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"打开属性"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_OpenPropertiesFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"打开属性", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
@@ -586,7 +577,7 @@ namespace winrt::StarlightGUI::implementation
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
         // 更新进程数量文本
-        ProcessCountText().Text(t(L"Task_ProcessCount", static_cast<size_t>(m_processList.Size()), static_cast<long long>(duration)));
+        ProcessCountText().Text(t(L"Task.ProcessCount", m_processList.Size(), duration));
         if (fullReload) {
             LoadingRing().IsActive(false);
         }
@@ -635,7 +626,7 @@ namespace winrt::StarlightGUI::implementation
         struct DescriptionUpdate {
             int32_t Pid{ 0 };
             std::wstring CacheKey;
-            winrt::hstring Description{ GetLocalizedString(L"Task_Desc_Application") };
+            winrt::hstring Description{ t(L"Task.Desc.Application") };
         };
 
         std::vector<DescriptionUpdate> descriptions;
@@ -650,13 +641,13 @@ namespace winrt::StarlightGUI::implementation
             if (!process) continue;
 
             if (process.Name() == L"Idle" || process.Name() == L"System" || process.Name() == L"Registry" || process.Name() == L"Secure System" || process.Name() == L"Memory Compression") {
-                descriptionTable[process.Id()] = GetLocalizedString(L"Task_Desc_SystemProcess");
+                descriptionTable[process.Id()] = t(L"Task.Desc.System");
                 continue;
             }
 
             std::wstring path = process.ExecutablePath().c_str();
             if (path.empty()) {
-                descriptionTable[process.Id()] = GetLocalizedString(L"Task_Desc_Application");
+                descriptionTable[process.Id()] = t(L"Task.Desc.Application");
                 continue;
             }
 
@@ -677,7 +668,7 @@ namespace winrt::StarlightGUI::implementation
         for (auto const& process : missingDescriptionProcesses) {
             if (!process) continue;
 
-            std::wstring description = GetLocalizedString(L"Task_Desc_Application").c_str();
+            std::wstring description = t(L"Task.Desc.Application").c_str();
             std::wstring path = process.ExecutablePath().c_str();
             std::wstring cacheKey;
             if (!path.empty()) {
@@ -714,13 +705,13 @@ namespace winrt::StarlightGUI::implementation
 
             auto cpuIt = processCpuTable.find((DWORD)process.Id());
             if (cpuIt != processCpuTable.end()) process.CpuUsage(cpuIt->second);
-            else process.CpuUsage(L"-1 " + GetLocalizedString(L"Task_Unknown"));
+            else process.CpuUsage(L"-1 " + t(L"Common.Unknown"));
 
             if (process.MemoryUsageByte() != 0) process.MemoryUsage(FormatMemorySize(process.MemoryUsageByte()));
-            else process.MemoryUsage(L"-1 " + GetLocalizedString(L"Task_Unknown"));
+            else process.MemoryUsage(L"-1 " + t(L"Common.Unknown"));
 
-            if (process.Status().empty()) process.Status(GetLocalizedString(L"Task_Unknown"));
-            if (process.EProcess().empty()) process.EProcess(GetLocalizedString(L"Task_Unknown"));
+            if (process.Status().empty()) process.Status(t(L"Common.Unknown"));
+            if (process.EProcess().empty()) process.EProcess(t(L"Common.Unknown"));
             UpdateRealizedItemMetrics(process);
 
             auto descIt = descriptionTable.find(process.Id());
@@ -729,7 +720,7 @@ namespace winrt::StarlightGUI::implementation
                 UpdateRealizedItemDescription(process, descIt->second);
             }
             else if (process.Description().empty()) {
-                process.Description(GetLocalizedString(L"Task_Desc_Application"));
+                process.Description(t(L"Task.Desc.Application"));
                 UpdateRealizedItemDescription(process, process.Description());
             }
 
@@ -961,10 +952,10 @@ namespace winrt::StarlightGUI::implementation
         if (activeColumn == SortColumn::Unknown) return;
 
         if (updateHeader) {
-            NameHeaderButton().Content(tbox(L"Task_ColProcess.Content"));
+            NameHeaderButton().Content(tbox(L"Common.Process"));
             EProcessHeaderButton().Content(box_value(L"EPROCESS"));
             CpuHeaderButton().Content(box_value(L"CPU"));
-            MemoryHeaderButton().Content(tbox(L"Task_ColMemory.Content"));
+            MemoryHeaderButton().Content(tbox(L"Common.Memory"));
             IdHeaderButton().Content(box_value(L"PID"));
         }
 
@@ -995,11 +986,11 @@ namespace winrt::StarlightGUI::implementation
         }
 
         if (updateHeader) {
-            if (activeColumn == SortColumn::Name) NameHeaderButton().Content(box_value(GetLocalizedString(L"Task_ColProcess.Content") + (isAscending ? L" ↓" : L" ↑")));
-            if (activeColumn == SortColumn::EProcess) EProcessHeaderButton().Content(box_value(isAscending ? L"EPROCESS \u2193" : L"EPROCESS \u2191"));
-            if (activeColumn == SortColumn::CpuUsage) CpuHeaderButton().Content(box_value(isAscending ? L"CPU \u2193" : L"CPU \u2191"));
-            if (activeColumn == SortColumn::MemoryUsage) MemoryHeaderButton().Content(box_value(GetLocalizedString(L"Task_ColMemory.Content") + (isAscending ? L" ↓" : L" ↑")));
-            if (activeColumn == SortColumn::Id) IdHeaderButton().Content(box_value(isAscending ? L"PID \u2193" : L"PID \u2191"));
+            if (activeColumn == SortColumn::Name) NameHeaderButton().Content(box_value(t(L"Common.Process") + (isAscending ? L" ↓" : L" ↑")));
+            if (activeColumn == SortColumn::EProcess) EProcessHeaderButton().Content(box_value(isAscending ? L"EPROCESS ↓" : L"EPROCESS ↑"));
+            if (activeColumn == SortColumn::CpuUsage) CpuHeaderButton().Content(box_value(isAscending ? L"CPU ↓" : L"CPU ↑"));
+            if (activeColumn == SortColumn::MemoryUsage) MemoryHeaderButton().Content(box_value(t(L"Common.Memory") + (isAscending ? L" ↓" : L" ↑")));
+            if (activeColumn == SortColumn::Id) IdHeaderButton().Content(box_value(isAscending ? L"PID ↓" : L"PID ↑"));
         }
 
         auto sortActiveColumn = [&](const winrt::StarlightGUI::ProcessInfo& a, const winrt::StarlightGUI::ProcessInfo& b) -> bool {
@@ -1115,7 +1106,7 @@ namespace winrt::StarlightGUI::implementation
     slg::coroutine TaskPage::RefreshProcessListButton_Click(IInspectable const&, RoutedEventArgs const&)
     {
         if (m_isLoadingProcesses || m_isPostLoading) {
-            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"Task_StillLoading").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Task.Msg.StillLoading").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
             co_return;
         }
 
@@ -1141,11 +1132,11 @@ namespace winrt::StarlightGUI::implementation
 
                 if (permission == 1) {
                     if (CreateProcessElevated(processPath.c_str(), fullPrivileges)) {
-                        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_ProcessStartSuccess").c_str(),
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"启动进程"),
                             InfoBarSeverity::Success, g_mainWindowInstance);
                     }
                     else {
-                        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_ProcessStartFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(),
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"启动进程", GetLastError()),
                             InfoBarSeverity::Error, g_mainWindowInstance);
                     }
                 }
@@ -1162,11 +1153,11 @@ namespace winrt::StarlightGUI::implementation
                         DWORD processId = GetProcessId(sei.hProcess);
                         CloseHandle(sei.hProcess);
                         CloseHandle(sei.hIcon);
-                        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_ProcessStartSuccess").c_str(),
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"启动进程"),
                             InfoBarSeverity::Success, g_mainWindowInstance);
                     }
                     else {
-                        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_ProcessStartFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(),
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"启动进程", GetLastError()),
                             InfoBarSeverity::Error, g_mainWindowInstance);
                     }
                 }
@@ -1175,7 +1166,7 @@ namespace winrt::StarlightGUI::implementation
             }
         }
         catch (winrt::hresult_error const& ex) {
-            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), (GetLocalizedString(L"Task_DialogFailed") + ex.message()).c_str(),
+            slg::CreateInfoBarAndDisplay(t(L"Common.Error"), (t(L"Msg.ShowDialog.Failed") + ex.message()).c_str(),
                 InfoBarSeverity::Error, g_mainWindowInstance);
         }
         co_return;
@@ -1193,13 +1184,13 @@ namespace winrt::StarlightGUI::implementation
 
                 size_t dotPos = path.rfind(L'.');
                 if (dotPos == std::wstring::npos) {
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Task_NotDLLFile").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Task.Msg.NotDLLFile").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
                     co_return;
                 }
                 else {
                     std::wstring extension = path.substr(dotPos + 1);
                     if (_wcsicmp(extension.c_str(), L"dll") != 0 && _wcsicmp(extension.c_str(), L"DLL") != 0) {
-                        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Task_NotDLLFile").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Task.Msg.NotDLLFile").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
                         co_return;
                     }
                 }
@@ -1207,23 +1198,23 @@ namespace winrt::StarlightGUI::implementation
                 HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
                 if (hFile == INVALID_HANDLE_VALUE) {
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Task_FileNotExist").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Task.FileNotFound").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
                     co_return;
                 }
 
                 CloseHandle(hFile);
                 
                 if (KernelInstance::InjectDLLToProcess(pid, const_cast<PWCHAR>(path.c_str()))) {
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_InjectSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"注入 DLL 至进程"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
                 else {
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_InjectFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"注入 DLL 至进程", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
                 }
             }
         }
         catch (winrt::hresult_error const& ex) {
-            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), (GetLocalizedString(L"Task_DialogFailed") + ex.message()).c_str(),
+            slg::CreateInfoBarAndDisplay(t(L"Common.Error"), (t(L"Msg.ShowDialog.Failed") + ex.message()).c_str(),
                 InfoBarSeverity::Error, g_mainWindowInstance);
         }
         co_return;
@@ -1242,22 +1233,22 @@ namespace winrt::StarlightGUI::implementation
                 // 如果是 TrustedInstaller 的话要先启动服务，检测一下
                 if (tokenType == 1) {
                     if (FindProcessId(L"TrustedInstaller.exe") == 0) {
-                        slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Task_TrustedInstallerNotRunning").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Task.Msg.TINotRunning").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
                         co_return;
                     }
                 }
 
                 if (KernelInstance::ModifyProcessToken(pid, tokenType)) {
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Task_ModifyTokenSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"修改进程令牌"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
                 else {
-                    slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_ModifyTokenFailed") + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"修改进程令牌", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
                 }
             }
         }
         catch (winrt::hresult_error const& ex) {
-            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), (GetLocalizedString(L"Task_DialogFailed") + ex.message()).c_str(),
+            slg::CreateInfoBarAndDisplay(t(L"Common.Error"), (t(L"Msg.ShowDialog.Failed") + ex.message()).c_str(),
                 InfoBarSeverity::Error, g_mainWindowInstance);
         }
         co_return;
@@ -1268,20 +1259,20 @@ namespace winrt::StarlightGUI::implementation
             auto item = ProcessListView().SelectedItem().as<winrt::StarlightGUI::ProcessInfo>();
 
             if (item.Name() == L"StarlightGUI.exe") {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"Msg_WhatAreYouDoing").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Msg.EditSelfWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
                 co_return;
             }
 
             // 普通无法结束时，尝试使用内核结束
             if (TaskUtils::_TerminateProcess(item.Id())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Task_TerminateSuccess") + item.Name() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"终止进程"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
             else if (KernelInstance::_ZwTerminateProcess(item.Id())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Task_TerminateSuccess") + item.Name() + L" (" + to_hstring(item.Id()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success", L"终止进程"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Task_TerminateFailed") + item.Name() + L" (" + to_hstring(item.Id()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", L"终止进程", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
         }
         co_return;
     }
@@ -1297,6 +1288,18 @@ namespace winrt::StarlightGUI::implementation
         if (g_mainWindowInstance->m_openWindows.empty()) LoadProcessList(true);
 
         co_return;
+    }
+
+    void TaskPage::SetupLocalization() {
+        TaskTitleUid().Text(t(L"Task.Title"));
+        ProcessCountText().Text(t(L"Task.Loading"));
+        ProcessSearchBox().PlaceholderText(t(L"Task.PlaceholderText"));
+        RefreshProcessListButton().Label(t(L"Task.Button.Refresh"));
+        TaskRunUid().Label(t(L"Task.Button.Run"));
+        TerminateProcessButton().Label(t(L"Task.Button.Terminate"));
+        NameHeaderButton().Content(tbox(L"Common.Process"));
+        MemoryHeaderButton().Content(tbox(L"Common.Memory"));
+        StatusHeaderButton().Content(tbox(L"Common.Status"));
     }
 }
 

@@ -17,10 +17,10 @@ namespace winrt::StarlightGUI::implementation
         InitializeComponent();
 
         this->Title(tbox(L"ModifyToken_Dialog.Title"));
-        this->PrimaryButtonText(GetLocalizedString(L"ModifyToken_Dialog.PrimaryButtonText"));
-        this->SecondaryButtonText(GetLocalizedString(L"ModifyToken_Dialog.SecondaryButtonText"));
-        ModifyTokenDescriptionText().Text(GetLocalizedString(L"ModifyToken_Description.Text"));
-        TokenComboBox().Text(GetLocalizedString(L"ModifyToken_Token.Text"));
+        this->PrimaryButtonText(t(L"ModifyToken_Dialog.PrimaryButtonText"));
+        this->SecondaryButtonText(t(L"ModifyToken_Dialog.SecondaryButtonText"));
+        ModifyTokenDescriptionText().Text(t(L"ModifyToken_Description.Text"));
+        TokenComboBox().Text(t(L"ModifyToken_Token.Text"));
     }
 
     void ModifyTokenDialog::OnPrimaryButtonClick(ContentDialog const& sender,

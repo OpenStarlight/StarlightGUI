@@ -494,7 +494,7 @@
   "Msg_ErrorCode": ", error code: ",
   "Msg_None": "(None)",
   "Msg_Unknown": "(Unknown)",
-  "Msg_WhatAreYouDoing": "What are you doing?",
+  "Msg.EditSelfWarning": "What are you doing?",
   "TaskMenu_CopyInfo": "Copy Info",
   "TaskMenu_CopyName": "Name",
   "TaskMenu_EfficiencyMode": "Efficiency Mode",

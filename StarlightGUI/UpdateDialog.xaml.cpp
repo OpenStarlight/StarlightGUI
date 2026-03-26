@@ -11,22 +11,22 @@ namespace winrt::StarlightGUI::implementation
 {
     UpdateDialog::UpdateDialog() {
         InitializeComponent();
-        NewVersionAvailableText().Text(GetLocalizedString(L"Update_NewVersionAvailable.Text"));
-        CurrentVersionLabelRun().Text(GetLocalizedString(L"Update_CurrentVersion.Text"));
-        LatestVersionLabelRun().Text(GetLocalizedString(L"Update_LatestVersion.Text"));
-        UpdateDescriptionText().Text(GetLocalizedString(L"Update_Description.Text"));
-        UpdateTipText().Text(GetLocalizedString(L"Update_Tip.Text"));
-        QuarkCodeText().Text(GetLocalizedString(L"Update_QuarkCode.Text"));
-        NoDirectLinkText().Text(GetLocalizedString(L"Update_NoDirectLink.Text"));
-        UpdateTimeLabelRun().Text(GetLocalizedString(L"Update_UpdateTimeLabel.Text"));
+        NewVersionAvailableText().Text(t(L"Update_NewVersionAvailable.Text"));
+        CurrentVersionLabelRun().Text(t(L"Update_CurrentVersion.Text"));
+        LatestVersionLabelRun().Text(t(L"Update_LatestVersion.Text"));
+        UpdateDescriptionText().Text(t(L"Update_Description.Text"));
+        UpdateTipText().Text(t(L"Update_Tip.Text"));
+        QuarkCodeText().Text(t(L"Update_QuarkCode.Text"));
+        NoDirectLinkText().Text(t(L"Update_NoDirectLink.Text"));
+        UpdateTimeLabelRun().Text(t(L"Update_UpdateTimeLabel.Text"));
         DontShowAgainCheckBox().Content(tbox(L"Update_DontShow.Content"));
 
         this->Loaded([this](auto&&, auto&&) {
             if (IsUpdate()) {
                 Title(tbox(L"Update_Found"));
                 LatestVersionText().Text(LatestVersion());
-                PrimaryButtonText(GetLocalizedString(L"Update_Download"));
-                SecondaryButtonText(GetLocalizedString(L"Update_Cancel"));
+                PrimaryButtonText(t(L"Update_Download"));
+                SecondaryButtonText(t(L"Update_Cancel"));
 				UpdateStackPanel().Visibility(Visibility::Visible);
 				AnnouncementStackPanel().Visibility(Visibility::Collapsed);
             }
@@ -36,7 +36,7 @@ namespace winrt::StarlightGUI::implementation
                 AnnouncementLine1().Text(GetAnLine(1));
                 AnnouncementLine2().Text(GetAnLine(2));
                 AnnouncementLine3().Text(GetAnLine(3));
-                PrimaryButtonText(GetLocalizedString(L"Update_Confirm"));
+                PrimaryButtonText(t(L"Update_Confirm"));
                 UpdateStackPanel().Visibility(Visibility::Collapsed);
                 AnnouncementStackPanel().Visibility(Visibility::Visible);
             }

@@ -17,10 +17,10 @@ namespace winrt::StarlightGUI::implementation
         InitializeComponent();
 
         this->Title(tbox(L"CopyFile_Dialog.Title"));
-        this->PrimaryButtonText(GetLocalizedString(L"CopyFile_Dialog.PrimaryButtonText"));
-        this->SecondaryButtonText(GetLocalizedString(L"CopyFile_Dialog.SecondaryButtonText"));
-        CopyFileDescriptionText().Text(GetLocalizedString(L"CopyFile_Description.Text"));
-        CopyPathTextBox().PlaceholderText(GetLocalizedString(L"CopyFile_Path.PlaceholderText"));
+        this->PrimaryButtonText(t(L"CopyFile_Dialog.PrimaryButtonText"));
+        this->SecondaryButtonText(t(L"CopyFile_Dialog.SecondaryButtonText"));
+        CopyFileDescriptionText().Text(t(L"CopyFile_Description.Text"));
+        CopyPathTextBox().PlaceholderText(t(L"CopyFile_Path.PlaceholderText"));
         ExploreButton().Content(tbox(L"CopyFile_Browse.Content"));
     }
 

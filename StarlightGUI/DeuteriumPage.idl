@@ -1,8 +1,0 @@
-﻿namespace StarlightGUI
-{
-    [default_interface]
-    runtimeclass DeuteriumPage : Microsoft.UI.Xaml.Controls.Page
-    {
-        DeuteriumPage();
-    }
-}

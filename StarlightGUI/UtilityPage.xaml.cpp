@@ -51,11 +51,11 @@ namespace winrt::StarlightGUI::implementation{
 		}
 
 		// Localize section headers and buttons
-		UtilityHypervisorUid().Text(GetLocalizedString(L"Utility_Hypervisor.Text"));
+		UtilityHypervisorUid().Text(t(L"Utility_Hypervisor.Text"));
 		UtilityHVMEnableUid().Content(tbox(L"Utility_HVM_Enable.Content"));
-		UtilitySysBehaviorUid().Text(GetLocalizedString(L"Utility_SysBehavior.Text"));
-		UtilitySysOpUid().Text(GetLocalizedString(L"Utility_SysOp.Text"));
-		UtilitySysOpWarningUid().Text(GetLocalizedString(L"Utility_SysOpWarning.Text"));
+		UtilitySysBehaviorUid().Text(t(L"Utility_SysBehavior.Text"));
+		UtilitySysOpUid().Text(t(L"Utility_SysOp.Text"));
+		UtilitySysOpWarningUid().Text(t(L"Utility_SysOpWarning.Text"));
 		UtilityPowerShutdownUid().Content(tbox(L"Utility_PowerShutdown.Content"));
 		UtilityPowerRebootUid().Content(tbox(L"Utility_PowerReboot.Content"));
 		UtilityPowerForceRebootUid().Content(tbox(L"Utility_PowerForceReboot.Content"));
@@ -110,8 +110,8 @@ namespace winrt::StarlightGUI::implementation{
 
 		if (safeAcceptedTag != tag) {
 			safeAcceptedTag = tag;
-			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"Utility_ConfirmAction").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
-			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"Utility_ConfirmAction2").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Utility_ConfirmAction").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Utility_ConfirmAction2").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
 			co_return;
 		}
 
@@ -196,21 +196,21 @@ namespace winrt::StarlightGUI::implementation{
 		}
 		else {
 			co_await wil::resume_foreground(DispatcherQueue());
-			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Utility_UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Utility_UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
 		}
 
 		co_await wil::resume_foreground(DispatcherQueue());
 
 		if (result) {
-			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Utility_ActionSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Utility_ActionSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
 		}
 		else {
 			if (GetLastError() == 0) {
-				slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Utility_ActionFailedAlready").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+				slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Utility_ActionFailedAlready").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
 			}
 			else {
-				slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Utility_ActionFailed").c_str() + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+				slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Utility_ActionFailed").c_str() + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
 			}
 		}
 
@@ -243,17 +243,17 @@ namespace winrt::StarlightGUI::implementation{
 			result = KernelInstance::RebootForce();
 		}
 		else {
-			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Error").c_str(), GetLocalizedString(L"Utility_UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Utility_UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
 		}
 
 		co_await wil::resume_foreground(DispatcherQueue());
 
 		if (result) {
-			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), GetLocalizedString(L"Utility_ActionSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Utility_ActionSuccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
 		}
 		else {
-			slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), GetLocalizedString(L"Utility_ActionFailed").c_str() + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Utility_ActionFailed").c_str() + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
 		}
 
 		co_return;

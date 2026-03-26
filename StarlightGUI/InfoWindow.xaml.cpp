@@ -68,13 +68,6 @@ namespace winrt::StarlightGUI::implementation
 
         MainFrame().Navigate(xaml_typename<StarlightGUI::Process_ThreadPage>());
         RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(0));
-        auto menuItems = RootNavigation().MenuItems();
-        if (menuItems.Size() >= 4) {
-            menuItems.GetAt(0).as<NavigationViewItem>().Content(tbox(L"InfoWindow_NavThread"));
-            menuItems.GetAt(1).as<NavigationViewItem>().Content(tbox(L"InfoWindow_NavHandle"));
-            menuItems.GetAt(2).as<NavigationViewItem>().Content(tbox(L"InfoWindow_NavModule"));
-            menuItems.GetAt(3).as<NavigationViewItem>().Content(tbox(L"InfoWindow_NavKCT"));
-        }
         ProcessName().Text(processForInfoWindow.Name());
         Title(processForInfoWindow.Name());
 

@@ -86,40 +86,62 @@
                 <!--  选项，从上到下  -->
                 <NavigationView.MenuItems>
                     <NavigationViewItem
-                        x:Name="NavHomeUid" Content="主页"
+                        x:Name="NavHomeUid"
+                        Content="主页"
                         Icon="Home"
                         Tag="Home" />
-                    <NavigationViewItem x:Name="NavTaskUid" Content="任务管理" Tag="Task">
+                    <NavigationViewItem
+                        x:Name="NavTaskUid"
+                        Content="任务管理"
+                        Tag="Task">
                         <NavigationViewItem.Icon>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xf120;" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="NavKernelModuleUid" Content="模块管理" Tag="KernelModule">
+                    <NavigationViewItem
+                        x:Name="NavKernelModuleUid"
+                        Content="模块管理"
+                        Tag="KernelModule">
                         <NavigationViewItem.Icon>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe8ce;" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="NavFileUid" Content="文件管理" Tag="File">
+                    <NavigationViewItem
+                        x:Name="NavFileUid"
+                        Content="文件管理"
+                        Tag="File">
                         <NavigationViewItem.Icon>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xec50;" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="NavWindowUid" Content="窗口管理" Tag="Window">
+                    <NavigationViewItem
+                        x:Name="NavWindowUid"
+                        Content="窗口管理"
+                        Tag="Window">
                         <NavigationViewItem.Icon>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe737;" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="NavUtilityUid" Content="系统功能" Tag="Utility">
+                    <NavigationViewItem
+                        x:Name="NavUtilityUid"
+                        Content="系统功能"
+                        Tag="Utility">
                         <NavigationViewItem.Icon>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xec7a;" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="NavMonitorUid" Content="监视器" Tag="Monitor">
+                    <NavigationViewItem
+                        x:Name="NavMonitorUid"
+                        Content="监视器"
+                        Tag="Monitor">
                         <NavigationViewItem.Icon>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xea8f;" />
                         </NavigationViewItem.Icon>
                     </NavigationViewItem>
-                    <NavigationViewItem x:Name="NavDisasmUid" Content="内存反汇编" Tag="Disasm">
+                    <NavigationViewItem
+                        x:Name="NavDisasmUid"
+                        Content="内存反汇编"
+                        Tag="Disasm">
                         <NavigationViewItem.Icon>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe943;" />
                         </NavigationViewItem.Icon>
@@ -130,15 +152,8 @@
                 <!--  最下面是设置  -->
                 <NavigationView.FooterMenuItems>
                     <NavigationViewItem
-                        Content="Work in progress..."
-                        IsEnabled="False"
-                        Tag="Deuterium">
-                        <NavigationViewItem.Icon>
-                            <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe945;" />
-                        </NavigationViewItem.Icon>
-                    </NavigationViewItem>
-                    <NavigationViewItem
-                        x:Name="NavHelpUid" Content="关于"
+                        x:Name="NavHelpUid"
+                        Content="关于"
                         Icon="Help"
                         Tag="Help" />
                 </NavigationView.FooterMenuItems>

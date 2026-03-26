@@ -48,47 +48,47 @@ namespace winrt::StarlightGUI::implementation
     {
         InitializeComponent();
 
-        HomeCurrentTimeUid().Text(GetLocalizedString(L"Home_CurrentTime.Text"));
-        HomeAppIntroUid().Text(GetLocalizedString(L"Home_AppIntro.Text"));
-        HomeVersionLabelUid().Text(GetLocalizedString(L"Home_VersionLabel.Text"));
-        HomeReleaseDateLabelUid().Text(GetLocalizedString(L"Home_ReleaseDateLabel.Text"));
-        HomeDeveloperLabelUid().Text(GetLocalizedString(L"Home_DeveloperLabel.Text"));
-        HomeOpenSourceUid().Text(GetLocalizedString(L"Home_OpenSource.Text"));
-        HomeOverviewUid().Text(GetLocalizedString(L"Home_Overview.Text"));
+        HomeCurrentTimeUid().Text(t(L"Home_CurrentTime.Text"));
+        HomeAppIntroUid().Text(t(L"Home_AppIntro.Text"));
+        HomeVersionLabelUid().Text(t(L"Home_VersionLabel.Text"));
+        HomeReleaseDateLabelUid().Text(t(L"Home_ReleaseDateLabel.Text"));
+        HomeDeveloperLabelUid().Text(t(L"Home_DeveloperLabel.Text"));
+        HomeOpenSourceUid().Text(t(L"Home_OpenSource.Text"));
+        HomeOverviewUid().Text(t(L"Home_Overview.Text"));
         HomeChartUid().Header(tbox(L"Home_Chart.Header"));
-        HomeCpuSpeedUid().Text(GetLocalizedString(L"Home_CpuSpeed.Text"));
-        HomeCpuProcessUid().Text(GetLocalizedString(L"Home_CpuProcess.Text"));
-        HomeCpuThreadUid().Text(GetLocalizedString(L"Home_CpuThread.Text"));
-        HomeCpuSyscallUid().Text(GetLocalizedString(L"Home_CpuSyscall.Text"));
-        HomeCpuUptimeUid().Text(GetLocalizedString(L"Home_CpuUptime.Text"));
-        HomeCpuCoresUid().Text(GetLocalizedString(L"Home_CpuCores.Text"));
-        HomeCpuVirtualizationUid().Text(GetLocalizedString(L"Home_CpuVirtualization.Text"));
-        HomeCpuCacheL1Uid().Text(GetLocalizedString(L"Home_CpuCacheL1.Text"));
-        HomeCpuCacheL2Uid().Text(GetLocalizedString(L"Home_CpuCacheL2.Text"));
-        HomeCpuCacheL3Uid().Text(GetLocalizedString(L"Home_CpuCacheL3.Text"));
-        HomeMemTitleUid().Text(GetLocalizedString(L"Home_MemTitle.Text"));
-        HomeMemInUseUid().Text(GetLocalizedString(L"Home_MemInUse.Text"));
-        HomeMemAvailableUid().Text(GetLocalizedString(L"Home_MemAvailable.Text"));
-        HomeMemCommittedUid().Text(GetLocalizedString(L"Home_MemCommitted.Text"));
-        HomeMemCachedUid().Text(GetLocalizedString(L"Home_MemCached.Text"));
-        HomeMemPageReadUid().Text(GetLocalizedString(L"Home_MemPageRead.Text"));
-        HomeMemPageWriteUid().Text(GetLocalizedString(L"Home_MemPageWrite.Text"));
-        HomeMemPageOutUid().Text(GetLocalizedString(L"Home_MemPageOut.Text"));
-        HomeMemPageInUid().Text(GetLocalizedString(L"Home_MemPageIn.Text"));
-        HomeGpuMemUid().Text(GetLocalizedString(L"Home_GpuMem.Text"));
-        HomeGpuTempUid().Text(GetLocalizedString(L"Home_GpuTemp.Text"));
-        HomeGpuClockGraphicsUid().Text(GetLocalizedString(L"Home_GpuClockGraphics.Text"));
-        HomeGpuClockMemUid().Text(GetLocalizedString(L"Home_GpuClockMem.Text"));
-        HomeNetTitleUid().Text(GetLocalizedString(L"Home_NetTitle.Text"));
-        HomeNetDownloadUid().Text(GetLocalizedString(L"Home_NetDownload.Text"));
-        HomeNetUploadUid().Text(GetLocalizedString(L"Home_NetUpload.Text"));
-        HomeNetPacketSendUid().Text(GetLocalizedString(L"Home_NetPacketSend.Text"));
-        HomeNetPacketRecvUid().Text(GetLocalizedString(L"Home_NetPacketRecv.Text"));
+        HomeCpuSpeedUid().Text(t(L"Home_CpuSpeed.Text"));
+        HomeCpuProcessUid().Text(t(L"Home_CpuProcess.Text"));
+        HomeCpuThreadUid().Text(t(L"Home_CpuThread.Text"));
+        HomeCpuSyscallUid().Text(t(L"Home_CpuSyscall.Text"));
+        HomeCpuUptimeUid().Text(t(L"Home_CpuUptime.Text"));
+        HomeCpuCoresUid().Text(t(L"Home_CpuCores.Text"));
+        HomeCpuVirtualizationUid().Text(t(L"Home_CpuVirtualization.Text"));
+        HomeCpuCacheL1Uid().Text(t(L"Home_CpuCacheL1.Text"));
+        HomeCpuCacheL2Uid().Text(t(L"Home_CpuCacheL2.Text"));
+        HomeCpuCacheL3Uid().Text(t(L"Home_CpuCacheL3.Text"));
+        HomeMemTitleUid().Text(t(L"Home_MemTitle.Text"));
+        HomeMemInUseUid().Text(t(L"Home_MemInUse.Text"));
+        HomeMemAvailableUid().Text(t(L"Home_MemAvailable.Text"));
+        HomeMemCommittedUid().Text(t(L"Home_MemCommitted.Text"));
+        HomeMemCachedUid().Text(t(L"Home_MemCached.Text"));
+        HomeMemPageReadUid().Text(t(L"Home_MemPageRead.Text"));
+        HomeMemPageWriteUid().Text(t(L"Home_MemPageWrite.Text"));
+        HomeMemPageOutUid().Text(t(L"Home_MemPageOut.Text"));
+        HomeMemPageInUid().Text(t(L"Home_MemPageIn.Text"));
+        HomeGpuMemUid().Text(t(L"Home_GpuMem.Text"));
+        HomeGpuTempUid().Text(t(L"Home_GpuTemp.Text"));
+        HomeGpuClockGraphicsUid().Text(t(L"Home_GpuClockGraphics.Text"));
+        HomeGpuClockMemUid().Text(t(L"Home_GpuClockMem.Text"));
+        HomeNetTitleUid().Text(t(L"Home_NetTitle.Text"));
+        HomeNetDownloadUid().Text(t(L"Home_NetDownload.Text"));
+        HomeNetUploadUid().Text(t(L"Home_NetUpload.Text"));
+        HomeNetPacketSendUid().Text(t(L"Home_NetPacketSend.Text"));
+        HomeNetPacketRecvUid().Text(t(L"Home_NetPacketRecv.Text"));
         HomeChangeModeUid().Content(tbox(L"Home_ChangeMode.Content"));
 
         TotalLineGraph().AddSeries(L"CPU", Colors::LightSkyBlue());
-        TotalLineGraph().AddSeries(GetLocalizedString(L"Home_Memory"), Colors::DodgerBlue());
-        TotalLineGraph().AddSeries(GetLocalizedString(L"Home_Disk"), Colors::LimeGreen());
+        TotalLineGraph().AddSeries(t(L"Home_Memory"), Colors::DodgerBlue());
+        TotalLineGraph().AddSeries(t(L"Home_Disk"), Colors::LimeGreen());
         TotalLineGraph().AddSeries(L"GPU", Colors::MediumPurple());
 
         this->Loaded([this](auto&&, auto&&) -> IAsyncAction {
@@ -112,8 +112,8 @@ namespace winrt::StarlightGUI::implementation
     {
         if (greeting.empty()) {
             std::vector<hstring> greetings = {
-                GetLocalizedString(L"Home_WelcomeBack"),
-                GetLocalizedString(L"Home_Hello"),
+                t(L"Home_WelcomeBack"),
+                t(L"Home_Hello"),
                 L"Hi",
                 L"Ciallo～(∠・ω< )⌒★",
                 L"TimeFormat",
@@ -129,20 +129,20 @@ namespace winrt::StarlightGUI::implementation
             if (greeting == L"TimeFormat") {
                 if (currentHour >= 4 && currentHour < 12)
                 {
-                    greeting = GetLocalizedString(L"Home_GoodMorning");
+                    greeting = t(L"Home_GoodMorning");
                 }
                 else if (currentHour < 18)
                 {
-                    greeting = GetLocalizedString(L"Home_GoodAfternoon");
+                    greeting = t(L"Home_GoodAfternoon");
                 }
                 else if (currentHour < 4 || currentHour >= 18)
                 {
-                    greeting = GetLocalizedString(L"Home_GoodEvening");
+                    greeting = t(L"Home_GoodEvening");
                 }
             }
         }
 
-        AppIntroduction().Text(GetLocalizedString(L"Home_WelcomeMsg"));
+        AppIntroduction().Text(t(L"Home_WelcomeMsg"));
         co_return;
     }
 
@@ -240,7 +240,7 @@ namespace winrt::StarlightGUI::implementation
         }
         catch (const hresult_error& e) {
             LOG_ERROR(__WFUNCTION__, L"Failed to fetch hitokoto! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-            HitokotoText().Text(GetLocalizedString(L"Home_FetchFailed"));
+            HitokotoText().Text(t(L"Home_FetchFailed"));
         }
     }
 
@@ -273,7 +273,7 @@ namespace winrt::StarlightGUI::implementation
         }
         catch (const hresult_error& e) {
             LOG_ERROR(__WFUNCTION__, L"Error while clock ticking! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-            HitokotoText().Text(GetLocalizedString(L"Home_FetchFailed"));
+            HitokotoText().Text(t(L"Home_FetchFailed"));
         }
     }
 
@@ -447,7 +447,7 @@ namespace winrt::StarlightGUI::implementation
             CpuSyscall().Text(ss.str());
             CpuRunTime().Text(timebuffer);
             CpuCore().Text(to_hstring(std::thread::hardware_concurrency()));
-            CpuVirtualization().Text(virtualization ? GetLocalizedString(L"Home_Supported") : GetLocalizedString(L"Home_NotSupported"));
+            CpuVirtualization().Text(virtualization ? t(L"Home_Supported") : t(L"Home_NotSupported"));
             CpuCacheL1().Text(to_hstring(cache_l1) + L" KB");
             CpuCacheL2().Text(to_hstring(cache_l2) + L" MB");
             CpuCacheL3().Text(to_hstring(cache_l3) + L" MB");
@@ -464,7 +464,7 @@ namespace winrt::StarlightGUI::implementation
             MemPageWrite().Text(FormatMemorySize(GetValueFromCounter(counter_mem_write)) + L"/s");
             MemPageInput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_input)) + L"/s");
             MemPageOutput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_output)) + L"/s");
-            TotalLineGraph().AddDataPoint(GetLocalizedString(L"Home_Memory"), graphX, memInfo.dwMemoryLoad);
+            TotalLineGraph().AddDataPoint(t(L"Home_Memory"), graphX, memInfo.dwMemoryLoad);
 
             auto diskTimeMap = GetDiskCounterMap(counter_disk_time);
             auto diskReadMap = GetDiskCounterMap(counter_disk_read);
@@ -488,18 +488,18 @@ namespace winrt::StarlightGUI::implementation
                 ss << std::fixed << std::setprecision(1) << timeValue << "%";
                 card.percent.Text(ss.str());
                 ss = std::wstringstream{};
-                ss << GetLocalizedString(L"Home_ReadSpeed").c_str() << FormatMemorySize(readValue) << L"/s";
+                ss << t(L"Home_ReadSpeed").c_str() << FormatMemorySize(readValue) << L"/s";
                 card.read.Text(ss.str());
                 ss = std::wstringstream{};
-                ss << GetLocalizedString(L"Home_WriteSpeed").c_str() << FormatMemorySize(writeValue) << L"/s";
+                ss << t(L"Home_WriteSpeed").c_str() << FormatMemorySize(writeValue) << L"/s";
                 card.write.Text(ss.str());
 
                 ss = std::wstringstream{};
-                ss << GetLocalizedString(L"Home_Transfer").c_str() << std::fixed << std::setprecision(1) << transValue << "/s";
+                ss << t(L"Home_Transfer").c_str() << std::fixed << std::setprecision(1) << transValue << "/s";
                 card.trans.Text(ss.str());
 
                 ss = std::wstringstream{};
-                ss << GetLocalizedString(L"Home_IOCount").c_str() << std::fixed << std::setprecision(1) << ioValue << "/s";
+                ss << t(L"Home_IOCount").c_str() << std::fixed << std::setprecision(1) << ioValue << "/s";
                 card.io.Text(ss.str());
 
                 totalDiskUsage += timeValue;
@@ -507,7 +507,7 @@ namespace winrt::StarlightGUI::implementation
             }
 
             if (totalDiskCount > 0) totalDiskUsage /= static_cast<double>(totalDiskCount);
-            TotalLineGraph().AddDataPoint(GetLocalizedString(L"Home_Disk"), graphX, totalDiskUsage);
+            TotalLineGraph().AddDataPoint(t(L"Home_Disk"), graphX, totalDiskUsage);
 
             double gpu_time = 0.0;
             if (isNvidia) {
@@ -555,7 +555,7 @@ namespace winrt::StarlightGUI::implementation
                 NetGauge().Value(receiveBytesPerSec / (1024 * 1024));
                 NetGauge().ValueStringFormat(L"↓ {0} MB/s");
             }
-            NetManufacture().Text(netadpt_manufacture.empty() ? GetLocalizedString(L"Home_NoActiveAdapter") : netadpt_manufacture);
+            NetManufacture().Text(netadpt_manufacture.empty() ? t(L"Home_NoActiveAdapter") : netadpt_manufacture);
             NetReceive().Text(FormatMemorySize(receiveBytesPerSec) + L"/s");
             NetSend().Text(FormatMemorySize(sendBytesPerSec) + L"/s");
             ss = std::wstringstream{};
@@ -661,7 +661,7 @@ namespace winrt::StarlightGUI::implementation
         active_net_if_index = selected->Index;
         std::wstring adapterName = StringToWideString(selected->Description ? selected->Description : "");
         if (adapterName.empty()) adapterName = StringToWideString(selected->AdapterName ? selected->AdapterName : "");
-        netadpt_manufacture = adapterName.empty() ? GetLocalizedString(L"Home_UnknownAdapter") : hstring(adapterName);
+        netadpt_manufacture = adapterName.empty() ? t(L"Home_UnknownAdapter") : hstring(adapterName);
         net_selected = true;
 
         MIB_IFROW row{};
@@ -803,7 +803,7 @@ namespace winrt::StarlightGUI::implementation
         HANDLE hDevice = CreateFileW(path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
         if (hDevice == INVALID_HANDLE_VALUE) {
             LOG_ERROR(L"MonitorInstance", L"Failed to open %s.", path.c_str());
-            return GetLocalizedString(L"Home_UnknownModel");
+            return t(L"Home_UnknownModel");
         }
 
         STORAGE_PROPERTY_QUERY spq{};
@@ -812,7 +812,7 @@ namespace winrt::StarlightGUI::implementation
 
         std::vector<BYTE> buffer(1024);
         DWORD bytesReturned = 0;
-        hstring manufacture = GetLocalizedString(L"Home_UnknownModel");
+        hstring manufacture = t(L"Home_UnknownModel");
 
         if (DeviceIoControl(hDevice, IOCTL_STORAGE_QUERY_PROPERTY, &spq, sizeof(spq), buffer.data(), static_cast<DWORD>(buffer.size()), &bytesReturned, NULL))
         {
@@ -872,7 +872,7 @@ namespace winrt::StarlightGUI::implementation
         title.FontSize(20);
         title.FontWeight(winrt::Microsoft::UI::Text::FontWeights::Bold());
         std::wstringstream ss;
-        ss << GetLocalizedString(L"Home_DiskN").c_str() << diskIndex;
+        ss << t(L"Home_DiskN").c_str() << diskIndex;
         title.Text(ss.str());
         infoPanel.Children().Append(title);
 
@@ -884,22 +884,22 @@ namespace winrt::StarlightGUI::implementation
 
         auto readText = TextBlock();
         readText.Margin(ThicknessHelper::FromLengths(0, 10, 0, 0));
-        readText.Text(GetLocalizedString(L"Home_ReadSpeedZero"));
+        readText.Text(t(L"Home_ReadSpeedZero"));
         readText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
         infoPanel.Children().Append(readText);
 
         auto writeText = TextBlock();
-        writeText.Text(GetLocalizedString(L"Home_WriteSpeedZero"));
+        writeText.Text(t(L"Home_WriteSpeedZero"));
         writeText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
         infoPanel.Children().Append(writeText);
 
         auto transText = TextBlock();
-        transText.Text(GetLocalizedString(L"Home_TransferZero"));
+        transText.Text(t(L"Home_TransferZero"));
         transText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
         infoPanel.Children().Append(transText);
 
         auto ioText = TextBlock();
-        ioText.Text(GetLocalizedString(L"Home_IOCountZero"));
+        ioText.Text(t(L"Home_IOCountZero"));
         ioText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
         infoPanel.Children().Append(ioText);
 

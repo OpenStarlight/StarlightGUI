@@ -9,6 +9,7 @@ namespace winrt::StarlightGUI::implementation
     struct TaskPage : TaskPageT<TaskPage>
     {
         TaskPage();
+        void SetupLocalization();
 
         slg::coroutine RefreshProcessListButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         slg::coroutine TerminateProcessButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);

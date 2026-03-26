@@ -53,12 +53,12 @@ namespace winrt::StarlightGUI::implementation
     WindowPage::WindowPage() {
         InitializeComponent();
 
-        WindowTitleUid().Text(GetLocalizedString(L"Window_Title.Text"));
-        WindowCountText().Text(GetLocalizedString(L"Window_Loading.Text"));
+        WindowTitleUid().Text(t(L"Window_Title.Text"));
+        WindowCountText().Text(t(L"Window_Loading.Text"));
         ShowNoTitleCheckBox().Content(tbox(L"Window_ShowNoTitle.Content"));
         ShowVisibleOnlyCheckBox().Content(tbox(L"Window_ShowVisibleOnly.Content"));
-        RefreshButton().Label(GetLocalizedString(L"Window_Refresh.Label"));
-        SearchBox().PlaceholderText(GetLocalizedString(L"Window_SearchBox.PlaceholderText"));
+        RefreshButton().Label(t(L"Window_Refresh.Label"));
+        SearchBox().PlaceholderText(t(L"Window_SearchBox.PlaceholderText"));
         NameHeaderButton().Content(tbox(L"Window_ColWindow.Content"));
         WindowStyleHeaderButton().Content(tbox(L"Window_ColStyle.Content"));
 
@@ -117,38 +117,38 @@ namespace winrt::StarlightGUI::implementation
         auto flyoutStyles = slg::GetStyles();
 
         if (item.Description() == L"StarlightGUI.exe / WinUIDesktopWin32WindowClass" || item.Description() == L"StarlightGUI.exe / ConsoleWindowClass") {
-            slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Warning").c_str(), GetLocalizedString(L"Msg_WhatAreYouDoing").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Msg.EditSelfWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
             return;
         }
 
         MenuFlyout menuFlyout;
 
-        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", GetLocalizedString(L"WinMenu_CloseWindow").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"WinMenu_CloseWindow").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (PostMessageW((HWND)item.Hwnd(), WM_CLOSE, 0, 0)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_CloseSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_CloseSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_CloseFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_CloseFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
-        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue8f0", GetLocalizedString(L"WinMenu_CloseEndTask").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue8f0", t(L"WinMenu_CloseEndTask").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::EndTaskByWindow((HWND)item.Hwnd())) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_CloseSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_CloseSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_CloseFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_CloseFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
-        auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", GetLocalizedString(L"WinMenu_CloseKernel").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", t(L"WinMenu_CloseKernel").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             DWORD pid;
 			GetWindowThreadProcessId((HWND)item.Hwnd(), &pid);
             if (KernelInstance::_ZwTerminateProcess(pid)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_CloseSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_CloseSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_CloseFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_CloseFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
@@ -156,226 +156,226 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator1;
 
         // 选项2.1
-        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue912", GetLocalizedString(L"WinMenu_SetState").c_str());
-        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", GetLocalizedString(L"WinMenu_Show").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue912", t(L"WinMenu_SetState").c_str());
+        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"WinMenu_Show").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (ShowWindow((HWND)item.Hwnd(), SW_SHOW) || GetLastError() == 0) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_ShowSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_ShowSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_ShowFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_ShowFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_1.Items().Append(item2_1_sub1);
-        auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", GetLocalizedString(L"WinMenu_Hide").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"WinMenu_Hide").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (ShowWindow((HWND)item.Hwnd(), SW_HIDE) || GetLastError() == 0) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_HideSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_HideSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_HideFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_HideFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_1.Items().Append(item2_1_sub2);
-        auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ue740", GetLocalizedString(L"WinMenu_Maximize").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ue740", t(L"WinMenu_Maximize").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (PostMessageW((HWND)item.Hwnd(), WM_SYSCOMMAND, SC_MAXIMIZE, 0) == ERROR_SUCCESS) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_MaximizeSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_MaximizeSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_MaximizeFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_MaximizeFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_1.Items().Append(item2_1_sub3);
-        auto item2_1_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ue73f", GetLocalizedString(L"WinMenu_Minimize").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ue73f", t(L"WinMenu_Minimize").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (PostMessageW((HWND)item.Hwnd(), WM_SYSCOMMAND, SC_MINIMIZE, 0) == ERROR_SUCCESS) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_MinimizeSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_MinimizeSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_MinimizeFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_MinimizeFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_1.Items().Append(item2_1_sub4);
 
         // 选项2.2
-        auto item2_2 = slg::CreateMenuSubItem(flyoutStyles, L"\uf7ed", GetLocalizedString(L"WinMenu_SetZBID").c_str());
+        auto item2_2 = slg::CreateMenuSubItem(flyoutStyles, L"\uf7ed", t(L"WinMenu_SetZBID").c_str());
         auto item2_2_sub1 = slg::CreateMenuItem(flyoutStyles, L"Desktop", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_DESKTOP)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Desktop").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Desktop").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Desktop" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Desktop" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub1);
         auto item2_2_sub2 = slg::CreateMenuItem(flyoutStyles, L"UIAccess", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_UIACCESS)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"UIAccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"UIAccess").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"UIAccess" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"UIAccess" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub2);
         auto item2_2_sub3 = slg::CreateMenuItem(flyoutStyles, L"Immersive-IHM", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_IHM)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-IHM").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-IHM").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-IHM" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-IHM" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub3);
         auto item2_2_sub4 = slg::CreateMenuItem(flyoutStyles, L"Immersive-Notification", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_NOTIFICATION)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-Notification").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-Notification").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-Notification" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-Notification" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub4);
         auto item2_2_sub5 = slg::CreateMenuItem(flyoutStyles, L"Immersive-AppChrome", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_APPCHROME)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-AppChrome").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-AppChrome").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-AppChrome" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-AppChrome" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub5);
         auto item2_2_sub6 = slg::CreateMenuItem(flyoutStyles, L"Immersive-MOGO", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_MOGO)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-MOGO").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-MOGO").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-MOGO" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-MOGO" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub6);
         auto item2_2_sub7 = slg::CreateMenuItem(flyoutStyles, L"Immersive-EDGY", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_EDGY)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-EDGY").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-EDGY").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-EDGY" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-EDGY" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub7);
         auto item2_2_sub8 = slg::CreateMenuItem(flyoutStyles, L"Immersive-InactiveMobody", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_INACTIVEMOBODY)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-InactiveMobody").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-InactiveMobody").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-InactiveMobody" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-InactiveMobody" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub8);
         auto item2_2_sub9 = slg::CreateMenuItem(flyoutStyles, L"Immersive-InactiveDock", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_INACTIVEDOCK)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-InactiveDock").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-InactiveDock").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-InactiveDock" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-InactiveDock" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub9);
         auto item2_2_sub10 = slg::CreateMenuItem(flyoutStyles, L"Immersive-ActiveMobody", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_ACTIVEMOBODY)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-ActiveMobody").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-ActiveMobody").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-ActiveMobody" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-ActiveMobody" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub10);
         auto item2_2_sub11 = slg::CreateMenuItem(flyoutStyles, L"Immersive-ActiveDock", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_ACTIVEDOCK)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-ActiveDock").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-ActiveDock").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-ActiveDock" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-ActiveDock" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub11);
         auto item2_2_sub12 = slg::CreateMenuItem(flyoutStyles, L"Immersive-Background", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_BACKGROUND)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-Background").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-Background").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-Background" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-Background" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub12);
         auto item2_2_sub13 = slg::CreateMenuItem(flyoutStyles, L"Immersive-Search", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_SEARCH)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-Search").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-Search").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-Search" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-Search" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub13);
         auto item2_2_sub14 = slg::CreateMenuItem(flyoutStyles, L"Immersive-Restricted", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_IMMERSIVE_RESTRICTED)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Immersive-Restricted").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Immersive-Restricted").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Immersive-Restricted" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Immersive-Restricted" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub14);
         auto item2_2_sub15 = slg::CreateMenuItem(flyoutStyles, L"GenuineWindows", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_GENUINE_WINDOWS)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"GenuineWindows").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"GenuineWindows").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"GenuineWindows" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"GenuineWindows" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub15);
         auto item2_2_sub16 = slg::CreateMenuItem(flyoutStyles, L"SystemTools", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_SYSTEM_TOOLS)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"SystemTools").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"SystemTools").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"SystemTools" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"SystemTools" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub16);
         auto item2_2_sub17 = slg::CreateMenuItem(flyoutStyles, L"Lock", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_LOCK)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"Lock").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"Lock").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"Lock" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"Lock" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub17);
         auto item2_2_sub18 = slg::CreateMenuItem(flyoutStyles, L"AboveLockUX", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_ABOVELOCK_UX)) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetZBIDSuccess") + L"AboveLockUX").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetZBIDSuccess") + L"AboveLockUX").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetZBIDFailed") + L"AboveLockUX" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetZBIDFailed") + L"AboveLockUX" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_2.Items().Append(item2_2_sub18);
 
         // 选项2.3
-        auto item2_3 = slg::CreateMenuItem(flyoutStyles, L"\ue754", GetLocalizedString(L"WinMenu_FlashTaskbar").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_3 = slg::CreateMenuItem(flyoutStyles, L"\ue754", t(L"WinMenu_FlashTaskbar").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (FlashWindow((HWND)item.Hwnd(), FALSE) || GetLastError() == 0) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_FlashSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_FlashSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_FlashFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_FlashFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
         // 选项2.4
-        auto item2_4 = slg::CreateMenuItem(flyoutStyles, L"\ue75c", GetLocalizedString(L"WinMenu_Redraw").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_4 = slg::CreateMenuItem(flyoutStyles, L"\ue75c", t(L"WinMenu_Redraw").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (UpdateWindow((HWND)item.Hwnd()) || GetLastError() == 0) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_RedrawSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_RedrawSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_RedrawFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_RedrawFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
@@ -383,132 +383,132 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator2;
 
         // 选项3.1
-        auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\uef1f", GetLocalizedString(L"WinMenu_SetStyle").c_str());
-        auto item3_1_sub1 = slg::CreateMenuItem(flyoutStyles, GetLocalizedString(L"WinMenu_StyleSolid").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\uef1f", t(L"WinMenu_SetStyle").c_str());
+        auto item3_1_sub1 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_StyleSolid").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMSBT_NONE;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_SYSTEMBACKDROP_TYPE, &type, sizeof(type)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetStyleSuccess_Solid") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetStyleSuccess_Solid") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetStyleFailed_Solid") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetStyleFailed_Solid") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_1.Items().Append(item3_1_sub1);
         auto item3_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"Mica (Base)", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMSBT_MAINWINDOW;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_SYSTEMBACKDROP_TYPE, &type, sizeof(type)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetStyleSuccess_MicaBase") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetStyleSuccess_MicaBase") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetStyleFailed_MicaBase") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetStyleFailed_MicaBase") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_1.Items().Append(item3_1_sub2);
         auto item3_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"Mica (BaseAlt)", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMSBT_TABBEDWINDOW;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_SYSTEMBACKDROP_TYPE, &type, sizeof(type)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetStyleSuccess_MicaBaseAlt") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetStyleSuccess_MicaBaseAlt") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetStyleFailed_MicaBaseAlt") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetStyleFailed_MicaBaseAlt") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_1.Items().Append(item3_1_sub3);
-        auto item3_1_sub4 = slg::CreateMenuItem(flyoutStyles, GetLocalizedString(L"WinMenu_StyleAcrylic").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1_sub4 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_StyleAcrylic").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMSBT_TRANSIENTWINDOW;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_SYSTEMBACKDROP_TYPE, &type, sizeof(type)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetStyleSuccess_Acrylic") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetStyleSuccess_Acrylic") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetStyleFailed_Acrylic") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetStyleFailed_Acrylic") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_1.Items().Append(item3_1_sub4);
-        auto item3_1_sub5 = slg::CreateMenuItem(flyoutStyles, GetLocalizedString(L"WinMenu_StyleAuto").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1_sub5 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_StyleAuto").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMSBT_AUTO;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_SYSTEMBACKDROP_TYPE, &type, sizeof(type)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetStyleSuccess_Auto") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetStyleSuccess_Auto") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetStyleFailed_Auto") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetStyleFailed_Auto") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_1.Items().Append(item3_1_sub5);
 
         // 选项3.2
-        auto item3_2 = slg::CreateMenuSubItem(flyoutStyles, L"\ue781", GetLocalizedString(L"WinMenu_SetTheme").c_str());
-        auto item3_2_sub1 = slg::CreateMenuItem(flyoutStyles, GetLocalizedString(L"WinMenu_ThemeDark").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_2 = slg::CreateMenuSubItem(flyoutStyles, L"\ue781", t(L"WinMenu_SetTheme").c_str());
+        auto item3_2_sub1 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_ThemeDark").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             BOOL val = TRUE;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_USE_IMMERSIVE_DARK_MODE, &val, sizeof(val)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetThemeSuccess_Dark") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetThemeSuccess_Dark") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetThemeFailed_Dark") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetThemeFailed_Dark") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_2.Items().Append(item3_2_sub1);
-        auto item3_2_sub2 = slg::CreateMenuItem(flyoutStyles, GetLocalizedString(L"WinMenu_ThemeLight").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_2_sub2 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_ThemeLight").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             BOOL val = FALSE;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_USE_IMMERSIVE_DARK_MODE, &val, sizeof(val)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetThemeSuccess_Light") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetThemeSuccess_Light") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetThemeFailed_Light") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetThemeFailed_Light") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_2.Items().Append(item3_2_sub2);
 
         // 选项3.3
-        auto item3_3 = slg::CreateMenuSubItem(flyoutStyles, L"\ue746", GetLocalizedString(L"WinMenu_SetCorner").c_str());
-        auto item3_3_sub1 = slg::CreateMenuItem(flyoutStyles, GetLocalizedString(L"WinMenu_CornerNone").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_3 = slg::CreateMenuSubItem(flyoutStyles, L"\ue746", t(L"WinMenu_SetCorner").c_str());
+        auto item3_3_sub1 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_CornerNone").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMWCP_DONOTROUND;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &type, sizeof(type)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetCornerSuccess_None") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetCornerSuccess_None") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetCornerFailed_None") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetCornerFailed_None") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_3.Items().Append(item3_3_sub1);
-        auto item3_3_sub2 = slg::CreateMenuItem(flyoutStyles, GetLocalizedString(L"WinMenu_CornerRound").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_3_sub2 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_CornerRound").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMWCP_ROUND;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &type, sizeof(type)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetCornerSuccess_Round") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetCornerSuccess_Round") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetCornerFailed_Round") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetCornerFailed_Round") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_3.Items().Append(item3_3_sub2);
-        auto item3_3_sub3 = slg::CreateMenuItem(flyoutStyles, GetLocalizedString(L"WinMenu_CornerRoundSmall").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_3_sub3 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_CornerRoundSmall").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMWCP_ROUNDSMALL;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &type, sizeof(type)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetCornerSuccess_RoundSmall") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetCornerSuccess_RoundSmall") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetCornerFailed_RoundSmall") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetCornerFailed_RoundSmall") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_3.Items().Append(item3_3_sub3);
-        auto item3_3_sub4 = slg::CreateMenuItem(flyoutStyles, GetLocalizedString(L"WinMenu_CornerAuto").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_3_sub4 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_CornerAuto").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMWCP_DEFAULT;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &type, sizeof(type)))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_SetCornerSuccess_Auto") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_SetCornerSuccess_Auto") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_SetCornerFailed_Auto") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_SetCornerFailed_Auto") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item3_3.Items().Append(item3_3_sub4);
 
         // 选项3.4
-        auto item3_4 = slg::CreateMenuItem(flyoutStyles, L"\ue740", GetLocalizedString(L"WinMenu_ExtendTitleBar").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_4 = slg::CreateMenuItem(flyoutStyles, L"\ue740", t(L"WinMenu_ExtendTitleBar").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             MARGINS margins = { -1 };
             if (SUCCEEDED(DwmExtendFrameIntoClientArea((HWND)item.Hwnd(), &margins))) {
-                slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Success").c_str(), (GetLocalizedString(L"Win_ExtendTitleBarSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), (t(L"Win_ExtendTitleBarSuccess") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")").c_str(), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(GetLocalizedString(L"Msg_Failure").c_str(), (GetLocalizedString(L"Win_ExtendTitleBarFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + GetLocalizedString(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), (t(L"Win_ExtendTitleBarFailed") + item.Name() + L" (" + to_hstring(item.Hwnd()) + L")" + t(L"Msg_ErrorCode") + to_hstring((int)GetLastError())).c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
@@ -609,9 +609,9 @@ namespace winrt::StarlightGUI::implementation
 
             GetWindowIconAsync(window);
 
-            if (window.Name().empty()) window.Name(GetLocalizedString(L"Msg_Unknown"));
-            if (window.Process().empty()) window.Process(GetLocalizedString(L"Msg_Unknown"));
-            if (window.ClassName().empty()) window.ClassName(GetLocalizedString(L"Msg_Unknown"));
+            if (window.Name().empty()) window.Name(t(L"Msg_Unknown"));
+            if (window.Process().empty()) window.Process(t(L"Msg_Unknown"));
+            if (window.ClassName().empty()) window.ClassName(t(L"Msg_Unknown"));
 
             m_windowList.Append(window);
         }
@@ -650,7 +650,7 @@ namespace winrt::StarlightGUI::implementation
 
             if (m_showVisibleOnly && !IsWindowVisible(hwnd)) return TRUE;
 
-            std::wstring windowTitle{ GetLocalizedString(L"Msg_Unknown") };
+            std::wstring windowTitle{ t(L"Msg_Unknown") };
             int length = GetWindowTextLengthW(hwnd);
             if (length > 0) {
                 windowTitle = std::wstring(length + 1, '\0');
@@ -670,7 +670,7 @@ namespace winrt::StarlightGUI::implementation
                 CloseHandle(hProcess);
             }
 
-            std::wstring className{ GetLocalizedString(L"Msg_Unknown") };
+            std::wstring className{ t(L"Msg_Unknown") };
             wchar_t classNameTmp[MAX_PATH];
             GetClassNameW(hwnd, &classNameTmp[0], MAX_PATH);
             className = classNameTmp;
@@ -820,9 +820,9 @@ namespace winrt::StarlightGUI::implementation
             WindowStyleHeaderButton().Content(tbox(L"Window_ColStyle.Content"));
             HwndHeaderButton().Content(box_value(L"HWND"));
 
-            if (activeColumn == SortColumn::Name) NameHeaderButton().Content(box_value(GetLocalizedString(L"Window_ColWindow.Content") + (isAscending ? L" ↓" : L" ↑")));
+            if (activeColumn == SortColumn::Name) NameHeaderButton().Content(box_value(t(L"Window_ColWindow.Content") + (isAscending ? L" ↓" : L" ↑")));
             if (activeColumn == SortColumn::Band) BandHeaderButton().Content(box_value(isAscending ? L"ZBID ↓" : L"ZBID ↑"));
-            if (activeColumn == SortColumn::WindowStyle) WindowStyleHeaderButton().Content(box_value(GetLocalizedString(L"Window_ColStyle.Content") + (isAscending ? L" ↓" : L" ↑")));
+            if (activeColumn == SortColumn::WindowStyle) WindowStyleHeaderButton().Content(box_value(t(L"Window_ColStyle.Content") + (isAscending ? L" ↓" : L" ↑")));
             if (activeColumn == SortColumn::Hwnd) HwndHeaderButton().Content(box_value(isAscending ? L"HWND ↓" : L"HWND ↑"));
         }
 

@@ -81,18 +81,22 @@
                 <!--  选项，从上到下  -->
                 <NavigationView.MenuItems>
                     <NavigationViewItem
+                        x:Name="NavThreadUid"
                         Content="线程"
                         Icon="List"
                         Tag="Thread" />
                     <NavigationViewItem
+                        x:Name="NavHandleUid"
                         Content="句柄"
                         Icon="Tag"
                         Tag="Handle" />
                     <NavigationViewItem
+                        x:Name="NavModuleUid"
                         Content="模块"
                         Icon="AddFriend"
                         Tag="Module" />
                     <NavigationViewItem
+                        x:Name="NavKCTUid"
                         Content="内核回调表"
                         Icon="NewWindow"
                         Tag="KCT" />
