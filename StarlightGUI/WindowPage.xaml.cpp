@@ -52,15 +52,7 @@ namespace winrt::StarlightGUI::implementation
 
     WindowPage::WindowPage() {
         InitializeComponent();
-
-        WindowTitleUid().Text(t(L"Window_Title.Text"));
-        WindowCountText().Text(t(L"Window_Loading.Text"));
-        ShowNoTitleCheckBox().Content(tbox(L"Window_ShowNoTitle.Content"));
-        ShowVisibleOnlyCheckBox().Content(tbox(L"Window_ShowVisibleOnly.Content"));
-        RefreshButton().Label(t(L"Window_Refresh.Label"));
-        SearchBox().PlaceholderText(t(L"Window_SearchBox.PlaceholderText"));
-        NameHeaderButton().Content(tbox(L"Window_ColWindow.Content"));
-        WindowStyleHeaderButton().Content(tbox(L"Window_ColStyle.Content"));
+        SetupLocalization();
 
         WindowListView().ItemsSource(m_windowList);
         WindowListView().ItemContainerTransitions().Clear();
@@ -123,7 +115,7 @@ namespace winrt::StarlightGUI::implementation
 
         MenuFlyout menuFlyout;
 
-        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"WinMenu_CloseWindow").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"Window.Menu.Close").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (PostMessageW((HWND)item.Hwnd(), WM_CLOSE, 0, 0)) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
@@ -132,7 +124,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
 
-        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue8f0", t(L"WinMenu_CloseEndTask").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue8f0", t(L"Window.Menu.CloseEndTask").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::EndTaskByWindow((HWND)item.Hwnd())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
@@ -141,7 +133,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
 
-        auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", t(L"WinMenu_CloseKernel").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", t(L"Window.Menu.CloseKernel").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             DWORD pid;
 			GetWindowThreadProcessId((HWND)item.Hwnd(), &pid);
             if (KernelInstance::_ZwTerminateProcess(pid)) {
@@ -156,8 +148,8 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator1;
 
         // 选项2.1
-        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue912", t(L"WinMenu_SetState").c_str());
-        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"WinMenu_Show").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue912", t(L"Window.Menu.SetState").c_str());
+        auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Window.Menu.Show").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (ShowWindow((HWND)item.Hwnd(), SW_SHOW) || GetLastError() == 0) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
@@ -166,7 +158,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item2_1.Items().Append(item2_1_sub1);
-        auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"WinMenu_Hide").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"Window.Menu.Hide").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (ShowWindow((HWND)item.Hwnd(), SW_HIDE) || GetLastError() == 0) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
@@ -175,7 +167,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item2_1.Items().Append(item2_1_sub2);
-        auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ue740", t(L"WinMenu_Maximize").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ue740", t(L"Window.Menu.Maximize").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (PostMessageW((HWND)item.Hwnd(), WM_SYSCOMMAND, SC_MAXIMIZE, 0) == ERROR_SUCCESS) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
@@ -184,7 +176,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item2_1.Items().Append(item2_1_sub3);
-        auto item2_1_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ue73f", t(L"WinMenu_Minimize").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_1_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ue73f", t(L"Window.Menu.Minimize").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (PostMessageW((HWND)item.Hwnd(), WM_SYSCOMMAND, SC_MINIMIZE, 0) == ERROR_SUCCESS) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
@@ -195,7 +187,7 @@ namespace winrt::StarlightGUI::implementation
         item2_1.Items().Append(item2_1_sub4);
 
         // 选项2.2
-        auto item2_2 = slg::CreateMenuSubItem(flyoutStyles, L"\uf7ed", t(L"WinMenu_SetZBID").c_str());
+        auto item2_2 = slg::CreateMenuSubItem(flyoutStyles, L"\uf7ed", t(L"Window.Menu.SetZBID").c_str());
         auto item2_2_sub1 = slg::CreateMenuItem(flyoutStyles, L"Desktop", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (SetWindowZBID((HWND)item.Hwnd(), ZBID_DESKTOP)) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -360,7 +352,7 @@ namespace winrt::StarlightGUI::implementation
         item2_2.Items().Append(item2_2_sub18);
 
         // 选项2.3
-        auto item2_3 = slg::CreateMenuItem(flyoutStyles, L"\ue754", t(L"WinMenu_FlashTaskbar").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_3 = slg::CreateMenuItem(flyoutStyles, L"\ue754", t(L"Window.Menu.FlashTaskbar").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (FlashWindow((HWND)item.Hwnd(), FALSE) || GetLastError() == 0) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
@@ -370,7 +362,7 @@ namespace winrt::StarlightGUI::implementation
             });
 
         // 选项2.4
-        auto item2_4 = slg::CreateMenuItem(flyoutStyles, L"\ue75c", t(L"WinMenu_Redraw").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item2_4 = slg::CreateMenuItem(flyoutStyles, L"\ue75c", t(L"Window.Menu.Redraw").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (UpdateWindow((HWND)item.Hwnd()) || GetLastError() == 0) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
@@ -383,8 +375,8 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator2;
 
         // 选项3.1
-        auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\uef1f", t(L"WinMenu_SetStyle").c_str());
-        auto item3_1_sub1 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_StyleSolid").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\uef1f", t(L"Window.Menu.SetStyle").c_str());
+        auto item3_1_sub1 = slg::CreateMenuItem(flyoutStyles, t(L"Window.Menu.StyleSolid").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMSBT_NONE;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_SYSTEMBACKDROP_TYPE, &type, sizeof(type)))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -414,7 +406,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item3_1.Items().Append(item3_1_sub3);
-        auto item3_1_sub4 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_StyleAcrylic").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1_sub4 = slg::CreateMenuItem(flyoutStyles, t(L"Window.Menu.StyleAcrylic").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMSBT_TRANSIENTWINDOW;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_SYSTEMBACKDROP_TYPE, &type, sizeof(type)))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -424,7 +416,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item3_1.Items().Append(item3_1_sub4);
-        auto item3_1_sub5 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_StyleAuto").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1_sub5 = slg::CreateMenuItem(flyoutStyles, t(L"Window.Menu.StyleAuto").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMSBT_AUTO;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_SYSTEMBACKDROP_TYPE, &type, sizeof(type)))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -436,8 +428,8 @@ namespace winrt::StarlightGUI::implementation
         item3_1.Items().Append(item3_1_sub5);
 
         // 选项3.2
-        auto item3_2 = slg::CreateMenuSubItem(flyoutStyles, L"\ue781", t(L"WinMenu_SetTheme").c_str());
-        auto item3_2_sub1 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_ThemeDark").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_2 = slg::CreateMenuSubItem(flyoutStyles, L"\ue781", t(L"Window.Menu.SetTheme").c_str());
+        auto item3_2_sub1 = slg::CreateMenuItem(flyoutStyles, t(L"Window.Menu.ThemeDark").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             BOOL val = TRUE;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_USE_IMMERSIVE_DARK_MODE, &val, sizeof(val)))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -447,7 +439,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item3_2.Items().Append(item3_2_sub1);
-        auto item3_2_sub2 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_ThemeLight").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_2_sub2 = slg::CreateMenuItem(flyoutStyles, t(L"Window.Menu.ThemeLight").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             BOOL val = FALSE;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_USE_IMMERSIVE_DARK_MODE, &val, sizeof(val)))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -459,8 +451,8 @@ namespace winrt::StarlightGUI::implementation
         item3_2.Items().Append(item3_2_sub2);
 
         // 选项3.3
-        auto item3_3 = slg::CreateMenuSubItem(flyoutStyles, L"\ue746", t(L"WinMenu_SetCorner").c_str());
-        auto item3_3_sub1 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_CornerNone").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_3 = slg::CreateMenuSubItem(flyoutStyles, L"\ue746", t(L"Window.Menu.SetCorner").c_str());
+        auto item3_3_sub1 = slg::CreateMenuItem(flyoutStyles, t(L"Window.Menu.CornerNone").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMWCP_DONOTROUND;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &type, sizeof(type)))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -470,7 +462,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item3_3.Items().Append(item3_3_sub1);
-        auto item3_3_sub2 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_CornerRound").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_3_sub2 = slg::CreateMenuItem(flyoutStyles, t(L"Window.Menu.CornerRound").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMWCP_ROUND;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &type, sizeof(type)))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -480,7 +472,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item3_3.Items().Append(item3_3_sub2);
-        auto item3_3_sub3 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_CornerRoundSmall").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_3_sub3 = slg::CreateMenuItem(flyoutStyles, t(L"Window.Menu.CornerRoundSmall").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMWCP_ROUNDSMALL;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &type, sizeof(type)))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -490,7 +482,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item3_3.Items().Append(item3_3_sub3);
-        auto item3_3_sub4 = slg::CreateMenuItem(flyoutStyles, t(L"WinMenu_CornerAuto").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_3_sub4 = slg::CreateMenuItem(flyoutStyles, t(L"Window.Menu.CornerAuto").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             auto type = DWMWCP_DEFAULT;
             if (SUCCEEDED(DwmSetWindowAttribute((HWND)item.Hwnd(), DWMWA_WINDOW_CORNER_PREFERENCE, &type, sizeof(type)))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -502,7 +494,7 @@ namespace winrt::StarlightGUI::implementation
         item3_3.Items().Append(item3_3_sub4);
 
         // 选项3.4
-        auto item3_4 = slg::CreateMenuItem(flyoutStyles, L"\ue740", t(L"WinMenu_ExtendTitleBar").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_4 = slg::CreateMenuItem(flyoutStyles, L"\ue740", t(L"Window.Menu.ExtendTitleBar").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             MARGINS margins = { -1 };
             if (SUCCEEDED(DwmExtendFrameIntoClientArea((HWND)item.Hwnd(), &margins))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
@@ -609,9 +601,9 @@ namespace winrt::StarlightGUI::implementation
 
             GetWindowIconAsync(window);
 
-            if (window.Name().empty()) window.Name(t(L"Msg_Unknown"));
-            if (window.Process().empty()) window.Process(t(L"Msg_Unknown"));
-            if (window.ClassName().empty()) window.ClassName(t(L"Msg_Unknown"));
+            if (window.Name().empty()) window.Name(t(L"Common.Unknown"));
+            if (window.Process().empty()) window.Process(t(L"Common.Unknown"));
+            if (window.ClassName().empty()) window.ClassName(t(L"Common.Unknown"));
 
             m_windowList.Append(window);
         }
@@ -650,7 +642,7 @@ namespace winrt::StarlightGUI::implementation
 
             if (m_showVisibleOnly && !IsWindowVisible(hwnd)) return TRUE;
 
-            std::wstring windowTitle{ t(L"Msg_Unknown") };
+            std::wstring windowTitle{ t(L"Common.Unknown") };
             int length = GetWindowTextLengthW(hwnd);
             if (length > 0) {
                 windowTitle = std::wstring(length + 1, '\0');
@@ -670,7 +662,7 @@ namespace winrt::StarlightGUI::implementation
                 CloseHandle(hProcess);
             }
 
-            std::wstring className{ t(L"Msg_Unknown") };
+            std::wstring className{ t(L"Common.Unknown") };
             wchar_t classNameTmp[MAX_PATH];
             GetClassNameW(hwnd, &classNameTmp[0], MAX_PATH);
             className = classNameTmp;
@@ -815,14 +807,14 @@ namespace winrt::StarlightGUI::implementation
         if (activeColumn == SortColumn::Unknown) return;
 
         if (updateHeader) {
-            NameHeaderButton().Content(tbox(L"Window_ColWindow.Content"));
+            NameHeaderButton().Content(tbox(L"Common.Window"));
             BandHeaderButton().Content(box_value(L"ZBID"));
-            WindowStyleHeaderButton().Content(tbox(L"Window_ColStyle.Content"));
+            WindowStyleHeaderButton().Content(tbox(L"Window.Header.Style"));
             HwndHeaderButton().Content(box_value(L"HWND"));
 
-            if (activeColumn == SortColumn::Name) NameHeaderButton().Content(box_value(t(L"Window_ColWindow.Content") + (isAscending ? L" ↓" : L" ↑")));
+            if (activeColumn == SortColumn::Name) NameHeaderButton().Content(box_value(t(L"Common.Window") + (isAscending ? L" ↓" : L" ↑")));
             if (activeColumn == SortColumn::Band) BandHeaderButton().Content(box_value(isAscending ? L"ZBID ↓" : L"ZBID ↑"));
-            if (activeColumn == SortColumn::WindowStyle) WindowStyleHeaderButton().Content(box_value(t(L"Window_ColStyle.Content") + (isAscending ? L" ↓" : L" ↑")));
+            if (activeColumn == SortColumn::WindowStyle) WindowStyleHeaderButton().Content(box_value(t(L"Window.Header.Style") + (isAscending ? L" ↓" : L" ↑")));
             if (activeColumn == SortColumn::Hwnd) HwndHeaderButton().Content(box_value(isAscending ? L"HWND ↓" : L"HWND ↑"));
         }
 
@@ -899,6 +891,17 @@ namespace winrt::StarlightGUI::implementation
         LoadWindowList();
 
         co_return;
+    }
+
+    void WindowPage::SetupLocalization() {
+        WindowTitleUid().Text(t(L"Window.Title"));
+        WindowCountText().Text(t(L"Window.Loading"));
+        ShowNoTitleCheckBox().Content(tbox(L"Window.ShowNoTitle"));
+        ShowVisibleOnlyCheckBox().Content(tbox(L"Window.ShowVisibleOnly"));
+        RefreshButton().Label(t(L"Common.Refresh"));
+        SearchBox().PlaceholderText(t(L"Window.PlaceholderText"));
+        NameHeaderButton().Content(tbox(L"Common.Window"));
+        WindowStyleHeaderButton().Content(tbox(L"Window.Header.Style"));
     }
 }
 

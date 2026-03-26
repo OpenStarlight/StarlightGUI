@@ -173,6 +173,7 @@ namespace winrt::StarlightGUI::implementation
     struct MonitorPage : MonitorPageT<MonitorPage>
     {
         MonitorPage();
+		void SetupLocalization();
 
         void MainSegmented_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& e);
         slg::coroutine HandleSegmentedChange(int index, bool force);

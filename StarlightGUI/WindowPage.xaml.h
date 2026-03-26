@@ -7,6 +7,7 @@ namespace winrt::StarlightGUI::implementation
     struct WindowPage : WindowPageT<WindowPage>
     {
         WindowPage();
+        void SetupLocalization();
 
         slg::coroutine RefreshButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
 
