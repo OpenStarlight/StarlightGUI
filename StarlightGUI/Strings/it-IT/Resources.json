@@ -469,7 +469,7 @@
   "ProcHandle.Msg.NoInfo": "Non poteva chiudere la cartella temporanea: %",
   "ProcHandle.Msg.TooManyHandles": "Ci sono troppe maniglie e il risultato potrebbe essere impreciso!",
   "ProcKCT.Title": "Tabella callback kernel",
-  "ProcKCT.Detail": "共 %d 条记录 (%d ms)",
+  "ProcKCT.Detail": "共 %d 个回调记录 (%d ms)",
   "ProcKCT.Header.Function": "Funzione",
   "ProcKCT.Msg.NoInfo": "Non poteva chiudere la cartella temporanea: %",
   "ProcKCT.Msg.TooManyRecords": "Ci sono troppi record e il risultato potrebbe non essere accurato!",

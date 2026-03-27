@@ -469,7 +469,7 @@
   "ProcHandle.Msg.NoInfo": "Nie można zamknąć katalogu tymczasowego:% s",
   "ProcHandle.Msg.TooManyHandles": "Za dużo uchwytów, a wynik może być niedokładny!",
   "ProcKCT.Title": "Tabela wywołań zwrotnych jądra",
-  "ProcKCT.Detail": "共 %d 条记录 (%d ms)",
+  "ProcKCT.Detail": "共 %d 个回调记录 (%d ms)",
   "ProcKCT.Header.Function": "Funkcja",
   "ProcKCT.Msg.NoInfo": "Nie można zamknąć katalogu tymczasowego:% s",
   "ProcKCT.Msg.TooManyRecords": "Jest zbyt wiele rekordów i wynik może nie być dokładny!",
