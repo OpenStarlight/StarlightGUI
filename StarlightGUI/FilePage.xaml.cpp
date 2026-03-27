@@ -520,7 +520,7 @@ namespace winrt::StarlightGUI::implementation
 
         // 选项3.1
         auto item3_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
-        auto item3_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue8ac", t(L"FileMenu.Name").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue8ac", t(L"Common.Name").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(selectedFiles[0].Name().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
@@ -528,7 +528,7 @@ namespace winrt::StarlightGUI::implementation
             co_return;
             });
         item3_1.Items().Append(item3_1_sub1);
-        auto item3_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", t(L"File.Menu.Path").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+        auto item3_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", t(L"Common.Path").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(selectedFiles[0].Path().c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
@@ -640,7 +640,7 @@ namespace winrt::StarlightGUI::implementation
 
         [this, lifetime, deferral, dataView]() -> winrt::Windows::Foundation::IAsyncAction {
             if (m_isLoadingFiles || m_isPostLoading) {
-                slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"File.StillLoading").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"File.Msg.StillLoading").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
                 deferral.Complete();
                 co_return;
             }

@@ -209,7 +209,7 @@ namespace winrt::StarlightGUI::implementation
     void Process_ModulePage::SetupLocalization()
     {
         ModuleTitleText().Text(t(L"ProcModule.Title"));
-        ModuleCountText().Text(t(L"Common.Loading"));
+        ModuleCountText().Text(t(L"Msg.Loading"));
         ModuleNameHeaderButton().Content(tbox(L"Common.Name"));
         AddressHeaderButton().Content(tbox(L"Common.Address"));
         SizeHeaderButton().Content(tbox(L"Common.Size"));

@@ -33,7 +33,7 @@
   "Common.CopyInfo": "复制信息",
 
   "Msg.EditSelfWarning": "你想干什么?",
-  "Msg.OpenInBrowser.Succe`ss": "已在浏览器中打开链接!",
+  "Msg.OpenInBrowser.Success": "已在浏览器中打开链接!",
   "Msg.OpenInBrowser.Failed": "无法在浏览器中打开链接!",
   "Msg.Success": "成功完成操作!",
   "Msg.SuccessWithArg": "成功%s!",
@@ -416,7 +416,7 @@
   "Utility.Msg.ActionFailedAlready": "操作失败: 已处于此状态!",
   "Utility.Msg.ActionSuccess": "操作成功!",
   "Utility.Msg.ConfirmAction": "你确定要这么做吗？再次点击以确认。",
-  "Utility.Msg.UnknownAction": "未知操作!",
+  "Utility.Common.UnknownAction": "未知操作!",
 
   "Settings.Header.Feature": "功能",
   "Settings.Header.Main": "主程序",
@@ -510,7 +510,7 @@
 
   "ProcHandle.Header.Access": "权限",
   "ProcHandle.Header.Attributes": "属性",
-  "ProcHandle.Header.Object": "地址",
+  "ProcHandle.Header.Object": "对象",
 
   "ProcHandle.Msg.NoInfo": "无法获取该进程的句柄信息!",
   "ProcHandle.Msg.TooManyHandles": "句柄数量过多，该结果可能不准确!",

@@ -359,7 +359,7 @@ namespace winrt::StarlightGUI::implementation
     void Process_ThreadPage::SetupLocalization()
     {
         ThreadTitleText().Text(t(L"ProcThread.Title"));
-        ThreadCountText().Text(t(L"Common.Loading"));
+        ThreadCountText().Text(t(L"Msg.Loading"));
         AddressHeaderButton().Content(tbox(L"Common.Address"));
         StatusHeaderButton().Content(tbox(L"Common.Status"));
         PriorityHeaderButton().Content(tbox(L"ProcThread.Header.Priority"));

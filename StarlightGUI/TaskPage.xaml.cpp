@@ -1202,7 +1202,7 @@ namespace winrt::StarlightGUI::implementation
                 HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
                 if (hFile == INVALID_HANDLE_VALUE) {
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Task.FileNotFound").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Msg.FileNotFound").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
                     co_return;
                 }
 

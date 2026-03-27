@@ -163,7 +163,7 @@ namespace winrt::StarlightGUI::implementation
     void Process_KCTPage::SetupLocalization()
     {
         KCTTitleText().Text(t(L"ProcKCT.Title"));
-        KCTCountText().Text(t(L"Common.Loading"));
+        KCTCountText().Text(t(L"Msg.Loading"));
         FunctionHeaderButton().Content(tbox(L"ProcKCT.Header.Function"));
         AddressHeaderButton().Content(tbox(L"Common.Address"));
 	}

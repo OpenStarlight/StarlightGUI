@@ -65,11 +65,11 @@ namespace winrt::StarlightGUI::implementation
                 DLLPathTextBox().Text(file.Path());
             }
             else {
-                ErrorText().Text(t(L"InjectDLL.NotDLL"));
+                ErrorText().Text(t(L"Task.Msg.NotDLLFile"));
             }
         }
         else {
-            ErrorText().Text(t(L"InjectDLL.FileNotExist"));
+            ErrorText().Text(t(L"Msg.FileNotFound"));
         }
     }
 }

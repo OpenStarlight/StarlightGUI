@@ -1219,7 +1219,7 @@ namespace winrt::StarlightGUI::implementation {
 			}
 			else
 			{
-				entry.CreationTime(t(L"Msg.Unknown"));
+				entry.CreationTime(t(L"Common.Unknown"));
 			}
 
 			ULONG bufferLength = 0;

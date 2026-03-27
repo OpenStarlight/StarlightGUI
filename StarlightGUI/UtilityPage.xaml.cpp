@@ -111,7 +111,7 @@ namespace winrt::StarlightGUI::implementation{
 		}
 		else {
 			co_await wil::resume_foreground(DispatcherQueue());
-			slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Utility.Msg.UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Utility.Common.UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
 		}
 
@@ -158,7 +158,7 @@ namespace winrt::StarlightGUI::implementation{
 			result = KernelInstance::RebootForce();
 		}
 		else {
-			slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Utility.Msg.UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
+			slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Utility.Common.UnknownAction").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
 		}
 

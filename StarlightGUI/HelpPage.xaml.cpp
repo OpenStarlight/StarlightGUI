@@ -122,14 +122,14 @@ namespace winrt::StarlightGUI::implementation
         }
         catch (const hresult_error& e) {
             LOG_ERROR(__WFUNCTION__, L"Failed to get sponsor list! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-            sponsorList = t(L"Help.FetchFailed");
+            sponsorList = t(L"Msg.FetchFailed");
         }
         co_return;
     }
 
     void HelpPage::SetSponsorList() {
         if (sponsorList.empty()) {
-            SponsorListText().Text(t(L"Help.FetchFailed"));
+            SponsorListText().Text(t(L"Msg.FetchFailed"));
         }
         else {
             SponsorListText().Text(sponsorList);
