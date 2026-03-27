@@ -1,4 +1,4 @@
-{
+﻿{
   "Common.Error": "错误",
   "Common.Success": "成功",
   "Common.Warning": "警告",
@@ -31,25 +31,28 @@
   "Common.Unsupported": "不支持",
   "Common.Refresh": "刷新",
   "Common.CopyInfo": "复制信息",
-  "Msg.EditSelfWarning": "你这是要做什么？",
-  "Msg.OpenInBrowser.Succe`ss": "已在浏览器中打开链接。",
-  "Msg.OpenInBrowser.Failed": "无法在浏览器中打开链接。",
-  "Msg.Success": "操作成功！",
-  "Msg.SuccessWithArg": "已成功%s！",
-  "Msg.Failed": "操作失败，错误码：%d",
-  "Msg.FailedWithArg": "无法%s，错误码：%d",
-  "Msg.FailedWithArgNoError": "无法%s%s！",
-  "Msg.CopyToClipboard.Success": "已复制到剪贴板！",
-  "Msg.CopyToClipboard.Failed": "无法复制到剪贴板！",
-  "Msg.ShowDialog.Success": "对话框已显示！",
-  "Msg.ShowDialog.Failed": "无法显示对话框！",
-  "Msg.FileNotFound": "文件不存在！",
-  "Msg.FetchFailed": "获取失败… :(",
-  "Msg.RestartRequired": "该操作需要重启程序后生效！",
+
+  "Msg.EditSelfWarning": "你想干什么?",
+  "Msg.OpenInBrowser.Succe`ss": "已在浏览器中打开链接!",
+  "Msg.OpenInBrowser.Failed": "无法在浏览器中打开链接!",
+  "Msg.Success": "成功完成操作!",
+  "Msg.SuccessWithArg": "成功%s!",
+  "Msg.Failed": "无法完成操作, 错误码: %d",
+  "Msg.FailedWithArg": "无法%s, 错误码: %d",
+  "Msg.FailedWithArgNoError": "无法%s%s!",
+  "Msg.CopyToClipboard.Success": "已成功复制至剪贴板!",
+  "Msg.CopyToClipboard.Failed": "无法复制至剪贴板!",
+  "Msg.ShowDialog.Success": "成功显示对话框!",
+  "Msg.ShowDialog.Failed": "无法显示对话框!",
+  "Msg.FileNotFound": "文件不存在!",
+  "Msg.FetchFailed": "获取失败... :(",
+  "Msg.RestartRequired": "该操作需要重启程序以生效!",
   "Msg.Loading": "加载中...",
   "Msg.StatusRunning": "运行中",
+
   "Msg.Console.CreatedAt": "创建时间: ",
   "Msg.Console.Version": "版本: ",
+
   "Msg.Thread.Running": "运行中",
   "Msg.Thread.Initialized": "已初始化",
   "Msg.Thread.Ready": "就绪",
@@ -60,6 +63,7 @@
   "Msg.Thread.Transition": "Transition",
   "Msg.Thread.DeferredReady": "Deferred Ready",
   "Msg.Thread.GateWait": "Gate Wait",
+
   "Nav.Home": "主页",
   "Nav.Task": "任务管理",
   "Nav.KernelModule": "模块管理",
@@ -73,16 +77,20 @@
   "Nav.Handle": "句柄",
   "Nav.Module": "模块",
   "Nav.KCT": "内核回调表",
+
   "MainWindow.Updater.Failed": "检查更新失败!",
-  "MainWindow.Updater.Dev": "当前使用的是开发版本。",
-  "MainWindow.Updater.Latest": "当前已是最新版本。",
-  "MainWindow.Updater.New": "检测到新版本。",
+  "MainWindow.Updater.Dev": "当前正在使用开发版本!",
+  "MainWindow.Updater.Latest": "当前已是最新版本!",
+  "MainWindow.Updater.New": "发现新版本!",
+
   "MainWindow.Driver.Loading": "正在加载必要模块，这可能需要一段时间...",
   "MainWindow.Driver.Success": "所有模块加载成功!",
   "MainWindow.Driver.Failed": "一个或多个模块加载失败!",
   "MainWindow.Driver.FailedHelp1": "无法加载驱动，请检查是否有进程或杀软正在阻止驱动加载!",
   "MainWindow.Driver.FailedHelp2": "无法加载驱动，请在 Windows Defender 内关闭内核隔离!",
+
   "MainWindow.Tray.Open": "打开主窗口",
+
   "Home.CurrentTime": "当前时间",
   "Home.Introduction": "一个 WinUI3 界面的全能内核级系统工具",
   "Home.VersionLabel": "  版本：",
@@ -94,7 +102,8 @@
   "Home.GoodEvening": "晚上好",
   "Home.GoodMorning": "上午好",
   "Home.WelcomeBack": "欢迎回来",
-  "Home.WelcomeMsg": "欢迎使用 Starlight GUI。",
+  "Home.WelcomeMsg": "欢迎使用 Starlight GUI!",
+
   "Home.Overview": "系统概览",
   "Home.Overview.Chart": "统计图",
   "Home.Overview.ChangeMode": "图表切换发送/接收",
@@ -136,12 +145,15 @@
   "Home.Overview.UnknownModel": "未知型号",
   "Home.Overview.WriteSpeed": "写入速度: ",
   "Home.Overview.WriteSpeedZero": "写入速度: 0 B/s",
+
   "Task.Title": "任务管理器",
   "Task.Loading": "正在加载...",
   "Task.Placeholder": "搜索进程...",
   "Task.Detail": "共 %d 个进程 (%d ms)",
+
   "Task.Button.Run": "运行进程",
   "Task.Button.Terminate": "结束进程",
+
   "Task.Menu.Terminate": "终止",
   "Task.Menu.TerminateKernel": "终止 (内核)",
   "Task.Menu.TerminateMurder": "终止 (内存抹杀)",
@@ -157,28 +169,37 @@
   "Task.Menu.Properties": "属性",
   "Task.Menu.SetCritical": "设置为关键进程",
   "Task.Menu.SetPPL": "设置 PPL",
+
   "Task.Desc.Application": "应用程序",
   "Task.Desc.System": "系统进程",
+
   "Task.Msg.MurderWarning": "该操作将强制抹杀进程内存，可能导致系统不稳定!再次点击以确认!",
   "Task.Msg.SetCriticalWarning": "这将使进程变为关键进程，终止它将导致蓝屏!再次点击以确认!",
-  "Task.Msg.StillLoading": "正在加载，请稍候。",
+  "Task.Msg.StillLoading": "正在加载中，请稍候...",
   "Task.Msg.NotDLLFile": "文件不是DLL类型!",
   "Task.Msg.TINotRunning": "TrustedInstaller 服务未运行!",
+
   "KernelModule.Title": "模块管理器",
   "KernelModule.Loading": "正在加载...",
   "KernelModule.Placeholder": "搜索模块...",
   "KernelModule.Detail": "共 %d 个内核模块 (%d ms)",
+
   "KernelModule.Header.DriverObj": "驱动对象",
   "KernelModule.Header.LoadOrder": "加载顺序",
+
   "KernelModule.Button.LoadDriver": "加载驱动",
   "KernelModule.Button.UnloadModule": "卸载模块",
+
   "KernelModule.Menu.Hide": "隐藏",
   "KernelModule.Menu.Unload": "卸载",
+
   "File.ThisPC": "此电脑",
   "File.BackToPC": "返回此电脑",
   "File.PreviousFolder": "上个文件夹",
   "File.Placeholder": "搜索文件...",
+
   "File.Header.ModifyTime": "修改日期",
+
   "File.Menu.Open": "打开",
   "File.Menu.OpenWith": "打开方式",
   "File.Menu.Copy": "复制",
@@ -191,18 +212,22 @@
   "File.Menu.Properties": "属性",
   "File.Menu.Lock": "锁定",
   "File.Menu.OpenInExplorer": "在文件管理器内打开",
-  "File.Msg.StillLoading": "当前正在加载，请稍后再试！",
+
+  "File.Msg.StillLoading": "当前正在加载，请稍后再试!",
   "File.Msg.ImportantFileWarning": "该文件可能为重要文件，如果确认继续请再次点击!",
   "File.Msg.DragCopyException": "拖拽复制时出现异常!",
   "File.Msg.EnterDriveFirst": "请先进入某个驱动器后再进行复制",
-  "File.Msg.CopyPartialFail": "%d 个项目复制失败！请尝试以高权限运行！",
+  "File.Msg.CopyPartialFail": "%d 个项目复制失败! 请尝试以高权限运行!",
+
   "Window.Title": "窗口管理器",
   "Window.Loading": "正在加载...",
   "Window.Placeholder": "搜索窗口标题...",
   "Window.ShowNoTitle": "显示无标题窗口",
   "Window.ShowVisibleOnly": "仅显示可见窗口",
   "Window.Detail": "共 %d 个窗口 (%d ms)",
+
   "Window.Header.Style": "样式",
+
   "Window.Menu.Close": "关闭",
   "Window.Menu.CloseEndTask": "关闭 (结束任务)",
   "Window.Menu.CloseKernel": "关闭 (内核)",
@@ -227,6 +252,7 @@
   "Window.Menu.StyleSolid": "纯色",
   "Window.Menu.ThemeDark": "深色",
   "Window.Menu.ThemeLight": "浅色",
+
   "Monitor.DefaultText": "选择一个板块。",
   "Monitor.Placeholder": "搜索...",
   "Monitor.Open": "打开",
@@ -244,6 +270,7 @@
   "Monitor.Timer": "计时器",
   "Monitor.Timestamp": "时间戳",
   "Monitor.IoCompletion": "I/O 完成端口",
+
   "Monitor.Seg.Object": "对象",
   "Monitor.Seg.Debug": "调试信息",
   "Monitor.Seg.Callback": "回调/消息",
@@ -258,6 +285,7 @@
   "Monitor.Seg.PiDDB": "PiDDB 缓存表",
   "Monitor.Seg.HALDPT": "HAL 分发表",
   "Monitor.Seg.HALPDPT": "HAL 私有分发表",
+
   "Monitor.Header.TypeModule": "类型/模块",
   "Monitor.Header.Entry": "入口",
   "Monitor.Header.IRPModule": "IRP/模块",
@@ -275,6 +303,7 @@
   "Monitor.Header.Limit": "段界限",
   "Monitor.Header.Privilege": "特权级",
   "Monitor.Header.Access": "访问权限",
+
   "Monitor.Label.Abandoned": "已放弃: ",
   "Monitor.Label.Attributes": "属性: ",
   "Monitor.Label.Base": "基址: ",
@@ -295,6 +324,7 @@
   "Monitor.Label.Signaled": "已触发: ",
   "Monitor.Label.Size": "大小: ",
   "Monitor.Label.Type": "类型: ",
+
   "Monitor.Menu.Remove": "移除",
   "Monitor.Menu.ScanEPTHook": "扫描 EPT/NPT 钩子",
   "Monitor.Menu.Unhook": "解除挂钩",
@@ -306,18 +336,22 @@
   "Monitor.Menu.Hook": "钩子",
   "Monitor.Menu.Object": "对象",
   "Monitor.Menu.SrcAddress": "源地址",
+
   "Monitor.Msg.WaitForLoading": "请等待列表加载完毕后再进行切换!",
   "Monitor.Msg.GetInfoError": "获取信息时出错，部分内容可能不完整!",
+
   "Disasm.Title": "内存反汇编",
   "Disasm.None": "无",
   "Disasm.Execute": "执行",
   "Disasm.Menu.ModeRead": "读取",
   "Disasm.Menu.ModeReadDisasm": "读取 + 反汇编",
   "Disasm.Menu.ModeWrite": "写入",
+
   "Disasm.Msg.CapstoneInitFailed": "无法初始化 Capstone! 请检查系统配置! 错误码: ",
   "Disasm.Msg.InvalidInput": "输入的一个或多个值不合法!",
   "Disasm.Msg.NoInstructions": "未能反汇编出任何指令，可能发生了错误!",
   "Disasm.Msg.WriteWarning": "写入内存可能会导致系统不稳定甚至崩溃! 请确保你知道自己在做什么!!! 再次点击以继续!!!",
+
   "Utility.Header.Hypervisor": "Hypervisor",
   "Utility.Header.SysBehavior": "系统行为控制",
   "Utility.Header.SysOp": "系统操作",
@@ -376,17 +410,20 @@
   "Utility.Menu.PG.Disable": "禁用",
   "Utility.Menu.Enable": "启用",
   "Utility.Menu.Disable": "禁用",
+
   "Utility.Msg.SysOpWarning": "(警告: 该区域的功能可能无法正常工作，导致蓝屏或崩溃是正常现象!)",
   "Utility.Msg.ActionFailed": "操作失败!",
   "Utility.Msg.ActionFailedAlready": "操作失败: 已处于此状态!",
   "Utility.Msg.ActionSuccess": "操作成功!",
-  "Utility.Msg.ConfirmAction": "此操作有风险，请再次点击确认。",
+  "Utility.Msg.ConfirmAction": "你确定要这么做吗？再次点击以确认。",
   "Utility.Msg.UnknownAction": "未知操作!",
+
   "Settings.Header.Feature": "功能",
   "Settings.Header.Main": "主程序",
   "Settings.Header.Appearance": "外观",
   "Settings.Header.Other": "其他",
   "Settings.Header.Language": "语言",
+
   "Settings.Header.Card.EnumFileMode": "遍历文件模式",
   "Settings.Header.Card.EnumStrengthen": "进程枚举强化",
   "Settings.Header.Card.TaskAutoRefresh": "任务自动刷新",
@@ -410,6 +447,7 @@
   "Settings.Header.Card.Log": "日志",
   "Settings.Header.Card.Fix": "服务修复",
   "Settings.Header.Card.Language": "语言",
+
   "Settings.Desc.Card.EnumFileMode": "文件管理器中进行遍历文件使用的 API，NTFSPARSER 可能不会工作",
   "Settings.Desc.Card.EnumStrengthen": "强制使用 SKT64 作为任务管理器枚举进程的驱动，可能会导致效率变低",
   "Settings.Desc.Card.TaskAutoRefresh": "任务管理器会周期性刷新进程列表，使信息始终保持最新",
@@ -433,27 +471,32 @@
   "Settings.Desc.Card.Log": "打开或关闭日志窗口",
   "Settings.Desc.Card.Fix": "如果无法正确加载完整功能，请尝试运行这个修复",
   "Settings.Desc.Card.Language": "应用程序显示的语言",
+
   "Settings.Button.ImportImage": "导入",
   "Settings.Button.ClearImage": "清除",
   "Settings.Button.ImageRefresh": "刷新",
   "Settings.Button.Log": "切换",
   "Settings.Button.Fix": "修复",
+
   "Settings.Msg.AutoStartEnabled": "开机自启动已开启，将通过计划任务以最高权限启动!",
   "Settings.Msg.AutoStartDisabled": "开机自启动已关闭!",
   "Settings.Msg.AutoStartEnableFailed": "创建开机自启动任务失败，请检查系统计划任务服务状态!",
   "Settings.Msg.AutoStartDisableFailed": "关闭开机自启动失败，请检查权限或计划任务服务!",
   "Settings.Msg.ReplaceTaskMgrEnabled": "已开启替代任务管理器!",
   "Settings.Msg.ReplaceTaskMgrDisabled": "已关闭替代任务管理器!",
-  "Settings.Msg.ReplaceTaskMgrFailed": "替换任务管理器失败，请检查权限或系统策略！",
+  "Settings.Msg.ReplaceTaskMgrFailed": "设置替代任务管理器失败，请检查权限或系统策略!",
+
   "Help.Header.About": "关于",
   "Help.Header.Acknowledgement": "特别鸣谢",
   "Help.Header.Sponsors": "赞助者",
+
   "Help.Button.Sponsor": "赞助!",
   "Help.Button.Bilibili": "查看B站",
   "Help.Button.GithubUser": "查看用户",
   "Help.Button.GithubRepo": "查看仓库",
   "Help.Button.WinUI": "查看链接",
-  "Help.Text.Stars.Desc": "Starlight GUI 的开发者，热爱编程。",
+
+  "Help.Text.Stars.Desc": "Starlight GUI 的开发者，一个热爱编程的男孩子~",
   "Help.Text.Github.Desc": "官方源代码仓库: https://github.com/OpenStarlight/StarlightGUI",
   "Help.Text.WinUI.Desc": "WinUI 是一个用户界面层，包含现代控件和样式，用于构建 Windows 应用。",
   "Help.Text.WinUIEssentials.Desc": "一个专门用于简化 WinUI 3 开发的 C++ 仓库。",
@@ -461,32 +504,45 @@
   "Help.Text.MuLin.Desc": "一个QA和半个PD？为本项目提了一些小Bug和一些小需求。",
   "Help.Text.Wormwaker.Desc": "本项目的技术支持、宣传、思路指导，Windows 用户层大师级开发者。",
   "Help.Text.SponsorIntro": "自 Starlight GUI 问世以来，所有为本软件开发提供过赞助的人员名单，排名不分先后。由衷感谢你们对作者和本软件开发的支持!",
+
   "ProcHandle.Title": "句柄",
   "ProcHandle.Detail": "共 %d 个句柄 (%d ms)",
+
   "ProcHandle.Header.Access": "权限",
   "ProcHandle.Header.Attributes": "属性",
   "ProcHandle.Header.Object": "地址",
-  "ProcHandle.Msg.NoInfo": "无法获取该进程的句柄信息！",
+
+  "ProcHandle.Msg.NoInfo": "无法获取该进程的句柄信息!",
   "ProcHandle.Msg.TooManyHandles": "句柄数量过多，该结果可能不准确!",
+
   "ProcKCT.Title": "内核回调表",
-  "ProcKCT.Detail": "共 %d 个回调记录 (%d ms)",
+  "ProcKCT.Detail": "共 %d 条记录 (%d ms)",
+
   "ProcKCT.Header.Function": "函数",
-  "ProcKCT.Msg.NoInfo": "无法获取该进程的内核回调信息！",
+
+  "ProcKCT.Msg.NoInfo": "无法获取该进程的内核回调信息!",
   "ProcKCT.Msg.TooManyRecords": "记录数量过多，该结果可能不准确!",
+
   "ProcModule.Title": "模块",
   "ProcModule.Detail": "共 %d 个模块 (%d ms)",
-  "ProcModule.Msg.NoInfo": "无法获取该进程的模块信息！",
+
+  "ProcModule.Msg.NoInfo": "无法获取该进程的模块信息!",
   "ProcModule.Msg.TooManyModules": "模块数量过多，该结果可能不准确!",
+
   "ProcThread.Title": "线程",
   "ProcThread.Detail": "共 %d 个线程 (%d ms)",
+
   "ProcThread.Header.Priority": "优先级",
+
   "ProcThread.Menu.SetState": "设置状态",
   "ProcThread.Menu.Resume": "恢复",
   "ProcThread.Menu.Suspend": "暂停",
   "ProcThread.Menu.Terminate": "终止",
   "ProcThread.Menu.TerminateKernel": "终止 (内核)",
   "ProcThread.Menu.TerminateMurder": "终止 (内存抹杀)",
+
   "ProcThread.Msg.MurderWarning": "这是一个危险操作! 再次点击以确认!",
+
   "RunProcess.Title": "运行新进程",
   "RunProcess.ButtonPrimary": "运行",
   "RunProcess.ButtonSecondary": "取消",
@@ -494,12 +550,14 @@
   "RunProcess.Placeholder": "进程名...",
   "RunProcess.FullPrivileges": "启用完整特权 (TrustedInstaller)",
   "RunProcess.Permission": "进程权限",
+
   "InjectDLL.Title": "注入DLL",
   "InjectDLL.ButtonPrimary": "注入",
   "InjectDLL.ButtonSecondary": "取消",
   "InjectDLL.Desc": "Starlight GUI 将根据选定 DLL 文件路径，注入文件至指定进程。",
   "InjectDLL.Placeholder": "文件路径...",
   "InjectDLL.Browse": "浏览...",
+
   "LoadDriver.Title": "加载驱动",
   "LoadDriver.ButtonPrimary": "加载",
   "LoadDriver.ButtonSecondary": "取消",
@@ -507,18 +565,22 @@
   "LoadDriver.Placeholder": "文件路径...",
   "LoadDriver.Browse": "浏览...",
   "LoadDriver.Bypass": "绕过驱动签名检测",
+
   "LoadDriver.Msg.NotSYS": "文件不是 SYS 类型!",
+
   "ModifyToken.Title": "修改进程令牌",
   "ModifyToken.ButtonPrimary": "修改",
   "ModifyToken.ButtonSecondary": "取消",
   "ModifyToken.Desc": "Starlight GUI 将修改指定进程的令牌至选定权限类型。",
   "ModifyToken.Token": "令牌",
+
   "CopyFile.Title": "复制文件",
   "CopyFile.ButtonPrimary": "复制",
   "CopyFile.ButtonSecondary": "取消",
   "CopyFile.Desc": "Starlight GUI 将会把选定的文件/文件夹复制至指定路径。",
   "CopyFile.Placeholder": "文件路径...",
   "CopyFile.Browse": "浏览...",
+
   "Update.Announcement": "公告",
   "Update.Cancel": "取消",
   "Update.Confirm": "确认",
@@ -532,22 +594,5 @@
   "Update.Text.QuarkCode": "夸克网盘提取码: vVmj",
   "Update.Text.NoDirectLink": "本软件依靠网盘转存拉新来获取一些收益，所以不提供直链下载，敬请理解!",
   "Update.Text.UpdateTimeLabel": "更新日期:",
-  "Update.Text.DontShow": "今日不再显示",
-  "Msg.OpenInBrowser.Success": "已在浏览器中打开链接。",
-  "Common.Loading": "加载中...",
-  "Msg.Warning": "警告",
-  "Msg.Unknown": "(未知)",
-  "File.Menu.Path": "路径",
-  "FileMenu.Name": "名称",
-  "File.StillLoading": "当前正在加载，请稍后重试。",
-  "Help.FetchFailed": "获取失败… :(",
-  "InjectDLL.FileNotExist": "文件不存在！",
-  "InjectDLL.NotDLL": "文件不是 DLL 类型！",
-  "Monitor.Menu.Timestamp": "时间戳",
-  "Msg.ReplaceTaskMgrEnabled": "已开启替代任务管理器！",
-  "Msg.ReplaceTaskMgrDisabled": "已关闭替代任务管理器！",
-  "Task.FileNotFound": "文件不存在！",
-  "TRUE": "TRUE",
-  "FALSE": "FALSE",
-  "NaN": "NaN"
+  "Update.Text.DontShow": "今日不再显示"
 }
