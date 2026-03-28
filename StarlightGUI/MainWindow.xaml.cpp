@@ -282,6 +282,10 @@ namespace winrt::StarlightGUI::implementation
             MainFrame().NavigateToType(xaml_typename<StarlightGUI::HelpPage>(), nullptr, options);
             RootNavigation().SelectedItem(RootNavigation().FooterMenuItems().GetAt(0));
         }
+        else if (invokedItem == L"Settings") {
+            MainFrame().NavigateToType(xaml_typename<StarlightGUI::SettingsPage>(), nullptr, options);
+            RootNavigation().SelectedItem(RootNavigation().FooterMenuItems().GetAt(1));
+        }
     }
 
     void MainWindow::AppTitleBar_PaneToggleRequested(Microsoft::UI::Xaml::Controls::TitleBar, winrt::Windows::Foundation::IInspectable const&)
@@ -680,6 +684,7 @@ namespace winrt::StarlightGUI::implementation
         NavUtilityUid().Content(tbox(L"Nav.Utility"));
         NavMonitorUid().Content(tbox(L"Nav.Monitor"));
         NavDisasmUid().Content(tbox(L"Nav.Disasm"));
+        NavSettingsUid().Content(tbox(L"Nav.Settings"));
         NavHelpUid().Content(tbox(L"Nav.Help"));
     }
 }

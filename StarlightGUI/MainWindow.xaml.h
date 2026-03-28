@@ -15,6 +15,8 @@ namespace winrt::StarlightGUI::implementation
         MainWindow();
         ~MainWindow();
         void SetupLocalization();
+        void NavSettingsUid_RightTapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
+        void PlaySettingsIconEasterEgg();
 
         void RootNavigation_ItemInvoked(Microsoft::UI::Xaml::Controls::NavigationView sender, Microsoft::UI::Xaml::Controls::NavigationViewItemInvokedEventArgs args);
         void AppTitleBar_PaneToggleRequested(Microsoft::UI::Xaml::Controls::TitleBar sender, winrt::Windows::Foundation::IInspectable const& args);

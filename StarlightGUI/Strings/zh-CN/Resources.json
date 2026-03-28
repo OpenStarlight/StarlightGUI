@@ -72,6 +72,7 @@
   "Nav.Utility": "系统功能",
   "Nav.Monitor": "监视器",
   "Nav.Disasm": "内存反汇编",
+  "Nav.Settings": "设置",
   "Nav.Help": "关于",
   "Nav.Thread": "线程",
   "Nav.Handle": "句柄",
@@ -601,3 +602,5 @@
   "Update.Text.UpdateTimeLabel": "更新日期:",
   "Update.Text.DontShow": "今日不再显示"
 }
+
+

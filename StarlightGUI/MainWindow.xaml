@@ -3,6 +3,7 @@
     x:Class="StarlightGUI.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:animatedvisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
     xmlns:controls="using:Microsoft.UI.Xaml.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:essential="using:WinUI3Package"
@@ -49,7 +50,7 @@
                 IsBackButtonVisible="Collapsed"
                 IsPaneOpen="False"
                 IsPaneToggleButtonVisible="False"
-                IsSettingsVisible="True"
+                IsSettingsVisible="False"
                 ItemInvoked="RootNavigation_ItemInvoked"
                 PaneDisplayMode="LeftCompact">
 
@@ -126,6 +127,21 @@
                         Content="关于"
                         Icon="Help"
                         Tag="Help" />
+                    <NavigationViewItem
+                        x:Name="NavSettingsUid"
+                        Content="设置"
+                        Tag="Settings">
+                        <NavigationViewItem.Icon>
+                            <AnimatedIcon x:Name="NavSettingsIcon">
+                                <AnimatedIcon.Source>
+                                    <animatedvisuals:AnimatedSettingsVisualSource />
+                                </AnimatedIcon.Source>
+                                <AnimatedIcon.FallbackIconSource>
+                                    <SymbolIconSource Symbol="Setting" />
+                                </AnimatedIcon.FallbackIconSource>
+                            </AnimatedIcon>
+                        </NavigationViewItem.Icon>
+                    </NavigationViewItem>
                 </NavigationView.FooterMenuItems>
 
                 <!--  内容  -->

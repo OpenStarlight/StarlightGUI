@@ -68,6 +68,7 @@
   "Nav.Utility": "System Tools",
   "Nav.Monitor": "Monitor",
   "Nav.Disasm": "Memory Disassembly",
+  "Nav.Settings": "Settings",
   "Nav.Help": "About",
   "Nav.Thread": "Threads",
   "Nav.Handle": "Handles",
@@ -564,3 +565,5 @@
   "Update.Text.UpdateTimeLabel": "Update Date:",
   "Update.Text.DontShow": "Do not show again today"
 }
+
+
