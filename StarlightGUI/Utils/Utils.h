@@ -7,6 +7,7 @@
 #include <exception>
 #include <unordered_map>
 #include <vector>
+#include <dwmapi.h>
 #include <winrt/Microsoft.UI.Xaml.Input.h>
 
 using namespace winrt;

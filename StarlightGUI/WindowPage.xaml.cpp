@@ -22,7 +22,6 @@
 #include <InfoWindow.xaml.h>
 #include <MainWindow.xaml.h>
 #include <psapi.h>
-#include <dwmapi.h>
 
 using namespace winrt;
 using namespace WinUI3Package;

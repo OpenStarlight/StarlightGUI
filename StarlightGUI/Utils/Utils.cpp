@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "Utils.h"
 #include <winrt/XamlToolkit.WinUI.Controls.h>
+#include <winrt/Microsoft.UI.Composition.SystemBackdrops.h>
 #include <unordered_map>
 #include <unordered_set>
 #include <shellapi.h>
@@ -10,35 +11,42 @@
 #include <limits>
 #include <cmath>
 
+using namespace winrt;
+using namespace Microsoft::UI::Xaml;
+using namespace Microsoft::UI::Xaml::Input;
+using namespace Microsoft::UI::Xaml::Media;
+using namespace Microsoft::UI::Xaml::Controls;
+using namespace Microsoft::UI::Composition::SystemBackdrops;
+
 namespace slg {
     static void UpdateTextMarqueeByNamesCore(
-        winrt::Microsoft::UI::Xaml::FrameworkElement const& itemRoot,
-        winrt::hstring const& containerName,
-        winrt::hstring const& textBlockName,
-        winrt::hstring const& marqueeName,
+        FrameworkElement const& itemRoot,
+        hstring const& containerName,
+        hstring const& textBlockName,
+        hstring const& marqueeName,
         double widthPadding,
         int retryCount);
 
     static void UpdateVisibleListViewMarqueeByNamesCore(
-        winrt::Microsoft::UI::Xaml::Controls::ListView const& listView,
+        ListView const& listView,
         uint32_t itemCount,
-        winrt::hstring const& containerName,
-        winrt::hstring const& textBlockName,
-        winrt::hstring const& marqueeName,
+        hstring const& containerName,
+        hstring const& textBlockName,
+        hstring const& marqueeName,
         double widthPadding)
     {
         if (!listView) return;
         auto liveCount = listView.Items().Size();
         if (liveCount > itemCount) itemCount = liveCount;
 
-        auto panel = listView.ItemsPanelRoot().try_as<winrt::Microsoft::UI::Xaml::Controls::Panel>();
+        auto panel = listView.ItemsPanelRoot().try_as<Panel>();
         if (panel) {
             auto children = panel.Children();
             for (uint32_t i = 0; i < children.Size(); ++i) {
-                auto itemContainer = children.GetAt(i).try_as<winrt::Microsoft::UI::Xaml::Controls::ListViewItem>();
+                auto itemContainer = children.GetAt(i).try_as<ListViewItem>();
                 if (!itemContainer) continue;
 
-                auto contentRoot = itemContainer.ContentTemplateRoot().try_as<winrt::Microsoft::UI::Xaml::FrameworkElement>();
+                auto contentRoot = itemContainer.ContentTemplateRoot().try_as<FrameworkElement>();
                 if (!contentRoot) continue;
 
                 UpdateTextMarqueeByNames(contentRoot, containerName, textBlockName, marqueeName, widthPadding);
@@ -47,10 +55,10 @@ namespace slg {
         }
 
         for (uint32_t i = 0; i < itemCount; ++i) {
-            auto itemContainer = listView.ContainerFromIndex(i).try_as<winrt::Microsoft::UI::Xaml::Controls::ListViewItem>();
+            auto itemContainer = listView.ContainerFromIndex(i).try_as<ListViewItem>();
             if (!itemContainer) continue;
 
-            auto contentRoot = itemContainer.ContentTemplateRoot().try_as<winrt::Microsoft::UI::Xaml::FrameworkElement>();
+            auto contentRoot = itemContainer.ContentTemplateRoot().try_as<FrameworkElement>();
             if (!contentRoot) continue;
 
             UpdateTextMarqueeByNames(contentRoot, containerName, textBlockName, marqueeName, widthPadding);
@@ -58,20 +66,20 @@ namespace slg {
     }
 
     static void EnsureListViewMarqueeScrollHook(
-        winrt::Microsoft::UI::Xaml::Controls::ListView const& listView,
-        winrt::hstring const& containerName,
-        winrt::hstring const& textBlockName,
-        winrt::hstring const& marqueeName,
+        ListView const& listView,
+        hstring const& containerName,
+        hstring const& textBlockName,
+        hstring const& marqueeName,
         double widthPadding,
         int retryCount = 0)
     {
         if (!listView) return;
 
         static std::unordered_set<uint64_t> hookedListViews;
-        uint64_t key = reinterpret_cast<uint64_t>(winrt::get_abi(listView));
+        uint64_t key = reinterpret_cast<uint64_t>(get_abi(listView));
         if (hookedListViews.find(key) != hookedListViews.end()) return;
 
-        auto scrollViewer = slg::FindVisualChild<winrt::Microsoft::UI::Xaml::Controls::ScrollViewer>(listView);
+        auto scrollViewer = slg::FindVisualChild<ScrollViewer>(listView);
         if (!scrollViewer) {
             if (retryCount < 4) {
                 listView.DispatcherQueue().TryEnqueue([listView, containerName, textBlockName, marqueeName, widthPadding, retryCount]() {
@@ -90,29 +98,28 @@ namespace slg {
     }
 
     static void EnsureListViewMarqueeContainerHook(
-        winrt::Microsoft::UI::Xaml::Controls::ListView const& listView,
-        winrt::hstring const& containerName,
-        winrt::hstring const& textBlockName,
-        winrt::hstring const& marqueeName,
+        ListView const& listView,
+        hstring const& containerName,
+        hstring const& textBlockName,
+        hstring const& marqueeName,
         double widthPadding)
     {
         if (!listView) return;
 
         static std::unordered_set<uint64_t> hookedListViews;
-        uint64_t key = reinterpret_cast<uint64_t>(winrt::get_abi(listView));
+        uint64_t key = reinterpret_cast<uint64_t>(get_abi(listView));
         if (hookedListViews.find(key) != hookedListViews.end()) return;
         hookedListViews.insert(key);
 
         listView.ContainerContentChanging([listView, containerName, textBlockName, marqueeName, widthPadding](auto&&, auto&& args) {
-            auto itemContainer = args.ItemContainer().try_as<winrt::Microsoft::UI::Xaml::Controls::ListViewItem>();
+            auto itemContainer = args.ItemContainer().try_as<ListViewItem>();
             if (!itemContainer) return;
 
-            auto contentRoot = itemContainer.ContentTemplateRoot().try_as<winrt::Microsoft::UI::Xaml::FrameworkElement>();
+            auto contentRoot = itemContainer.ContentTemplateRoot().try_as<FrameworkElement>();
             if (!contentRoot) return;
 
             UpdateTextMarqueeByNames(contentRoot, containerName, textBlockName, marqueeName, widthPadding);
 
-            // Virtualized rows may finish arrange in a later tick.
             if (listView) {
                 listView.DispatcherQueue().TryEnqueue([contentRoot, containerName, textBlockName, marqueeName, widthPadding]() {
                     UpdateTextMarqueeByNames(contentRoot, containerName, textBlockName, marqueeName, widthPadding);
@@ -121,9 +128,9 @@ namespace slg {
             });
     }
 
-    std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource>& GetShellIconCacheStore()
+    std::unordered_map<std::wstring, ImageSource>& GetShellIconCacheStore()
     {
-        static std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource> cache;
+        static std::unordered_map<std::wstring, ImageSource> cache;
         return cache;
     }
 
@@ -142,9 +149,9 @@ namespace slg {
         try {
             std::rethrow_exception(std::current_exception());
         }
-        catch (const winrt::hresult_error& e) {
+        catch (const hresult_error& e) {
             LOG_ERROR(L"App", L"===== Unhandled exception detected! =====");
-            LOG_ERROR(L"App", L"Type: 'winrt::hresult_error'");
+            LOG_ERROR(L"App", L"Type: 'hresult_error'");
             LOG_ERROR(L"App", L"Code: %d", e.code().value);
             LOG_ERROR(L"App", L"Message: %s", e.message().c_str());
             LOG_ERROR(L"App", L"=========================================");
@@ -164,10 +171,10 @@ namespace slg {
     }
     Styles GetStyles()
     {
-        auto resources = winrt::Microsoft::UI::Xaml::Application::Current().Resources();
+        auto resources = Application::Current().Resources();
         return {
-            winrt::unbox_value<winrt::Microsoft::UI::Xaml::Style>(resources.TryLookup(winrt::box_value(L"MenuFlyoutItemStyle"))),
-            winrt::unbox_value<winrt::Microsoft::UI::Xaml::Style>(resources.TryLookup(winrt::box_value(L"MenuFlyoutSubItemStyle")))
+            unbox_value<Style>(resources.TryLookup(box_value(L"MenuFlyoutItemStyle"))),
+            unbox_value<Style>(resources.TryLookup(box_value(L"MenuFlyoutSubItemStyle")))
         };
     }
 
@@ -175,7 +182,7 @@ namespace slg {
         Styles const& styles,
         hstring const& glyph,
         hstring const& text,
-        winrt::Microsoft::UI::Xaml::RoutedEventHandler const& click)
+        RoutedEventHandler const& click)
     {
         MenuFlyoutItem item;
         item.Style(styles.Item);
@@ -188,7 +195,7 @@ namespace slg {
     MenuFlyoutItem CreateMenuItem(
         Styles const& styles,
         hstring const& text,
-        winrt::Microsoft::UI::Xaml::RoutedEventHandler const& click)
+        RoutedEventHandler const& click)
     {
         MenuFlyoutItem item;
         item.Style(styles.Item);
@@ -220,9 +227,9 @@ namespace slg {
     }
 
     void ShowAt(
-        winrt::Microsoft::UI::Xaml::Controls::MenuFlyout const& flyout,
-        winrt::Microsoft::UI::Xaml::Controls::ListView const& listView,
-        winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
+        MenuFlyout const& flyout,
+        ListView const& listView,
+        RightTappedRoutedEventArgs const& e)
     {
         flyout.ShowAt(listView, e.GetPosition(listView));
     }
@@ -246,13 +253,8 @@ namespace slg {
         infobar.HorizontalAlignment(HorizontalAlignment::Right);
         infobar.VerticalAlignment(VerticalAlignment::Top);
 
-        auto colorObj = Application::Current().Resources().TryLookup(box_value(L"SystemChromeMediumColor"));
-        if (colorObj) {
-            auto color = unbox_value<Color>(colorObj);
-            SolidColorBrush bg;
-            bg.Color(color);
-            bg.Opacity(0.9);
-            infobar.Background(bg);
+        if (severity == InfoBarSeverity::Informational) {
+            infobar.Background(SolidColorBrush{ slg::GetConfiguredElementTheme() == ElementTheme::Dark ? Color{ 255,40,40,40 } : Color{ 255,240,240,240 } });
         }
 
         return infobar;
@@ -304,19 +306,19 @@ namespace slg {
         DisplayInfoBar(CreateInfoBar(title, message, severity, xamlRoot), parent, time);
     }
 
-    void CreateInfoBarAndDisplay(hstring title, hstring message, InfoBarSeverity severity, winrt::StarlightGUI::implementation::MainWindow* instance, int time) {
+    void CreateInfoBarAndDisplay(hstring title, hstring message, InfoBarSeverity severity, StarlightGUI::implementation::MainWindow* instance, int time) {
         DisplayInfoBar(CreateInfoBar(title, message, severity, instance->MainWindowGrid().XamlRoot()), instance->InfoBarPanel(), time);
     }
 
-    void CreateInfoBarAndDisplay(hstring title, hstring message, InfoBarSeverity severity, winrt::StarlightGUI::implementation::InfoWindow* instance, int time) {
+    void CreateInfoBarAndDisplay(hstring title, hstring message, InfoBarSeverity severity, StarlightGUI::implementation::InfoWindow* instance, int time) {
         DisplayInfoBar(CreateInfoBar(title, message, severity, instance->InfoWindowGrid().XamlRoot()), instance->InfoBarPanel(), time);
     }
 
     ContentDialog CreateContentDialog(hstring title, hstring content, hstring closeMessage, XamlRoot xamlRoot) {
         ContentDialog dialog;
 
-        dialog.Title(winrt::box_value(title));
-        dialog.Content(winrt::box_value(content));
+        dialog.Title(box_value(title));
+        dialog.Content(box_value(content));
         dialog.CloseButtonText(closeMessage);
         dialog.XamlRoot(xamlRoot);
         dialog.RequestedTheme(GetConfiguredElementTheme());
@@ -379,7 +381,7 @@ namespace slg {
         return false;
     }
 
-    static winrt::Microsoft::UI::Xaml::ElementTheme GetSystemElementTheme()
+    static ElementTheme GetSystemElementTheme()
     {
         DWORD lightTheme = 1;
         DWORD size = sizeof(lightTheme);
@@ -393,23 +395,23 @@ namespace slg {
             &size);
 
         if (result == ERROR_SUCCESS) {
-            return lightTheme == 0 ? winrt::Microsoft::UI::Xaml::ElementTheme::Dark : winrt::Microsoft::UI::Xaml::ElementTheme::Light;
+            return lightTheme == 0 ? ElementTheme::Dark : ElementTheme::Light;
         }
 
-        return winrt::Microsoft::UI::Xaml::ElementTheme::Dark;
+        return ElementTheme::Dark;
     }
 
-    winrt::Microsoft::UI::Xaml::ElementTheme GetConfiguredElementTheme()
+    ElementTheme GetConfiguredElementTheme()
     {
         std::string themeValue = theme;
         std::transform(themeValue.begin(), themeValue.end(), themeValue.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
         if (themeValue == "light") {
-            return winrt::Microsoft::UI::Xaml::ElementTheme::Light;
+            return ElementTheme::Light;
         }
 
         if (themeValue == "dark") {
-            return winrt::Microsoft::UI::Xaml::ElementTheme::Dark;
+            return ElementTheme::Dark;
         }
 
         return GetSystemElementTheme();
@@ -418,17 +420,28 @@ namespace slg {
     void ApplyConfiguredTheme()
     {
         auto targetTheme = GetConfiguredElementTheme();
+		BOOL isDark = (targetTheme == ElementTheme::Dark) ? TRUE : FALSE;
 
-        if (winrt::StarlightGUI::implementation::g_mainWindowInstance) {
-            winrt::StarlightGUI::implementation::g_mainWindowInstance->MainWindowGrid().RequestedTheme(targetTheme);
+        if (g_mainWindowInstance) {
+            DwmSetWindowAttribute(g_mainWindowInstance->GetWindowHandle(), DWMWA_USE_IMMERSIVE_DARK_MODE, &isDark, sizeof(isDark));
+            g_mainWindowInstance->MainWindowGrid().RequestedTheme(targetTheme);
+            
+            if (background_type == 0) {
+                g_mainWindowInstance->MainWindowGrid().Background(SolidColorBrush{ slg::GetConfiguredElementTheme() == ElementTheme::Dark ? Colors::Black() : Colors::White() });
+            }
+            else if (background_type == 2) {
+                if (acrylicBackdrop) acrylicBackdrop.RequestedTheme(slg::GetConfiguredElementTheme());
+            }
         }
 
-        if (winrt::StarlightGUI::implementation::g_infoWindowInstance) {
-            winrt::StarlightGUI::implementation::g_infoWindowInstance->InfoWindowGrid().RequestedTheme(targetTheme);
+        if (g_infoWindowInstance) {
+            DwmSetWindowAttribute(g_infoWindowInstance->GetWindowHandle(), DWMWA_USE_IMMERSIVE_DARK_MODE, &isDark, sizeof(isDark));
+            g_infoWindowInstance->InfoWindowGrid().RequestedTheme(targetTheme);
+            g_infoWindowInstance->LoadBackdrop();
         }
     }
 
-    winrt::Microsoft::UI::Xaml::Media::ImageSource CreateImageSourceFromHIcon(HICON hIcon, int iconSize, bool destroyIcon)
+    ImageSource CreateImageSourceFromHIcon(HICON hIcon, int iconSize, bool destroyIcon)
     {
         if (!hIcon || iconSize <= 0) return nullptr;
 
@@ -466,7 +479,7 @@ namespace slg {
         std::memset(bits, 0, iconSize * iconSize * 4);
         DrawIconEx(memDc, 0, 0, hIcon, iconSize, iconSize, 0, nullptr, DI_NORMAL);
 
-        winrt::Microsoft::UI::Xaml::Media::Imaging::WriteableBitmap bitmap(iconSize, iconSize);
+        Imaging::WriteableBitmap bitmap(iconSize, iconSize);
         std::memcpy(bitmap.PixelBuffer().data(), bits, iconSize * iconSize * 4);
 
         SelectObject(memDc, oldBitmap);
@@ -475,10 +488,10 @@ namespace slg {
         ReleaseDC(nullptr, screenDc);
 
         if (destroyIcon) DestroyIcon(hIcon);
-        return bitmap.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>();
+        return bitmap.as<ImageSource>();
     }
 
-    winrt::Microsoft::UI::Xaml::Media::ImageSource GetShellIconImage(
+    ImageSource GetShellIconImage(
         std::wstring const& path,
         bool isDirectory,
         int iconSize,
@@ -521,28 +534,28 @@ namespace slg {
     }
 
     void UpdateTextMarqueeByNames(
-        winrt::Microsoft::UI::Xaml::FrameworkElement const& itemRoot,
-        winrt::hstring const& containerName,
-        winrt::hstring const& textBlockName,
-        winrt::hstring const& marqueeName,
+        FrameworkElement const& itemRoot,
+        hstring const& containerName,
+        hstring const& textBlockName,
+        hstring const& marqueeName,
         double widthPadding)
     {
         UpdateTextMarqueeByNamesCore(itemRoot, containerName, textBlockName, marqueeName, widthPadding, 0);
     }
 
     static void UpdateTextMarqueeByNamesCore(
-        winrt::Microsoft::UI::Xaml::FrameworkElement const& itemRoot,
-        winrt::hstring const& containerName,
-        winrt::hstring const& textBlockName,
-        winrt::hstring const& marqueeName,
+        FrameworkElement const& itemRoot,
+        hstring const& containerName,
+        hstring const& textBlockName,
+        hstring const& marqueeName,
         double widthPadding,
         int retryCount)
     {
         if (!itemRoot) return;
 
-        auto textContainer = itemRoot.FindName(containerName).try_as<winrt::Microsoft::UI::Xaml::FrameworkElement>();
-        auto textBlock = itemRoot.FindName(textBlockName).try_as<winrt::Microsoft::UI::Xaml::Controls::TextBlock>();
-        auto marquee = itemRoot.FindName(marqueeName).try_as<winrt::WinUI3Package::MarqueeText>();
+        auto textContainer = itemRoot.FindName(containerName).try_as<FrameworkElement>();
+        auto textBlock = itemRoot.FindName(textBlockName).try_as<TextBlock>();
+        auto marquee = itemRoot.FindName(marqueeName).try_as<WinUI3Package::MarqueeText>();
         if (!textContainer || !textBlock || !marquee) return;
 
         double availableWidth = textContainer.ActualWidth();
@@ -557,7 +570,7 @@ namespace slg {
 
         bool shouldUseMarquee = false;
         if (!textBlock.Text().empty()) {
-            winrt::Microsoft::UI::Xaml::Controls::TextBlock measureBlock;
+            TextBlock measureBlock;
             measureBlock.Text(textBlock.Text());
             measureBlock.FontFamily(textBlock.FontFamily());
             measureBlock.FontSize(textBlock.FontSize());
@@ -571,8 +584,8 @@ namespace slg {
             shouldUseMarquee = std::ceil(measureBlock.DesiredSize().Width) >= std::floor(availableWidth - widthPadding);
         }
 
-        textBlock.Visibility(shouldUseMarquee ? winrt::Microsoft::UI::Xaml::Visibility::Collapsed : winrt::Microsoft::UI::Xaml::Visibility::Visible);
-        marquee.Visibility(shouldUseMarquee ? winrt::Microsoft::UI::Xaml::Visibility::Visible : winrt::Microsoft::UI::Xaml::Visibility::Collapsed);
+        textBlock.Visibility(shouldUseMarquee ? Visibility::Collapsed : Visibility::Visible);
+        marquee.Visibility(shouldUseMarquee ? Visibility::Visible : Visibility::Collapsed);
 
         if (shouldUseMarquee) {
             auto targetText = textBlock.Text();
@@ -596,11 +609,11 @@ namespace slg {
     }
 
     void UpdateVisibleListViewMarqueeByNames(
-        winrt::Microsoft::UI::Xaml::Controls::ListView const& listView,
+        ListView const& listView,
         uint32_t itemCount,
-        winrt::hstring const& containerName,
-        winrt::hstring const& textBlockName,
-        winrt::hstring const& marqueeName,
+        hstring const& containerName,
+        hstring const& textBlockName,
+        hstring const& marqueeName,
         double widthPadding)
     {
         if (!listView) return;
@@ -618,8 +631,8 @@ namespace slg {
     }
 
     void ApplyHeaderColumnWidthsToRow(
-        winrt::Microsoft::UI::Xaml::Controls::Grid const& headerGrid,
-        winrt::Microsoft::UI::Xaml::Controls::Grid const& rowGrid,
+        Grid const& headerGrid,
+        Grid const& rowGrid,
         uint32_t rowOffset)
     {
         if (!headerGrid || !rowGrid) return;
@@ -634,22 +647,22 @@ namespace slg {
     }
 
     void ApplyHeaderColumnWidthsToContainer(
-        winrt::Microsoft::UI::Xaml::Controls::Grid const& headerGrid,
-        winrt::Microsoft::UI::Xaml::Controls::ListViewItem const& itemContainer,
+        Grid const& headerGrid,
+        ListViewItem const& itemContainer,
         uint32_t rowOffset)
     {
         if (!headerGrid || !itemContainer) return;
 
-        auto rowGrid = itemContainer.ContentTemplateRoot().try_as<winrt::Microsoft::UI::Xaml::Controls::Grid>();
+        auto rowGrid = itemContainer.ContentTemplateRoot().try_as<Grid>();
         if (!rowGrid) return;
 
         ApplyHeaderColumnWidthsToRow(headerGrid, rowGrid, rowOffset);
     }
 
     void SyncListViewColumnWidths(
-        winrt::Microsoft::UI::Xaml::Controls::Grid const& headerGrid,
-        winrt::Microsoft::UI::Xaml::Controls::Grid const& bodyGrid,
-        winrt::Microsoft::UI::Xaml::Controls::ListView const& listView,
+        Grid const& headerGrid,
+        Grid const& bodyGrid,
+        ListView const& listView,
         uint32_t rowOffset,
         double epsilon)
     {
@@ -660,7 +673,7 @@ namespace slg {
         if (headerColumns.Size() == 0 || bodyColumns.Size() < headerColumns.Size()) return;
 
         static std::unordered_map<uint64_t, std::vector<double>> cachedHeaderWidths;
-        uint64_t key = reinterpret_cast<uint64_t>(winrt::get_abi(headerGrid));
+        uint64_t key = reinterpret_cast<uint64_t>(get_abi(headerGrid));
         auto& lastWidths = cachedHeaderWidths[key];
         if (lastWidths.size() != headerColumns.Size()) {
             lastWidths.assign(headerColumns.Size(), -1.0);
@@ -686,7 +699,7 @@ namespace slg {
 
         auto itemCount = listView.Items().Size();
         for (uint32_t i = 0; i < itemCount; ++i) {
-            auto itemContainer = listView.ContainerFromIndex(i).try_as<winrt::Microsoft::UI::Xaml::Controls::ListViewItem>();
+            auto itemContainer = listView.ContainerFromIndex(i).try_as<ListViewItem>();
             if (!itemContainer) continue;
             ApplyHeaderColumnWidthsToContainer(headerGrid, itemContainer, rowOffset);
         }

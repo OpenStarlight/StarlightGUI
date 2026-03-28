@@ -303,7 +303,7 @@ namespace winrt::StarlightGUI::implementation
         int option = -1;
 
         if (background_type == 1) {
-            MicaBackdrop micaBackdrop = MicaBackdrop();
+            static MicaBackdrop micaBackdrop = MicaBackdrop();
 
             this->SystemBackdrop(micaBackdrop);
 
@@ -314,12 +314,15 @@ namespace winrt::StarlightGUI::implementation
             else {
                 micaBackdrop.Kind(MicaKind::BaseAlt);
             }
+
+            MainWindowGrid().Background(nullptr);
         }
         else if (background_type == 2) {
-            CustomAcrylicBackdrop acrylicBackdrop = CustomAcrylicBackdrop();
+            static CustomAcrylicBackdrop acrylicBackdrop = CustomAcrylicBackdrop();
 
             this->SystemBackdrop(acrylicBackdrop);
 
+            acrylicBackdrop.RequestedTheme(slg::GetConfiguredElementTheme());
             option = acrylic_type;
             if (option == 1) {
                 acrylicBackdrop.Kind(DesktopAcrylicKind::Base);
@@ -330,6 +333,8 @@ namespace winrt::StarlightGUI::implementation
             else {
                 acrylicBackdrop.Kind(DesktopAcrylicKind::Default);
             }
+
+            LOG_WARNING(L"MainWindow", L"注意：如果你看到了这里，该实例目前存在严重问题，使用时可能导致颜色异常或者崩溃，请不要向开发者反馈，我们正在尝试修复此问题！");
         }
         else
         {
@@ -343,10 +348,9 @@ namespace winrt::StarlightGUI::implementation
     slg::coroutine MainWindow::LoadBackground()
     {
         if (background_image.empty()) {
-            SolidColorBrush brush;
-            brush.Color(Colors::Transparent());
-
-            MainWindowGrid().Background(brush);
+            // 先清空然后重新加载一次背景色，防止纯色背景被覆盖
+            MainWindowGrid().Background(nullptr);
+            LoadBackdrop();
             co_return;
         }
 
@@ -374,19 +378,18 @@ namespace winrt::StarlightGUI::implementation
                 }
             }
             catch (hresult_error) {
-                SolidColorBrush brush;
-                brush.Color(Colors::Transparent());
-
-                MainWindowGrid().Background(brush);
+                // 先清空然后重新加载一次背景色，防止纯色背景被覆盖
+                MainWindowGrid().Background(nullptr);
+                LoadBackdrop();
                 LOG_ERROR(L"MainWindow", L"Unable to load window backgroud! Applying transparent brush instead.");
             }
         }
         else {
-            SaveConfig("background_image", ""); // 保存一次空的，后面不再检查
-            SolidColorBrush brush;
-            brush.Color(Colors::Transparent());
-
-            MainWindowGrid().Background(brush);
+            // 保存一次空的，后面不再检查
+            SaveConfig("background_image", ""); 
+            // 先清空然后重新加载一次背景色，防止纯色背景被覆盖
+            MainWindowGrid().Background(nullptr);
+            LoadBackdrop();
             LOG_ERROR(L"MainWindow", L"Background file does not exist. Applying transparent brush instead.");
         }
         co_return;

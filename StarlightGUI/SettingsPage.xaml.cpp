@@ -440,8 +440,8 @@ namespace winrt::StarlightGUI::implementation
         if (slg::CheckIllegalComboBoxAction(sender, e)) return;
 
         int idx = (int)ThemeComboBox().SelectedIndex();
-        std::string selectedTheme = (idx == 1) ? "light" : (idx == 2) ? "dark" : "system";
-        SaveConfig("theme", selectedTheme);
+        theme = (idx == 1) ? "light" : (idx == 2) ? "dark" : "system";
+        SaveConfig("theme", theme);
         slg::ApplyConfiguredTheme();
     }
 
