@@ -246,6 +246,15 @@ namespace slg {
         infobar.HorizontalAlignment(HorizontalAlignment::Right);
         infobar.VerticalAlignment(VerticalAlignment::Top);
 
+        auto colorObj = Application::Current().Resources().TryLookup(box_value(L"SystemChromeMediumColor"));
+        if (colorObj) {
+            auto color = unbox_value<Color>(colorObj);
+            SolidColorBrush bg;
+            bg.Color(color);
+            bg.Opacity(0.9);
+            infobar.Background(bg);
+        }
+
         return infobar;
     }
 
