@@ -34,8 +34,9 @@
                 </TitleBar.IconSource>
                 <TitleBar.RightHeader>
                     <PersonPicture
-                        Width="30"
-                        Height="30"
+                        x:Name="MainAvatar"
+                        Width="24"
+                        Height="24"
                         Initials="SL" />
                 </TitleBar.RightHeader>
             </TitleBar>

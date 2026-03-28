@@ -125,6 +125,15 @@ namespace winrt::StarlightGUI::implementation
                 {
                     LOG_INFO(__WFUNCTION__, L"Retrieved user list.");
                     auto user = users.GetAt(0);
+
+                    auto displayName = co_await user.GetPropertyAsync(KnownUserProperties::DisplayName());
+
+                    if (displayName && !unbox_value<winrt::hstring>(displayName).empty())
+                    {
+                        username = unbox_value<winrt::hstring>(displayName);
+                        LOG_INFO(__WFUNCTION__, L"Retrieved user account name successfully.");
+                    }
+
                     auto picture = co_await user.GetPictureAsync(UserPictureSize::Size64x64);
 
                     if (picture)
@@ -143,28 +152,21 @@ namespace winrt::StarlightGUI::implementation
                             LOG_INFO(__WFUNCTION__, L"Retrieved user account picture successfully.");
                         }
                     }
-
-                    co_await winrt::resume_background();
-
-                    auto displayName = co_await user.GetPropertyAsync(KnownUserProperties::DisplayName());
-
-                    if (displayName && !displayName.as<winrt::hstring>().empty())
-                    {
-                        username = displayName.as<winrt::hstring>();
-                        LOG_INFO(__WFUNCTION__, L"Retrieved user account name successfully.");
-                    }
                 }
             }
 
             if (auto strong_this = weak_this.get()) {
                 co_await wil::resume_foreground(DispatcherQueue());
-                UserAvatar().ImageSource(avatar.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>());
-                WelcomeText().Text(greeting + L", " + username + L"！");
+                UserAvatar().Name(username.cbegin());
+                UserAvatar().ProfilePicture(avatar.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>());
+                g_mainWindowInstance->MainAvatar().Name(username.cbegin());
+                g_mainWindowInstance->MainAvatar().ProfilePicture(avatar.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>());
+                WelcomeText().Text(greeting + L", " + username + L"!");
             }
         }
         catch (const hresult_error& e) {
             LOG_ERROR(__WFUNCTION__, L"Failed to retrieve user profile! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-            WelcomeText().Text(greeting + L"！");
+            WelcomeText().Text(greeting + L"!");
         }
     }
 
