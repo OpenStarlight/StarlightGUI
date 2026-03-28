@@ -4,6 +4,7 @@
 #include "MonitorPage.g.cpp"
 #endif
 #include <winrt/XamlToolkit.WinUI.Controls.h>
+#include <unordered_set>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -16,6 +17,25 @@ using namespace XamlToolkit::WinUI::Controls;
 namespace winrt::StarlightGUI::implementation
 {
 	static std::vector<winrt::StarlightGUI::ObjectEntry> partitions;
+
+    static hstring GetMonitorSuggestionKey(int segmentedIndex, winrt::StarlightGUI::GeneralEntry const& entry)
+    {
+        switch (segmentedIndex) {
+        case 4:
+            if (!entry.String2().empty()) return entry.String2();
+            if (!entry.String3().empty()) return entry.String3();
+            return entry.String1();
+        case 7:
+        case 9:
+        case 10:
+        case 11:
+            return entry.String1();
+        default:
+            if (!entry.String1().empty()) return entry.String1();
+            if (!entry.String2().empty()) return entry.String2();
+            return entry.String3();
+        }
+    }
 
     void MonitorPage::EnsureHeaderSplitters(winrt::Microsoft::UI::Xaml::Controls::Grid const& headerGrid)
     {
@@ -1192,11 +1212,71 @@ namespace winrt::StarlightGUI::implementation
 		co_return;
 	}
 
-	void MonitorPage::SearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+	void MonitorPage::SearchBox_TextChanged(
+        winrt::Windows::Foundation::IInspectable const& sender,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxTextChangedEventArgs const& e)
 	{
 		if (!IsLoaded()) return;
+
+        auto searchBox = sender.try_as<AutoSuggestBox>();
+        if (!searchBox) return;
+
+        if (e.Reason() == AutoSuggestionBoxTextChangeReason::UserInput) {
+            std::unordered_set<std::wstring> seen;
+            auto suggestions = winrt::single_threaded_observable_vector<winrt::Windows::Foundation::IInspectable>();
+            std::wstring lowerQuery = ToLowerCase(searchBox.Text().c_str());
+
+            if (segmentedIndex == 0) {
+                for (auto const& object : m_objectList) {
+                    std::wstring name = object.Name().c_str();
+                    if (name.empty()) continue;
+
+                    std::wstring lowerName = ToLowerCase(name);
+                    if (!lowerQuery.empty() && lowerName.find(lowerQuery) == std::wstring::npos) continue;
+                    if (!seen.insert(lowerName).second) continue;
+
+                    suggestions.Append(box_value(object.Name()));
+                    if (suggestions.Size() >= 20) break;
+                }
+            }
+            else if (segmentedIndex >= 2 && segmentedIndex <= 13) {
+                for (auto const& entry : m_generalList) {
+                    hstring key = GetMonitorSuggestionKey(segmentedIndex, entry);
+                    std::wstring text = key.c_str();
+                    if (text.empty()) continue;
+
+                    std::wstring lowerText = ToLowerCase(text);
+                    if (!lowerQuery.empty() && lowerText.find(lowerQuery) == std::wstring::npos) continue;
+                    if (!seen.insert(lowerText).second) continue;
+
+                    suggestions.Append(box_value(key));
+                    if (suggestions.Size() >= 20) break;
+                }
+            }
+
+            searchBox.ItemsSource(suggestions);
+        }
+
 		WaitAndReloadAsync(250);
 	}
+
+    void MonitorPage::SearchBox_SuggestionChosen(
+        winrt::Windows::Foundation::IInspectable const&,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxSuggestionChosenEventArgs const& e)
+    {
+        auto selected = e.SelectedItem().try_as<winrt::Windows::Foundation::IReference<winrt::hstring>>();
+        hstring target = selected ? selected.Value() : unbox_value<hstring>(e.SelectedItem());
+        if (target.empty()) return;
+
+        SearchBox().Text(target);
+    }
+
+    void MonitorPage::SearchBox_QuerySubmitted(
+        winrt::Windows::Foundation::IInspectable const&,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& e)
+    {
+        (void)e;
+    }
 
 	bool MonitorPage::ApplyFilter(const hstring& target, const hstring& query) {
 		return !ContainsIgnoreCase(target.c_str(), query.c_str());

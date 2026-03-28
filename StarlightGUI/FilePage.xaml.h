@@ -33,7 +33,9 @@ namespace winrt::StarlightGUI::implementation
         slg::coroutine ApplySort(bool& isAscending, const std::string& column);
         void SortFileList(bool isAscending, const std::string& column, bool updateHeader);
 
-        void SearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
+        void SearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxTextChangedEventArgs const& e);
+        void SearchBox_SuggestionChosen(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxSuggestionChosenEventArgs const& e);
+        void SearchBox_QuerySubmitted(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& e);
         bool ApplyFilter(const winrt::StarlightGUI::FileInfo& file, hstring& query);
 
         winrt::Windows::Foundation::IAsyncAction LoadFileList();

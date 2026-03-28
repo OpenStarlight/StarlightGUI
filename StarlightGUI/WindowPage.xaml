@@ -82,13 +82,17 @@
                     </AppBarToggleButton>
                 </CommandBar>
 
-                <TextBox
+                <AutoSuggestBox
                     x:Name="SearchBox"
                     Grid.Column="6"
                     Width="300"
                     Height="32"
                     HorizontalAlignment="Right"
+                    essential:AutoSuggestBoxHelper.AcrylicWorkaround="True"
                     PlaceholderText="搜索窗口标题..."
+                    QueryIcon="Find"
+                    QuerySubmitted="SearchBox_QuerySubmitted"
+                    SuggestionChosen="SearchBox_SuggestionChosen"
                     TextChanged="SearchBox_TextChanged" />
             </Grid>
 

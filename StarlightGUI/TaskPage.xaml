@@ -78,13 +78,17 @@
                     </AppBarButton>
                 </CommandBar>
 
-                <TextBox
+                <AutoSuggestBox
                     x:Name="ProcessSearchBox"
                     Grid.Column="4"
                     Width="300"
                     Height="32"
                     HorizontalAlignment="Right"
+                    essential:AutoSuggestBoxHelper.AcrylicWorkaround="True"
                     PlaceholderText="搜索进程..."
+                    QueryIcon="Find"
+                    QuerySubmitted="ProcessSearchBox_QuerySubmitted"
+                    SuggestionChosen="ProcessSearchBox_SuggestionChosen"
                     TextChanged="ProcessSearchBox_TextChanged" />
             </Grid>
 

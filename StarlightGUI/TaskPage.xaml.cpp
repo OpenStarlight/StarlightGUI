@@ -15,6 +15,7 @@
 #include <winrt/Windows.Foundation.h>
 #include <Psapi.h>
 #include <array>
+#include <unordered_set>
 #include <sstream>
 #include <iomanip>
 #include <shellapi.h>
@@ -1100,10 +1101,53 @@ namespace winrt::StarlightGUI::implementation
         }
     }
 
-    void TaskPage::ProcessSearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+    void TaskPage::ProcessSearchBox_TextChanged(
+        winrt::Windows::Foundation::IInspectable const& sender,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxTextChangedEventArgs const& e)
     {
         if (!IsLoaded()) return;
+        auto searchBox = sender.try_as<AutoSuggestBox>();
+        if (!searchBox) return;
+
+        if (e.Reason() == AutoSuggestionBoxTextChangeReason::UserInput) {
+            std::unordered_set<std::wstring> seen;
+            auto suggestions = winrt::single_threaded_observable_vector<winrt::Windows::Foundation::IInspectable>();
+            std::wstring lowerQuery = ToLowerCase(searchBox.Text().c_str());
+
+            for (auto const& process : m_processList) {
+                std::wstring name = process.Name().c_str();
+                if (name.empty()) continue;
+
+                std::wstring lowerName = ToLowerCase(name);
+                if (!lowerQuery.empty() && lowerName.find(lowerQuery) == std::wstring::npos) continue;
+                if (!seen.insert(lowerName).second) continue;
+
+                suggestions.Append(box_value(process.Name()));
+                if (suggestions.Size() >= 20) break;
+            }
+
+            searchBox.ItemsSource(suggestions);
+        }
+
         WaitAndReloadAsync(250);
+    }
+
+    void TaskPage::ProcessSearchBox_SuggestionChosen(
+        winrt::Windows::Foundation::IInspectable const&,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxSuggestionChosenEventArgs const& e)
+    {
+        auto selected = e.SelectedItem().try_as<winrt::Windows::Foundation::IReference<winrt::hstring>>();
+        hstring target = selected ? selected.Value() : unbox_value<hstring>(e.SelectedItem());
+        if (target.empty()) return;
+
+        ProcessSearchBox().Text(target);
+    }
+
+    void TaskPage::ProcessSearchBox_QuerySubmitted(
+        winrt::Windows::Foundation::IInspectable const&,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& e)
+    {
+        (void)e;
     }
 
     bool TaskPage::ApplyFilter(const winrt::StarlightGUI::ProcessInfo& process, hstring& query) {

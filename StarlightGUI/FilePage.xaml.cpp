@@ -1093,9 +1093,14 @@ namespace winrt::StarlightGUI::implementation
         }
     }
 
-    void FilePage::SearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+    void FilePage::SearchBox_TextChanged(
+        winrt::Windows::Foundation::IInspectable const& sender,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxTextChangedEventArgs const& e) {
         if (!IsLoaded()) return;
         if (m_isSyncingTab) return;
+
+        auto searchBox = sender.try_as<winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBox>();
+        if (!searchBox) return;
 
         auto tabId = GetCurrentTabId();
         if (!tabId.empty()) {
@@ -1104,7 +1109,69 @@ namespace winrt::StarlightGUI::implementation
                 stateIt->second.searchText = SearchBox().Text().c_str();
             }
         }
+
+        if (e.Reason() == winrt::Microsoft::UI::Xaml::Controls::AutoSuggestionBoxTextChangeReason::UserInput) {
+            std::unordered_set<std::wstring> seen;
+            auto suggestions = winrt::single_threaded_observable_vector<winrt::Windows::Foundation::IInspectable>();
+            std::wstring lowerQuery = ToLowerCase(searchBox.Text().c_str());
+
+            for (auto const& file : m_fileList) {
+                if (file.Flag() == 999) continue;
+
+                std::wstring name = file.Name().c_str();
+                if (name.empty()) continue;
+
+                std::wstring lowerName = ToLowerCase(name);
+                if (!lowerQuery.empty() && lowerName.find(lowerQuery) == std::wstring::npos) continue;
+                if (!seen.insert(lowerName).second) continue;
+
+                suggestions.Append(box_value(file.Name()));
+                if (suggestions.Size() >= 20) break;
+            }
+
+            searchBox.ItemsSource(suggestions);
+        }
+
         WaitAndReloadAsync(250);
+    }
+
+    void FilePage::SearchBox_SuggestionChosen(
+        winrt::Windows::Foundation::IInspectable const&,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxSuggestionChosenEventArgs const& e)
+    {
+        auto selected = e.SelectedItem().try_as<winrt::Windows::Foundation::IReference<winrt::hstring>>();
+        hstring target = selected ? selected.Value() : unbox_value<hstring>(e.SelectedItem());
+        if (target.empty()) return;
+
+        SearchBox().Text(target);
+
+        auto tabId = GetCurrentTabId();
+        if (!tabId.empty()) {
+            auto stateIt = m_tabStates.find(tabId);
+            if (stateIt != m_tabStates.end()) {
+                stateIt->second.searchText = target.c_str();
+            }
+        }
+    }
+
+    void FilePage::SearchBox_QuerySubmitted(
+        winrt::Windows::Foundation::IInspectable const&,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& e)
+    {
+        hstring target = e.QueryText();
+        if (e.ChosenSuggestion()) {
+            auto selected = e.ChosenSuggestion().try_as<winrt::Windows::Foundation::IReference<winrt::hstring>>();
+            target = selected ? selected.Value() : unbox_value<hstring>(e.ChosenSuggestion());
+        }
+        if (target.empty()) return;
+
+        auto tabId = GetCurrentTabId();
+        if (!tabId.empty()) {
+            auto stateIt = m_tabStates.find(tabId);
+            if (stateIt != m_tabStates.end()) {
+                stateIt->second.searchText = target.c_str();
+            }
+        }
     }
 
     bool FilePage::ApplyFilter(const winrt::StarlightGUI::FileInfo& file, hstring& query) {

@@ -78,13 +78,17 @@
                     </AppBarButton>
                 </CommandBar>
 
-                <TextBox
+                <AutoSuggestBox
                     x:Name="KernelModuleSearchBox"
                     Grid.Column="4"
                     Width="300"
                     Height="32"
                     HorizontalAlignment="Right"
+                    essential:AutoSuggestBoxHelper.AcrylicWorkaround="True"
                     PlaceholderText="搜索模块..."
+                    QueryIcon="Find"
+                    QuerySubmitted="KernelModuleSearchBox_QuerySubmitted"
+                    SuggestionChosen="KernelModuleSearchBox_SuggestionChosen"
                     TextChanged="KernelModuleSearchBox_TextChanged" />
             </Grid>
 

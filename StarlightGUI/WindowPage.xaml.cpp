@@ -868,11 +868,54 @@ namespace winrt::StarlightGUI::implementation
         LoadWindowList();
     }
 
-    void WindowPage::SearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+    void WindowPage::SearchBox_TextChanged(
+        winrt::Windows::Foundation::IInspectable const& sender,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxTextChangedEventArgs const& e)
     {
         if (!IsLoaded()) return;
 
+        auto searchBox = sender.try_as<AutoSuggestBox>();
+        if (!searchBox) return;
+
+        if (e.Reason() == AutoSuggestionBoxTextChangeReason::UserInput) {
+            std::unordered_set<std::wstring> seen;
+            auto suggestions = winrt::single_threaded_observable_vector<winrt::Windows::Foundation::IInspectable>();
+            std::wstring lowerQuery = ToLowerCase(searchBox.Text().c_str());
+
+            for (auto const& window : m_windowList) {
+                std::wstring name = window.Name().c_str();
+                if (name.empty()) continue;
+
+                std::wstring lowerName = ToLowerCase(name);
+                if (!lowerQuery.empty() && lowerName.find(lowerQuery) == std::wstring::npos) continue;
+                if (!seen.insert(lowerName).second) continue;
+
+                suggestions.Append(box_value(window.Name()));
+                if (suggestions.Size() >= 20) break;
+            }
+
+            searchBox.ItemsSource(suggestions);
+        }
+
         WaitAndReloadAsync(250);
+    }
+
+    void WindowPage::SearchBox_SuggestionChosen(
+        winrt::Windows::Foundation::IInspectable const&,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxSuggestionChosenEventArgs const& e)
+    {
+        auto selected = e.SelectedItem().try_as<winrt::Windows::Foundation::IReference<winrt::hstring>>();
+        hstring target = selected ? selected.Value() : unbox_value<hstring>(e.SelectedItem());
+        if (target.empty()) return;
+
+        SearchBox().Text(target);
+    }
+
+    void WindowPage::SearchBox_QuerySubmitted(
+        winrt::Windows::Foundation::IInspectable const&,
+        winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& e)
+    {
+        (void)e;
     }
 
     bool WindowPage::ApplyFilter(const winrt::StarlightGUI::WindowInfo& window, hstring& query) {
