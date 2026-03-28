@@ -39,7 +39,8 @@
                         </StackPanel>
                     </Button>
                     <TextBlock
-                        x:Name="HelpAboutUid" Padding="10"
+                        x:Name="HelpAboutUid"
+                        Padding="10"
                         HorizontalAlignment="Left"
                         FontSize="14"
                         FontWeight="SemiBold"
@@ -66,13 +67,15 @@
                                         FontWeight="SemiBold"
                                         Text="Stars" />
                                     <TextBlock
-                                        x:Name="HelpStarsDescUid" FontSize="14"
+                                        x:Name="HelpStarsDescUid"
+                                        FontSize="14"
                                         Foreground="{ThemeResource AppSecondaryTextBrush}"
                                         Text="Starlight GUI 的开发者，一个热爱编程的男孩子~" />
                                 </StackPanel>
                             </StackPanel>
                             <Button
-                                x:Name="HelpBilibiliButtonUid" Margin="0,0,16,0"
+                                x:Name="HelpBilibiliButtonUid"
+                                Margin="0,0,16,0"
                                 HorizontalAlignment="Right"
                                 Click="BilibiliButton_Click"
                                 Content="查看B站" />
@@ -106,18 +109,21 @@
                                         FontWeight="SemiBold"
                                         Text="Github" />
                                     <TextBlock
-                                        x:Name="HelpGithubDescUid" FontSize="14"
+                                        x:Name="HelpGithubDescUid"
+                                        FontSize="14"
                                         Foreground="{ThemeResource AppSecondaryTextBrush}"
                                         Text="官方源代码仓库: https://github.com/OpenStarlight/StarlightGUI" />
                                 </StackPanel>
                             </StackPanel>
                             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                                 <Button
-                                    x:Name="HelpGithubUserButtonUid" Margin="0,0,16,0"
+                                    x:Name="HelpGithubUserButtonUid"
+                                    Margin="0,0,16,0"
                                     Click="GithubUserButton_Click"
                                     Content="查看用户" />
                                 <Button
-                                    x:Name="HelpGithubRepoButtonUid" Margin="0,0,16,0"
+                                    x:Name="HelpGithubRepoButtonUid"
+                                    Margin="0,0,16,0"
                                     HorizontalAlignment="Right"
                                     Click="GithubButton_Click"
                                     Content="查看仓库" />
@@ -125,7 +131,8 @@
                         </Grid>
                     </Button>
                     <TextBlock
-                        x:Name="HelpAcknowledgementUid" Margin="0,10,0,0"
+                        x:Name="HelpAcknowledgementUid"
+                        Margin="0,10,0,0"
                         Padding="10"
                         HorizontalAlignment="Left"
                         FontSize="14"
@@ -154,13 +161,15 @@
                                         FontWeight="SemiBold"
                                         Text="WinUI 3" />
                                     <TextBlock
-                                        x:Name="HelpWinUIDescUid" FontSize="14"
+                                        x:Name="HelpWinUIDescUid"
+                                        FontSize="14"
                                         Foreground="{ThemeResource AppSecondaryTextBrush}"
                                         Text="WinUI 是一个用户界面层，包含现代控件和样式，用于构建 Windows 应用。" />
                                 </StackPanel>
                             </StackPanel>
                             <Button
-                                x:Name="HelpWinUIButtonUid" Margin="0,0,16,0"
+                                x:Name="HelpWinUIButtonUid"
+                                Margin="0,0,16,0"
                                 HorizontalAlignment="Right"
                                 Click="WinUIButton_Click"
                                 Content="查看主页" />
@@ -189,7 +198,8 @@
                                         FontWeight="SemiBold"
                                         Text="WinUI Essentials" />
                                     <TextBlock
-                                        x:Name="HelpWinUIEssentialsDescUid" FontSize="14"
+                                        x:Name="HelpWinUIEssentialsDescUid"
+                                        FontSize="14"
                                         Foreground="{ThemeResource AppSecondaryTextBrush}"
                                         Text="一个专门用于简化 WinUI 3 开发的 C++ 仓库。" />
                                 </StackPanel>
@@ -220,14 +230,15 @@
                                     Height="36"
                                     Margin="12,0,0,0"
                                     HorizontalAlignment="Left"
-                                    Fill="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                                    Fill="Black" />
                                 <StackPanel Margin="16">
                                     <TextBlock
                                         FontSize="20"
                                         FontWeight="SemiBold"
-                                        Text="KALI_MC" />
+                                        Text="PspExitThread" />
                                     <TextBlock
-                                        x:Name="HelpKALIDescUid" FontSize="14"
+                                        x:Name="HelpKALIDescUid"
+                                        FontSize="14"
                                         Foreground="{ThemeResource AppSecondaryTextBrush}"
                                         Text="擅长内核开发，提供了 SKT64 驱动和 AstralX 代码指导。" />
                                 </StackPanel>
@@ -262,7 +273,8 @@
                                         FontWeight="SemiBold"
                                         Text="MuLin" />
                                     <TextBlock
-                                        x:Name="HelpMuLinDescUid" FontSize="14"
+                                        x:Name="HelpMuLinDescUid"
+                                        FontSize="14"
                                         Foreground="{ThemeResource AppSecondaryTextBrush}"
                                         Text="一个QA和半个PD？为本项目提了一些小Bug和一些小需求。" />
                                 </StackPanel>
@@ -298,7 +310,8 @@
                                         FontWeight="SemiBold"
                                         Text="Wormwaker" />
                                     <TextBlock
-                                        x:Name="HelpWormwakerDescUid" FontSize="14"
+                                        x:Name="HelpWormwakerDescUid"
+                                        FontSize="14"
                                         Foreground="{ThemeResource AppSecondaryTextBrush}"
                                         Text="本项目的技术支持、宣传、思路指导，Windows 用户层大师级开发者。" />
                                 </StackPanel>
@@ -313,13 +326,15 @@
                     </Button>
                     <Grid Padding="10">
                         <TextBlock
-                            x:Name="HelpSponsorsUid" Margin="0,10,0,0"
+                            x:Name="HelpSponsorsUid"
+                            Margin="0,10,0,0"
                             HorizontalAlignment="Left"
                             FontSize="14"
                             FontWeight="SemiBold"
                             Text="赞助者" />
                         <Button
-                            x:Name="HelpSponsorButtonUid" Margin="0,5,5,0"
+                            x:Name="HelpSponsorButtonUid"
+                            Margin="0,5,5,0"
                             HorizontalAlignment="Right"
                             Click="SponsorButton_Click"
                             Content="赞助！" />
@@ -333,7 +348,8 @@
                         <Grid>
                             <StackPanel Margin="5,0,0,0">
                                 <TextBlock
-                                    x:Name="HelpSponsorIntroUid" Padding="10,5,10,0"
+                                    x:Name="HelpSponsorIntroUid"
+                                    Padding="10,5,10,0"
                                     FontSize="14"
                                     Text="自 Starlight GUI 问世以来，所有为本软件开发提供过赞助的人员名单，排名不分先后。由衷感谢你们对作者和本软件开发的支持！" />
                                 <Border

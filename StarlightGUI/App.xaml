@@ -20,7 +20,7 @@
                     <SolidColorBrush x:Key="AppGraphTooltipBackgroundBrush" Color="#F0FFFFFF" />
                     <SolidColorBrush x:Key="AppGraphTooltipBorderBrush" Color="#40000000" />
                     <SolidColorBrush x:Key="AppGraphTooltipForegroundBrush" Color="#FF1A1A1A" />
-                    <SolidColorBrush x:Key="AppSeparatorBrush" Color="#FFD0D0D0" />
+                    <SolidColorBrush x:Key="AppSeparatorBrush" Color="#FF4A4A4A" />
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <SolidColorBrush x:Key="AppSecondaryTextBrush" Color="#FFB9B9B9" />
@@ -30,7 +30,7 @@
                     <SolidColorBrush x:Key="AppGraphTooltipBackgroundBrush" Color="#F01F1F1F" />
                     <SolidColorBrush x:Key="AppGraphTooltipBorderBrush" Color="#66FFFFFF" />
                     <SolidColorBrush x:Key="AppGraphTooltipForegroundBrush" Color="#FFF2F2F2" />
-                    <SolidColorBrush x:Key="AppSeparatorBrush" Color="#FF4A4A4A" />
+                    <SolidColorBrush x:Key="AppSeparatorBrush" Color="#FFD0D0D0" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
 
