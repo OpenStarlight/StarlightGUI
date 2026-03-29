@@ -17,7 +17,7 @@
                     <SolidColorBrush x:Key="AppMutedTextBrush" Color="#FF757575" />
                     <SolidColorBrush x:Key="AppDangerTextBrush" Color="#FFB00020" />
                     <SolidColorBrush x:Key="AppGraphGridBrush" Color="#22000000" />
-                    <SolidColorBrush x:Key="AppGraphTooltipBackgroundBrush" Color="#F01F1F1F" />
+                    <SolidColorBrush x:Key="AppGraphTooltipBackgroundBrush" Color="#F0FFFFFF" />
                     <SolidColorBrush x:Key="AppGraphTooltipBorderBrush" Color="#40000000" />
                     <SolidColorBrush x:Key="AppGraphTooltipForegroundBrush" Color="#FF1A1A1A" />
                     <SolidColorBrush x:Key="AppSeparatorBrush" Color="#FF4A4A4A" />
@@ -27,7 +27,7 @@
                     <SolidColorBrush x:Key="AppMutedTextBrush" Color="#FF9C9C9C" />
                     <SolidColorBrush x:Key="AppDangerTextBrush" Color="#FFFF6B6B" />
                     <SolidColorBrush x:Key="AppGraphGridBrush" Color="#33FFFFFF" />
-                    <SolidColorBrush x:Key="AppGraphTooltipBackgroundBrush" Color="#F0FFFFFF" />
+                    <SolidColorBrush x:Key="AppGraphTooltipBackgroundBrush" Color="#F01F1F1F" />
                     <SolidColorBrush x:Key="AppGraphTooltipBorderBrush" Color="#66FFFFFF" />
                     <SolidColorBrush x:Key="AppGraphTooltipForegroundBrush" Color="#FFF2F2F2" />
                     <SolidColorBrush x:Key="AppSeparatorBrush" Color="#FFD0D0D0" />

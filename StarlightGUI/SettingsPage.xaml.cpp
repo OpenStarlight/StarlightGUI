@@ -418,7 +418,7 @@ namespace winrt::StarlightGUI::implementation
     void SettingsPage::FixButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-        slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"Msg.RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
+        slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"Msg.RestartRequired"), InfoBarSeverity::Informational, g_mainWindowInstance);
         DriverUtils::FixServices();
     }
 

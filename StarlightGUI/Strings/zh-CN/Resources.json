@@ -491,6 +491,7 @@
   "Settings.Msg.ReplaceTaskMgrEnabled": "已开启替代任务管理器!",
   "Settings.Msg.ReplaceTaskMgrDisabled": "已关闭替代任务管理器!",
   "Settings.Msg.ReplaceTaskMgrFailed": "设置替代任务管理器失败，请检查权限或系统策略!",
+  "Settings.Msg.FixCompleted": "操作已完成，请重启电脑!",
 
   "Help.Header.About": "关于",
   "Help.Header.Acknowledgement": "特别鸣谢",

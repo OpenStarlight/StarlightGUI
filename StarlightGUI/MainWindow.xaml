@@ -33,6 +33,13 @@
                 <TitleBar.IconSource>
                     <ImageIconSource ImageSource="/Assets/Starlight.png" />
                 </TitleBar.IconSource>
+                <TitleBar.Content>
+                    <TextBlock FontStyle="Oblique">
+                        <Span>
+                            "在我走后，你也要坚强地活下去哦！"
+                        </Span>
+                    </TextBlock>
+                </TitleBar.Content>
                 <TitleBar.RightHeader>
                     <PersonPicture
                         x:Name="MainAvatar"

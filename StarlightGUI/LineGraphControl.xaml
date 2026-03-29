@@ -23,7 +23,7 @@
 
         <!--  坐标轴标签  -->
         <Style x:Key="AxisLabelStyle" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="LightGray" />
+            <Setter Property="Foreground" Value="{StaticResource AppSecondaryTextBrush}" />
             <Setter Property="FontSize" Value="12" />
             <Setter Property="HorizontalAlignment" Value="Center" />
             <Setter Property="VerticalAlignment" Value="Center" />

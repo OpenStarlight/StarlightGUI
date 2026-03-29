@@ -447,6 +447,7 @@
   "Settings.Option.ThemeDark": "Dark",
   "Settings.Button.Log": "Toggle",
   "Settings.Button.Fix": "Fix",
+
   "Settings.Msg.AutoStartEnabled": "Auto-start enabled. The app will launch with highest privileges via scheduled task!",
   "Settings.Msg.AutoStartDisabled": "Auto-start disabled!",
   "Settings.Msg.AutoStartEnableFailed": "Failed to create auto-start task. Please check Task Scheduler service!",
@@ -454,6 +455,7 @@
   "Settings.Msg.ReplaceTaskMgrEnabled": "Task Manager replacement enabled!",
   "Settings.Msg.ReplaceTaskMgrDisabled": "Task Manager replacement disabled!",
   "Settings.Msg.ReplaceTaskMgrFailed": "Failed to set Task Manager replacement. Check permissions or system policies!",
+  "Settings.Msg.FixCompleted": "Operation completed, please restart your PC!",
 
   "Help.Header.About": "About",
   "Help.Header.Acknowledgement": "Acknowledgements",

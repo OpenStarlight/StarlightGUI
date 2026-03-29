@@ -120,26 +120,41 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	void DriverUtils::FixServices() noexcept {
-		// 启动 fix_services.bat
-		std::wstring path = GetInstalledLocationPath() + L"\\Assets\\fix_services.bat";
-		SHELLEXECUTEINFOW sei = { sizeof(sei) };
-		sei.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
-		sei.lpFile = path.c_str();
-		sei.nShow = SW_SHOWNORMAL;
-		sei.lpVerb = L"runas";
+		SC_HANDLE hSCM, hService;
 
-		BOOL stauts = ShellExecuteExW(&sei);
+		hSCM = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+		if (!hSCM) {
+			return;
+		}
 
-		if (stauts && sei.hProcess != NULL) {
-			DWORD processId = GetProcessId(sei.hProcess);
-			CloseHandle(sei.hProcess);
-			CloseHandle(sei.hIcon);
-			slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"),
-				InfoBarSeverity::Success, g_mainWindowInstance);
+		hService = OpenServiceW(hSCM, L"StarlightGUI Kernel Driver", SERVICE_ALL_ACCESS);
+		if (hService) {
+			SERVICE_STATUS serviceStatus;
+			if (QueryServiceStatus(hService, &serviceStatus)) {
+				if (serviceStatus.dwCurrentState != SERVICE_STOPPED) {
+					ControlService(hService, SERVICE_CONTROL_STOP, &serviceStatus);
+					DeleteService(hService);
+				}
+			}
+
+			CloseServiceHandle(hService);
 		}
-		else {
-			slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()),
-				InfoBarSeverity::Error, g_mainWindowInstance);
+
+		hService = OpenServiceW(hSCM, L"AstralX", SERVICE_ALL_ACCESS);
+		if (hService) {
+			SERVICE_STATUS serviceStatus;
+			if (QueryServiceStatus(hService, &serviceStatus)) {
+				if (serviceStatus.dwCurrentState != SERVICE_STOPPED) {
+					ControlService(hService, SERVICE_CONTROL_STOP, &serviceStatus);
+					DeleteService(hService);
+				}
+			}
+
+			CloseServiceHandle(hService);
 		}
+
+		CloseServiceHandle(hSCM);
+
+		slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Settings.Msg.FixCompleted"), InfoBarSeverity::Success, g_mainWindowInstance);
 	}
 }

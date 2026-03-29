@@ -425,13 +425,7 @@ namespace slg {
         if (g_mainWindowInstance) {
             DwmSetWindowAttribute(g_mainWindowInstance->GetWindowHandle(), DWMWA_USE_IMMERSIVE_DARK_MODE, &isDark, sizeof(isDark));
             g_mainWindowInstance->MainWindowGrid().RequestedTheme(targetTheme);
-            
-            if (background_type == 0) {
-                g_mainWindowInstance->MainWindowGrid().Background(SolidColorBrush{ slg::GetConfiguredElementTheme() == ElementTheme::Dark ? Colors::Black() : Colors::White() });
-            }
-            else if (background_type == 2) {
-                if (acrylicBackdrop) acrylicBackdrop.RequestedTheme(slg::GetConfiguredElementTheme());
-            }
+            g_mainWindowInstance->LoadBackdrop();
         }
 
         if (g_infoWindowInstance) {
