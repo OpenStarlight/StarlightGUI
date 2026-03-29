@@ -317,9 +317,6 @@
     <None Include="nvml.dll">
       <Filter>Assets</Filter>
     </None>
-    <None Include="Assets\fix_services.bat">
-      <Filter>Assets</Filter>
-    </None>
     <None Include="IAMKeyHacker.dll">
       <Filter>Assets</Filter>
     </None>
