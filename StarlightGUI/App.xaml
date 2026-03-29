@@ -37,7 +37,7 @@
             <x:String x:Key="Version">v3.0.0-pre3</x:String>
             <!--  x(Major) xx(Minor) x(Patch) x(Hotfix) x(Preview) → x.xx.x(.x)(-prex)  -->
             <x:Int32 x:Key="BuildNumber">300003</x:Int32>
-            <x:String x:Key="ReleaseDate">2026/3/23</x:String>
+            <x:String x:Key="ReleaseDate">2026/3/29</x:String>
             <x:String x:Key="Author">Stars</x:String>
 
             <!--  透明  -->
