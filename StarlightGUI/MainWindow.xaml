@@ -148,7 +148,7 @@
                 <Frame
                     x:Name="MainFrame"
                     Grid.Row="1"
-                    CacheSize="4">
+                    CacheSize="10">
                     <ProgressRing
                         x:Name="LoadingRing"
                         HorizontalAlignment="Center"

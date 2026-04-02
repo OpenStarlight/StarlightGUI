@@ -154,19 +154,25 @@ namespace winrt::StarlightGUI::implementation
                     }
                 }
             }
-
-            if (auto strong_this = weak_this.get()) {
-                co_await wil::resume_foreground(DispatcherQueue());
-                UserAvatar().Name(username.cbegin());
-                UserAvatar().ProfilePicture(avatar.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>());
-                g_mainWindowInstance->MainAvatar().Name(username.cbegin());
-                g_mainWindowInstance->MainAvatar().ProfilePicture(avatar.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>());
-                WelcomeText().Text(greeting + L", " + username + L"!");
-            }
         }
         catch (const hresult_error& e) {
             LOG_ERROR(__WFUNCTION__, L"Failed to retrieve user profile! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-            WelcomeText().Text(greeting + L"!");
+        }
+
+
+        if (auto strong_this = weak_this.get()) {
+            co_await wil::resume_foreground(DispatcherQueue());
+
+            if (username.empty()) username = L"User";
+
+            UserAvatar().Name(username.cbegin());
+            g_mainWindowInstance->MainAvatar().Name(username.cbegin());
+            WelcomeText().Text(greeting + L", " + username + L"!");
+
+            if (avatar) {
+                UserAvatar().ProfilePicture(avatar.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>());
+                g_mainWindowInstance->MainAvatar().ProfilePicture(avatar.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>());
+            }
         }
     }
 
