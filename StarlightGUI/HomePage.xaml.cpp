@@ -24,6 +24,7 @@
 #include <iomanip>
 #include <algorithm>
 #include <cwctype>
+#include <cstring>
 #include <iphlpapi.h>
 #include <pdhmsg.h>
 #include "MainWindow.xaml.h"
@@ -36,13 +37,29 @@ using namespace Windows::Storage;
 using namespace Windows::Foundation;
 using namespace Windows::Globalization;
 using namespace Windows::ApplicationModel;
-using namespace Microsoft::UI::Dispatching;
-using namespace Microsoft::UI::Xaml::Controls;
-using namespace Microsoft::UI::Xaml::Media::Imaging;
+using namespace winrt::Microsoft::UI::Dispatching;
+using namespace winrt::Microsoft::UI::Xaml::Controls;
+using namespace winrt::Microsoft::UI::Xaml::Media::Imaging;
 
 namespace winrt::StarlightGUI::implementation
 {
     static double graphX = 1;
+
+    static bool AddPdhCounter(PDH_HQUERY query, PCWSTR path, PDH_HCOUNTER& counter)
+    {
+        auto status = PdhAddCounterW(query, path, 0, &counter);
+        if (status != ERROR_SUCCESS) {
+            LOG_ERROR(L"MonitorInstance", L"Failed to add counter %s, status=0x%08X.", path, status);
+            return false;
+        }
+        return true;
+    }
+
+    static UINT64 ComputeCounterDelta32(UINT64 current, UINT64 previous)
+    {
+        if (current >= previous) return current - previous;
+        return (1ULL << 32) - previous + current;
+    }
 
     HomePage::HomePage()
     {
@@ -59,19 +76,35 @@ namespace winrt::StarlightGUI::implementation
             SetUserProfile();
             FetchHitokoto();
             SetupClock();
-            infoInitialized = true;
 
             co_return;
             });
 
         this->Unloaded([this](auto&&, auto&&) {
             clockTimer.Stop();
+            if (clockTickRegistered) {
+                clockTimer.Tick(clockTickToken);
+                clockTickRegistered = false;
+            }
+            });
+
+        this->ActualThemeChanged([this](auto&&, auto&&) {
+            auto theme = slg::GetConfiguredElementTheme();
+            auto brush = theme == winrt::Microsoft::UI::Xaml::ElementTheme::Light
+                ? winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Windows::UI::Color{ 0xFF, 0x5E, 0x5E, 0x5E })
+                : winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Windows::UI::Color{ 0xFF, 0xB9, 0xB9, 0xB9 });
+            for (auto& [index, card] : disk_card_map) {
+                if (card.read) card.read.Foreground(brush);
+                if (card.write) card.write.Foreground(brush);
+                if (card.trans) card.trans.Foreground(brush);
+                if (card.io) card.io.Foreground(brush);
+            }
             });
 
         LOG_INFO(L"HomePage", L"HomePage initialized.");
     }
 
-    slg::coroutine HomePage::SetGreetingText()
+    void HomePage::SetGreetingText()
     {
         if (greeting.empty()) {
             std::vector<hstring> greetings = {
@@ -106,50 +139,110 @@ namespace winrt::StarlightGUI::implementation
         }
 
         AppIntroduction().Text(t(L"Home.WelcomeMsg"));
-        co_return;
     }
 
     slg::coroutine HomePage::SetUserProfile()
     {
         auto weak_this = get_weak();
+        auto dispatcher = DispatcherQueue();
+        bool shouldLoadProfile = username.empty() || !avatar;
 
         try {
-            if (!infoInitialized) {
+            if (shouldLoadProfile) {
                 co_await winrt::resume_background();
 
                 LOG_INFO(__WFUNCTION__, L"Retrieving user profile...");
 
-                auto users = co_await User::FindAllAsync(UserType::LocalUser, UserAuthenticationStatus::LocallyAuthenticated);
+                Windows::Foundation::Collections::IVectorView<User> users{ nullptr };
+                try {
+                    users = co_await User::FindAllAsync(UserType::LocalUser, UserAuthenticationStatus::LocallyAuthenticated);
+                }
+                catch (const hresult_error& e) {
+                    LOG_WARNING(__WFUNCTION__, L"FindAllAsync() failed: %s (%d)", e.message().c_str(), e.code().value);
+                }
+
+                if (!users || users.Size() == 0)
+                {
+                    try {
+                        users = co_await User::FindAllAsync();
+                    }
+                    catch (const hresult_error& e) {
+                        LOG_WARNING(__WFUNCTION__, L"FindAllAsync() fallback failed: %s (%d)", e.message().c_str(), e.code().value);
+                    }
+                }
 
                 if (users && users.Size() > 0)
                 {
                     LOG_INFO(__WFUNCTION__, L"Retrieved user list.");
-                    auto user = users.GetAt(0);
 
-                    auto displayName = co_await user.GetPropertyAsync(KnownUserProperties::DisplayName());
+                    for (uint32_t i = 0; i < users.Size(); ++i) {
+                        auto user = users.GetAt(i);
 
-                    if (displayName && !unbox_value<winrt::hstring>(displayName).empty())
-                    {
-                        username = unbox_value<winrt::hstring>(displayName);
-                        LOG_INFO(__WFUNCTION__, L"Retrieved user account name successfully.");
+                        if (username.empty()) {
+                            try {
+                                auto displayName = co_await user.GetPropertyAsync(KnownUserProperties::DisplayName());
+                                if (displayName) {
+                                    auto name = unbox_value<winrt::hstring>(displayName);
+                                    if (!name.empty()) {
+                                        username = name;
+                                        LOG_INFO(__WFUNCTION__, L"Retrieved user account name successfully.");
+                                    }
+                                }
+                            }
+                            catch (const hresult_error& e) {
+                                LOG_WARNING(__WFUNCTION__, L"GetPropertyAsync() failed: %s (%d)", e.message().c_str(), e.code().value);
+                            }
+                        }
+
+                        if (!avatar) {
+                            try {
+                                auto picture = co_await user.GetPictureAsync(UserPictureSize::Size64x64);
+                                if (picture) {
+                                    LOG_INFO(__WFUNCTION__, L"Retrieved user picture.");
+                                    auto stream = co_await picture.OpenReadAsync();
+
+                                    if (stream) {
+                                        co_await wil::resume_foreground(dispatcher);
+
+                                        BitmapImage bitmapImage;
+                                        co_await bitmapImage.SetSourceAsync(stream);
+                                        avatar = bitmapImage;
+
+                                        LOG_INFO(__WFUNCTION__, L"Retrieved user account picture successfully.");
+                                        co_await winrt::resume_background();
+                                    }
+                                }
+                            }
+                            catch (const hresult_error& e) {
+                                LOG_ERROR(__WFUNCTION__, L"GetPictureAsync() failed: %s (%d)", e.message().c_str(), e.code().value);
+                            }
+                        }
+
+                        if (!username.empty() && avatar) {
+                            break;
+                        }
                     }
+                }
 
-                    auto picture = co_await user.GetPictureAsync(UserPictureSize::Size64x64);
+                if (username.empty()) {
+                    wchar_t nameBuffer[256]{};
+                    DWORD nameSize = _countof(nameBuffer);
+                    if (GetUserNameW(nameBuffer, &nameSize) && nameBuffer[0] != L'\0') {
+                        username = nameBuffer;
+                        LOG_INFO(__WFUNCTION__, L"Falling back to Win32 user name successfully.");
+                    }
+                }
 
-                    if (picture)
-                    {
-                        LOG_INFO(__WFUNCTION__, L"Retrieved user picture.");
-                        auto stream = co_await picture.OpenReadAsync();
-
-                        if (stream)
-                        {
-                            co_await wil::resume_foreground(DispatcherQueue());
-
-                            BitmapImage bitmapImage;
-                            co_await bitmapImage.SetSourceAsync(stream);
-                            avatar = bitmapImage;
-
-                            LOG_INFO(__WFUNCTION__, L"Retrieved user account picture successfully.");
+                if (username.empty()) {
+                    DWORD needed = GetEnvironmentVariableW(L"USERNAME", nullptr, 0);
+                    if (needed > 1) {
+                        std::wstring envName(needed, L'\0');
+                        if (GetEnvironmentVariableW(L"USERNAME", envName.data(), needed) > 0) {
+                            envName.resize(wcslen(envName.c_str()));
+                            if (!envName.empty()) {
+                                username = hstring(envName);
+                                LOG_INFO(__WFUNCTION__, L"Falling back to USERNAME environment variable.");
+                            }
                         }
                     }
                 }
@@ -161,17 +254,22 @@ namespace winrt::StarlightGUI::implementation
 
 
         if (auto strong_this = weak_this.get()) {
-            co_await wil::resume_foreground(DispatcherQueue());
+            co_await wil::resume_foreground(dispatcher);
+            if (!IsLoaded()) co_return;
 
             if (username.empty()) username = L"User";
 
-            UserAvatar().Name(username.cbegin());
-            g_mainWindowInstance->MainAvatar().Name(username.cbegin());
+            UserAvatar().Name(username);
+            if (g_mainWindowInstance) {
+                g_mainWindowInstance->MainAvatar().Name(username);
+            }
             WelcomeText().Text(greeting + L", " + username + L"!");
 
             if (avatar) {
                 UserAvatar().ProfilePicture(avatar.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>());
-                g_mainWindowInstance->MainAvatar().ProfilePicture(avatar.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>());
+                if (g_mainWindowInstance) {
+                    g_mainWindowInstance->MainAvatar().ProfilePicture(avatar.as<winrt::Microsoft::UI::Xaml::Media::ImageSource>());
+                }
             }
         }
     }
@@ -179,8 +277,10 @@ namespace winrt::StarlightGUI::implementation
     slg::coroutine HomePage::FetchHitokoto()
     {
         auto weak_this = get_weak();
+        auto dispatcher = DispatcherQueue();
+
         try {
-            if (!infoInitialized) {
+            if (hitokoto.empty()) {
                 co_await winrt::resume_background();
 
                 LOG_INFO(__WFUNCTION__, L"Sending hitokoto request...");
@@ -203,46 +303,45 @@ namespace winrt::StarlightGUI::implementation
 
                 LOG_INFO(__WFUNCTION__, L"Hitokoto json result: %s", result.c_str());
             }
-
-            if (auto strong_this = weak_this.get()) {
-                co_await wil::resume_foreground(DispatcherQueue());
-                HitokotoText().Text(hitokoto);
-            }
         }
         catch (const hresult_error& e) {
             LOG_ERROR(__WFUNCTION__, L"Failed to fetch hitokoto! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-            HitokotoText().Text(t(L"Msg.FetchFailed"));
+            hitokoto = t(L"Msg.FetchFailed");
+        }
+
+        if (auto strong_this = weak_this.get()) {
+            co_await wil::resume_foreground(dispatcher);
+            strong_this->HitokotoText().Text(hitokoto);
         }
     }
 
-    slg::coroutine HomePage::SetupClock()
+    void HomePage::SetupClock()
     {
         UpdateClock();
         UpdateGauges();
 
         // 每秒更新一次
         clockTimer.Interval(std::chrono::seconds(1));
-        clockTimer.Tick({ this, &HomePage::OnClockTick });
+        if (!clockTickRegistered) {
+            clockTickToken = clockTimer.Tick({ this, &HomePage::OnClockTick });
+            clockTickRegistered = true;
+        }
         clockTimer.Start();
-
-        co_return;
     }
 
     slg::coroutine HomePage::OnClockTick(IInspectable const&, IInspectable const&)
     {
-        if (!IsLoaded()) co_return;
-        auto weak_this = get_weak();
+        if (!IsLoaded()) {
+            clockTimer.Stop();
+            co_return;
+        }
 
         try {
-            if (auto strong_this = weak_this.get()) {
-                UpdateClock();
-                UpdateGauges();
-            }
-            else {
-                clockTimer.Stop();
-            }
+            UpdateClock();
+            UpdateGauges();
         }
         catch (const hresult_error& e) {
+            clockTimer.Stop();
             LOG_ERROR(__WFUNCTION__, L"Error while clock ticking! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
         }
     }
@@ -259,25 +358,34 @@ namespace winrt::StarlightGUI::implementation
 
         // 初始化性能计数器
         if (!initialized) {
-            PdhOpenQueryW(NULL, 0, &query);
-            PdhAddCounterW(query, L"\\Processor(_Total)\\% Processor Time", 0, &counter_cpu_time);
-            PdhAddCounterW(query, L"\\Processor Information(_Total)\\Actual Frequency", 0, &counter_cpu_freq);
-            PdhAddCounterW(query, L"\\Processor Information(_Total)\\Actual Frequency", 0, &counter_cpu_freq);
-            PdhAddCounterW(query, L"\\System\\Processes", 0, &counter_cpu_process);
-            PdhAddCounterW(query, L"\\System\\Threads", 0, &counter_cpu_thread);
-            PdhAddCounterW(query, L"\\System\\System Calls/sec", 0, &counter_cpu_syscall);
-            PdhAddCounterW(query, L"\\Memory\\Cache Bytes", 0, &counter_mem_cached);
-            PdhAddCounterW(query, L"\\Memory\\Committed Bytes", 0, &counter_mem_committed);
-            PdhAddCounterW(query, L"\\Memory\\Page Reads/sec", 0, &counter_mem_read);
-            PdhAddCounterW(query, L"\\Memory\\Page Writes/sec", 0, &counter_mem_write);
-            PdhAddCounterW(query, L"\\Memory\\Pages Input/sec", 0, &counter_mem_input);
-            PdhAddCounterW(query, L"\\Memory\\Pages Output/sec", 0, &counter_mem_output);
-            PdhAddCounterW(query, L"\\PhysicalDisk(*)\\% Disk Time", 0, &counter_disk_time);
-            PdhAddCounterW(query, L"\\PhysicalDisk(*)\\Disk Transfers/sec", 0, &counter_disk_trans);
-            PdhAddCounterW(query, L"\\PhysicalDisk(*)\\Disk Read Bytes/sec", 0, &counter_disk_read);
-            PdhAddCounterW(query, L"\\PhysicalDisk(*)\\Disk Write Bytes/sec", 0, &counter_disk_write);
-            PdhAddCounterW(query, L"\\PhysicalDisk(*)\\Split IO/Sec", 0, &counter_disk_io);
-            PdhAddCounterW(query, L"\\GPU Engine(*)\\Utilization Percentage", 0, &counter_gpu_time);
+            auto openStatus = PdhOpenQueryW(NULL, 0, &query);
+            if (openStatus != ERROR_SUCCESS) {
+                LOG_ERROR(L"MonitorInstance", L"Failed to open PDH query, status=0x%08X.", openStatus);
+                co_return;
+            }
+
+            bool counterReady = true;
+            counterReady &= AddPdhCounter(query, L"\\Processor(_Total)\\% Processor Time", counter_cpu_time);
+            counterReady &= AddPdhCounter(query, L"\\Processor Information(_Total)\\Actual Frequency", counter_cpu_freq);
+            counterReady &= AddPdhCounter(query, L"\\System\\Processes", counter_cpu_process);
+            counterReady &= AddPdhCounter(query, L"\\System\\Threads", counter_cpu_thread);
+            counterReady &= AddPdhCounter(query, L"\\System\\System Calls/sec", counter_cpu_syscall);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Cache Bytes", counter_mem_cached);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Committed Bytes", counter_mem_committed);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Page Reads/sec", counter_mem_read);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Page Writes/sec", counter_mem_write);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Pages Input/sec", counter_mem_input);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Pages Output/sec", counter_mem_output);
+            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\% Disk Time", counter_disk_time);
+            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Disk Transfers/sec", counter_disk_trans);
+            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Disk Read Bytes/sec", counter_disk_read);
+            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Disk Write Bytes/sec", counter_disk_write);
+            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Split IO/Sec", counter_disk_io);
+            counterReady &= AddPdhCounter(query, L"\\GPU Engine(*)\\Utilization Percentage", counter_gpu_time);
+
+            if (!counterReady) {
+                LOG_ERROR(L"MonitorInstance", L"One or multiple PDH counters failed to add!");
+            }
 
             LOG_INFO(L"MonitorInstance", L"Initialized PDH counters.");
 
@@ -294,16 +402,17 @@ namespace winrt::StarlightGUI::implementation
 
             // 获取 L1/L2/L3 缓存
             DWORD bufferSize = 0;
-            GetLogicalProcessorInformation(NULL, &bufferSize);
-
-            std::vector<BYTE> buffer(bufferSize);
-            PSYSTEM_LOGICAL_PROCESSOR_INFORMATION slpi = reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION>(buffer.data());
-            GetLogicalProcessorInformation(slpi, &bufferSize);
-            for (size_t i = 0; i < bufferSize / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION); ++i) {
-                if (slpi[i].Relationship == RelationCache) {
-                    if (slpi[i].Cache.Level == 1) cache_l1 += slpi[i].Cache.Size / 1024.0;
-                    else if (slpi[i].Cache.Level == 2) cache_l2 += slpi[i].Cache.Size / (1024.0 * 1024.0);
-                    else if (slpi[i].Cache.Level == 3) cache_l3 += slpi[i].Cache.Size / (1024.0 * 1024.0);
+            if (!GetLogicalProcessorInformation(NULL, &bufferSize) && GetLastError() == ERROR_INSUFFICIENT_BUFFER && bufferSize > 0) {
+                std::vector<BYTE> buffer(bufferSize);
+                auto slpi = reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION>(buffer.data());
+                if (GetLogicalProcessorInformation(slpi, &bufferSize)) {
+                    for (size_t i = 0; i < bufferSize / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION); ++i) {
+                        if (slpi[i].Relationship == RelationCache) {
+                            if (slpi[i].Cache.Level == 1) cache_l1 += slpi[i].Cache.Size / 1024.0;
+                            else if (slpi[i].Cache.Level == 2) cache_l2 += slpi[i].Cache.Size / (1024.0 * 1024.0);
+                            else if (slpi[i].Cache.Level == 3) cache_l3 += slpi[i].Cache.Size / (1024.0 * 1024.0);
+                        }
+                    }
                 }
             }
 
@@ -358,7 +467,12 @@ namespace winrt::StarlightGUI::implementation
             initialized = true;
         }
 
-        PdhCollectQueryData(query);
+        if (!query) co_return;
+        auto collectStatus = PdhCollectQueryData(query);
+        if (collectStatus != ERROR_SUCCESS) {
+            LOG_ERROR(L"MonitorInstance", L"Failed to collect PDH query data, status=0x%08X.", collectStatus);
+            co_return;
+        }
 
         // CPU
         ULONG64 seconds = GetTickCount64() / 1000;
@@ -380,17 +494,20 @@ namespace winrt::StarlightGUI::implementation
         // GPU
         nvmlUtilization_t gpu_utilization{};
         nvmlMemory_t gpu_memory{};
-        UINT gpu_temp, gpu_clock_graphics, gpu_clock_mem;
+        UINT gpu_temp = 0, gpu_clock_graphics = 0, gpu_clock_mem = 0;
+        bool gpuInfoReady = false;
         if (isNvidia) {
-            nvmlDeviceGetUtilizationRates(device, &gpu_utilization);
-            nvmlDeviceGetMemoryInfo(device, &gpu_memory);
-            nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &gpu_temp);
-            nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &gpu_clock_graphics);
-            nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &gpu_clock_mem);
+            gpuInfoReady =
+                nvmlDeviceGetUtilizationRates(device, &gpu_utilization) == NVML_SUCCESS &&
+                nvmlDeviceGetMemoryInfo(device, &gpu_memory) == NVML_SUCCESS &&
+                nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &gpu_temp) == NVML_SUCCESS &&
+                nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &gpu_clock_graphics) == NVML_SUCCESS &&
+                nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &gpu_clock_mem) == NVML_SUCCESS;
         }
 
         if (auto strong_this = weak_this.get()) {
             co_await wil::resume_foreground(DispatcherQueue());
+            if (!IsLoaded()) co_return;
             InitializeDiskCards();
 
             graphX += 1;
@@ -424,8 +541,8 @@ namespace winrt::StarlightGUI::implementation
             MemCommitted().Text(FormatMemorySize(GetValueFromCounter(counter_mem_committed)));
             MemPageRead().Text(FormatMemorySize(GetValueFromCounter(counter_mem_read)) + L"/s");
             MemPageWrite().Text(FormatMemorySize(GetValueFromCounter(counter_mem_write)) + L"/s");
-            MemPageInput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_input)) + L"/s");
-            MemPageOutput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_output)) + L"/s");
+            MemPageInput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_output)) + L"/s");
+            MemPageOutput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_input)) + L"/s");
             TotalLineGraph().AddDataPoint(t(L"Common.Memory"), graphX, memInfo.dwMemoryLoad);
 
             auto diskTimeMap = GetDiskCounterMap(counter_disk_time);
@@ -436,6 +553,10 @@ namespace winrt::StarlightGUI::implementation
 
             double totalDiskUsage = 0.0;
             size_t totalDiskCount = 0;
+            auto theme = slg::GetConfiguredElementTheme();
+            auto secondaryTextBrush = theme == winrt::Microsoft::UI::Xaml::ElementTheme::Light
+                ? winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Windows::UI::Color{ 0xFF, 0x5E, 0x5E, 0x5E })
+                : winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Windows::UI::Color{ 0xFF, 0xB9, 0xB9, 0xB9 });
 
             for (auto& [index, card] : disk_card_map) {
                 double timeValue = diskTimeMap[index];
@@ -445,23 +566,23 @@ namespace winrt::StarlightGUI::implementation
                 double ioValue = diskIoMap[index];
 
                 card.gauge.Value(timeValue);
+                card.read.Foreground(secondaryTextBrush);
+                card.write.Foreground(secondaryTextBrush);
+                card.trans.Foreground(secondaryTextBrush);
+                card.io.Foreground(secondaryTextBrush);
 
                 ss = std::wstringstream{};
                 ss << std::fixed << std::setprecision(1) << timeValue << "%";
                 card.percent.Text(ss.str());
-                ss = std::wstringstream{};
-                ss << t(L"Home.Overview.ReadSpeed").c_str() << FormatMemorySize(readValue) << L"/s";
-                card.read.Text(ss.str());
-                ss = std::wstringstream{};
-                ss << t(L"Home.Overview.WriteSpeed").c_str() << FormatMemorySize(writeValue) << L"/s";
-                card.write.Text(ss.str());
+                card.read.Text(FormatMemorySize(readValue) + L"/s");
+                card.write.Text(FormatMemorySize(writeValue) + L"/s");
 
                 ss = std::wstringstream{};
-                ss << t(L"Home.Overview.Transfer").c_str() << std::fixed << std::setprecision(1) << transValue << "/s";
+                ss << std::fixed << std::setprecision(1) << transValue << "/s";
                 card.trans.Text(ss.str());
 
                 ss = std::wstringstream{};
-                ss << t(L"Home.Overview.IOCount").c_str() << std::fixed << std::setprecision(1) << ioValue << "/s";
+                ss << std::fixed << std::setprecision(1) << ioValue << "/s";
                 card.io.Text(ss.str());
 
                 totalDiskUsage += timeValue;
@@ -472,7 +593,7 @@ namespace winrt::StarlightGUI::implementation
             TotalLineGraph().AddDataPoint(t(L"Common.Disk"), graphX, totalDiskUsage);
 
             double gpu_time = 0.0;
-            if (isNvidia) {
+            if (isNvidia && gpuInfoReady) {
                 if (pdh_first) {
                     gpu_time = GetValueFromCounterArray(counter_gpu_time);
                 }
@@ -673,10 +794,10 @@ namespace winrt::StarlightGUI::implementation
         UINT64 inPackets = row.dwInUcastPkts + row.dwInNUcastPkts;
         UINT64 outPackets = row.dwOutUcastPkts + row.dwOutNUcastPkts;
 
-        UINT64 inOctetsDelta = inOctets >= last_in_octets ? (inOctets - last_in_octets) : 0;
-        UINT64 outOctetsDelta = outOctets >= last_out_octets ? (outOctets - last_out_octets) : 0;
-        UINT64 inPacketsDelta = inPackets >= last_in_packets ? (inPackets - last_in_packets) : 0;
-        UINT64 outPacketsDelta = outPackets >= last_out_packets ? (outPackets - last_out_packets) : 0;
+        UINT64 inOctetsDelta = ComputeCounterDelta32(inOctets, last_in_octets);
+        UINT64 outOctetsDelta = ComputeCounterDelta32(outOctets, last_out_octets);
+        UINT64 inPacketsDelta = ComputeCounterDelta32(inPackets, last_in_packets);
+        UINT64 outPacketsDelta = ComputeCounterDelta32(outPackets, last_out_packets);
 
         receiveBytesPerSec = static_cast<double>(inOctetsDelta) / seconds;
         sendBytesPerSec = static_cast<double>(outOctetsDelta) / seconds;
@@ -779,9 +900,19 @@ namespace winrt::StarlightGUI::implementation
         if (DeviceIoControl(hDevice, IOCTL_STORAGE_QUERY_PROPERTY, &spq, sizeof(spq), buffer.data(), static_cast<DWORD>(buffer.size()), &bytesReturned, NULL))
         {
             auto sdd = reinterpret_cast<PSTORAGE_DEVICE_DESCRIPTOR>(buffer.data());
-            if (sdd->ProductIdOffset != 0 && sdd->ProductIdOffset < buffer.size()) {
+            if (sdd->ProductIdOffset != 0 && sdd->ProductIdOffset < bytesReturned) {
                 LPCSTR productId = reinterpret_cast<LPCSTR>(buffer.data() + sdd->ProductIdOffset);
-                manufacture = to_hstring(productId);
+                size_t maxLen = static_cast<size_t>(bytesReturned - sdd->ProductIdOffset);
+                size_t len = strnlen_s(productId, maxLen);
+                if (len > 0) {
+                    std::string product(productId, len);
+                    while (!product.empty() && (product.back() == ' ' || product.back() == '\t')) {
+                        product.pop_back();
+                    }
+                    if (!product.empty()) {
+                        manufacture = to_hstring(product);
+                    }
+                }
             }
         }
         else {
@@ -844,25 +975,50 @@ namespace winrt::StarlightGUI::implementation
         model.Text(manufacture);
         infoPanel.Children().Append(model);
 
+        auto theme = slg::GetConfiguredElementTheme();
+        auto secondaryTextBrush = theme == winrt::Microsoft::UI::Xaml::ElementTheme::Light
+            ? winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Windows::UI::Color{ 0xFF, 0x5E, 0x5E, 0x5E })
+            : winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Windows::UI::Color{ 0xFF, 0xB9, 0xB9, 0xB9 });
+
         auto readText = TextBlock();
         readText.Margin(ThicknessHelper::FromLengths(0, 10, 0, 0));
-        readText.Text(t(L"Home.Overview.ReadSpeedZero"));
-        readText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
+        auto readLabel = winrt::Microsoft::UI::Xaml::Documents::Run();
+        readLabel.Text(t(L"Home.Overview.ReadSpeed"));
+        auto readValue = winrt::Microsoft::UI::Xaml::Documents::Run();
+        readValue.Text(L"0 B/s");
+        readValue.Foreground(secondaryTextBrush);
+        readText.Inlines().Append(readLabel);
+        readText.Inlines().Append(readValue);
         infoPanel.Children().Append(readText);
 
         auto writeText = TextBlock();
-        writeText.Text(t(L"Home.Overview.WriteSpeedZero"));
-        writeText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
+        auto writeLabel = winrt::Microsoft::UI::Xaml::Documents::Run();
+        writeLabel.Text(t(L"Home.Overview.WriteSpeed"));
+        auto writeValue = winrt::Microsoft::UI::Xaml::Documents::Run();
+        writeValue.Text(L"0 B/s");
+        writeValue.Foreground(secondaryTextBrush);
+        writeText.Inlines().Append(writeLabel);
+        writeText.Inlines().Append(writeValue);
         infoPanel.Children().Append(writeText);
 
         auto transText = TextBlock();
-        transText.Text(t(L"Home.Overview.TransferZero"));
-        transText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
+        auto transLabel = winrt::Microsoft::UI::Xaml::Documents::Run();
+        transLabel.Text(t(L"Home.Overview.Transfer"));
+        auto transValue = winrt::Microsoft::UI::Xaml::Documents::Run();
+        transValue.Text(L"0/s");
+        transValue.Foreground(secondaryTextBrush);
+        transText.Inlines().Append(transLabel);
+        transText.Inlines().Append(transValue);
         infoPanel.Children().Append(transText);
 
         auto ioText = TextBlock();
-        ioText.Text(t(L"Home.Overview.IOCountZero"));
-        ioText.Foreground(winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(Colors::LightGray()));
+        auto ioLabel = winrt::Microsoft::UI::Xaml::Documents::Run();
+        ioLabel.Text(t(L"Home.Overview.IOCount"));
+        auto ioValue = winrt::Microsoft::UI::Xaml::Documents::Run();
+        ioValue.Text(L"0/s");
+        ioValue.Foreground(secondaryTextBrush);
+        ioText.Inlines().Append(ioLabel);
+        ioText.Inlines().Append(ioValue);
         infoPanel.Children().Append(ioText);
 
         grid.Children().Append(infoPanel);
@@ -882,10 +1038,10 @@ namespace winrt::StarlightGUI::implementation
         card.manufacture = manufacture;
         card.gauge = gauge;
         card.title = title;
-        card.read = readText;
-        card.write = writeText;
-        card.trans = transText;
-        card.io = ioText;
+        card.read = readValue;
+        card.write = writeValue;
+        card.trans = transValue;
+        card.io = ioValue;
         card.percent = percent;
         disk_card_map[diskIndex] = card;
     }

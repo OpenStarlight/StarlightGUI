@@ -3,6 +3,7 @@
 #include "HomePage.g.h"
 #include <pdh.h>
 #include <nvidia/nvml.h>
+#include <atomic>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -16,10 +17,10 @@ namespace winrt::StarlightGUI::implementation
         hstring manufacture = L"";
         winrt::XamlToolkit::WinUI::Controls::RadialGauge gauge{ nullptr };
         winrt::Microsoft::UI::Xaml::Controls::TextBlock title{ nullptr };
-        winrt::Microsoft::UI::Xaml::Controls::TextBlock read{ nullptr };
-        winrt::Microsoft::UI::Xaml::Controls::TextBlock write{ nullptr };
-        winrt::Microsoft::UI::Xaml::Controls::TextBlock trans{ nullptr };
-        winrt::Microsoft::UI::Xaml::Controls::TextBlock io{ nullptr };
+        winrt::Microsoft::UI::Xaml::Documents::Run read{ nullptr };
+        winrt::Microsoft::UI::Xaml::Documents::Run write{ nullptr };
+        winrt::Microsoft::UI::Xaml::Documents::Run trans{ nullptr };
+        winrt::Microsoft::UI::Xaml::Documents::Run io{ nullptr };
         winrt::Microsoft::UI::Xaml::Controls::TextBlock percent{ nullptr };
     };
 
@@ -28,10 +29,10 @@ namespace winrt::StarlightGUI::implementation
         HomePage();
 		void SetupLocalization();
 
-        slg::coroutine SetGreetingText();
+        void SetGreetingText();
         slg::coroutine SetUserProfile();
         slg::coroutine FetchHitokoto();
-        slg::coroutine SetupClock();
+        void SetupClock();
         slg::coroutine OnClockTick(IInspectable const&, IInspectable const&);
         slg::coroutine UpdateClock();
 
@@ -47,8 +48,9 @@ namespace winrt::StarlightGUI::implementation
         bool GetActiveNetworkSpeed(double& receiveBytesPerSec, double& sendBytesPerSec, double& receivePacketsPerSec, double& sendPacketsPerSec);
 
         winrt::Microsoft::UI::Xaml::DispatcherTimer clockTimer;
+        winrt::event_token clockTickToken{};
+        bool clockTickRegistered = false;
 
-        inline static bool infoInitialized;
         inline static hstring greeting;
         inline static hstring username;
         inline static hstring hitokoto;
