@@ -148,7 +148,7 @@ By installing and running this software, you acknowledge that you have **read an
 
 ### Project Support
 - **KALI_MC** — Driver development
-- **Wormwaker** — Ideas & promotion
+- **Wormwaker** — Ideas & Promotion
 - **MuLin** — Testing
 - **NtKrnl64** — Localization
 
@@ -156,6 +156,12 @@ By installing and running this software, you acknowledge that you have **read an
 - **Visual Studio** — Powerful integrated development environment
 - **Microsoft WinUI3** — Modern UI framework
 - **C++/WinRT** — Efficient Windows Runtime support
+
+## Localization
+Project has supported multi-language localization, we welcome every developer and user from the world to use and maintain the project together!
+You can submit a request at **Issues Page** for adding a new language, and upload your language file on official [Crowdin](https://crowdin.com/project/StarlightGUI)
+This is the current localization of the project on Crowdin:
+[![Crowdin](https://badges.crowdin.net/StarlightGUI/localized.svg)](https://crowdin.com/project/StarlightGUI)
 
 ## Star History
 
