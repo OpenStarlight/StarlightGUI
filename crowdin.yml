@@ -1,0 +1,4 @@
+files:
+  - source: /StarlightGUI/Strings/zh-CN/Resources.json
+    translation: /StarlightGUI/Strings/%language%/%original_file_name%
+    multilingual: 1
