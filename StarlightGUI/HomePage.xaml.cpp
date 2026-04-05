@@ -541,8 +541,8 @@ namespace winrt::StarlightGUI::implementation
             MemCommitted().Text(FormatMemorySize(GetValueFromCounter(counter_mem_committed)));
             MemPageRead().Text(FormatMemorySize(GetValueFromCounter(counter_mem_read)) + L"/s");
             MemPageWrite().Text(FormatMemorySize(GetValueFromCounter(counter_mem_write)) + L"/s");
-            MemPageInput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_output)) + L"/s");
-            MemPageOutput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_input)) + L"/s");
+            MemPageInput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_input)) + L"/s");
+            MemPageOutput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_output)) + L"/s");
             TotalLineGraph().AddDataPoint(t(L"Common.Memory"), graphX, memInfo.dwMemoryLoad);
 
             auto diskTimeMap = GetDiskCounterMap(counter_disk_time);
