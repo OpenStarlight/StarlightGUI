@@ -502,8 +502,7 @@ namespace winrt::StarlightGUI::implementation {
 				di.ImageBaseULong(data.nBase);
 				di.Size(ULongToHexString(data.nSize, 0, false, true));
 				di.SizeULong(data.nSize);
-				di.LoadOrder(ULongToHexString(data.nLoadOrder, 0, false, true));
-				di.LoadOrderULong(data.nLoadOrder);
+				di.Index(data.nLoadOrder);
 				di.DriverObject(ULongToHexString(data.nDriverObject));
 				di.DriverObjectULong(data.nDriverObject);
 				kernelModules.push_back(di);

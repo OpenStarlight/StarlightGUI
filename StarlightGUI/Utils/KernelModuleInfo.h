@@ -32,11 +32,8 @@ namespace winrt::StarlightGUI::implementation
 		ULONG64 DriverObjectULong() { return m_driverObjectULong; }
 		void DriverObjectULong(ULONG64 value) { m_driverObjectULong = value; }
 
-		hstring LoadOrder() { return m_loadOrder; }
-		void LoadOrder(hstring const& value) { m_loadOrder = value; }
-
-		ULONG64 LoadOrderULong() { return m_loadOrderULong; }
-		void LoadOrderULong(ULONG64 value) { m_loadOrderULong = value; }
+		ULONG64 Index() { return m_index; }
+		void Index(ULONG64 value) { m_index = value; }
 
 	private:
 		hstring m_name{ L"" };
@@ -47,8 +44,7 @@ namespace winrt::StarlightGUI::implementation
 		ULONG64 m_sizeULong{ 0 };
 		hstring m_driverObject{ L"" };
 		ULONG64 m_driverObjectULong{ 0 };
-		hstring m_loadOrder{ L"" };
-		ULONG64 m_loadOrderULong{ 0 };
+		ULONG64 m_index{ 0 };
 	};
 }
 

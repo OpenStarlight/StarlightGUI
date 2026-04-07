@@ -238,7 +238,7 @@ namespace winrt::StarlightGUI::implementation
             { L"ImageBase", "ImageBase", &KernelModulePage::m_isImageBaseAscending },
             { L"DriverObject", "DriverObject", &KernelModulePage::m_isDriverObjectAscending },
             { L"Size", "Size", &KernelModulePage::m_isSizeAscending },
-            { L"LoadOrder", "LoadOrder", &KernelModulePage::m_isLoadOrderAscending },
+            { L"Index", "Index", &KernelModulePage::m_isIndexAscending },
         } };
 
         for (auto const& binding : bindings) {
@@ -271,7 +271,7 @@ namespace winrt::StarlightGUI::implementation
             ImageBase,
             DriverObject,
             Size,
-            LoadOrder
+            Index
         };
 
         auto resolveSortColumn = [&](const std::string& key) -> SortColumn {
@@ -279,7 +279,7 @@ namespace winrt::StarlightGUI::implementation
             if (key == "ImageBase") return SortColumn::ImageBase;
             if (key == "DriverObject") return SortColumn::DriverObject;
             if (key == "Size") return SortColumn::Size;
-            if (key == "LoadOrder") return SortColumn::LoadOrder;
+            if (key == "Index") return SortColumn::Index;
             return SortColumn::Unknown;
             };
 
@@ -291,13 +291,13 @@ namespace winrt::StarlightGUI::implementation
             ImageBaseHeaderButton().Content(tbox(L"Common.Base"));
             DriverObjectHeaderButton().Content(tbox(L"KernelModule.Header.DriverObj"));
             SizeHeaderButton().Content(tbox(L"Common.Size"));
-            LoadOrderHeaderButton().Content(tbox(L"KernelModule.Header.LoadOrder"));
+            IndexHeaderButton().Content(tbox(L"Common.Index"));
 
             if (activeColumn == SortColumn::Name) NameHeaderButton().Content(box_value(t(L"Common.Module") + (isAscending ? L" ↓" : L" ↑")));
             if (activeColumn == SortColumn::ImageBase) ImageBaseHeaderButton().Content(box_value(t(L"Common.Base") + (isAscending ? L" ↓" : L" ↑")));
             if (activeColumn == SortColumn::DriverObject) DriverObjectHeaderButton().Content(box_value(t(L"KernelModule.Header.DriverObj") + (isAscending ? L" ↓" : L" ↑")));
             if (activeColumn == SortColumn::Size) SizeHeaderButton().Content(box_value(t(L"Common.Size") + (isAscending ? L" ↓" : L" ↑")));
-            if (activeColumn == SortColumn::LoadOrder) LoadOrderHeaderButton().Content(box_value(t(L"KernelModule.Header.LoadOrder") + (isAscending ? L" ↓" : L" ↑")));
+            if (activeColumn == SortColumn::Index) IndexHeaderButton().Content(box_value(t(L"Common.Index") + (isAscending ? L" ↓" : L" ↑")));
         }
 
         std::vector<winrt::StarlightGUI::KernelModuleInfo> sortedKernelModules;
@@ -316,8 +316,8 @@ namespace winrt::StarlightGUI::implementation
                 return a.DriverObjectULong() < b.DriverObjectULong();
             case SortColumn::Size:
                 return a.SizeULong() < b.SizeULong();
-            case SortColumn::LoadOrder:
-                return a.LoadOrderULong() < b.LoadOrderULong();
+            case SortColumn::Index:
+                return a.Index() < b.Index();
             default:
                 return false;
             }
@@ -485,13 +485,6 @@ namespace winrt::StarlightGUI::implementation
         ImageBaseHeaderButton().Content(tbox(L"Common.Base"));
         DriverObjectHeaderButton().Content(tbox(L"KernelModule.Header.DriverObj"));
         SizeHeaderButton().Content(tbox(L"Common.Size"));
-        LoadOrderHeaderButton().Content(tbox(L"KernelModule.Header.LoadOrder"));
+        IndexHeaderButton().Content(tbox(L"Common.Index"));
     }
 }
-
-
-
-
-
-
-

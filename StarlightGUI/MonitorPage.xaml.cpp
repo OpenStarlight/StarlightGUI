@@ -1453,15 +1453,15 @@ namespace winrt::StarlightGUI::implementation
 		SSDTHookHeaderButton().Content(tbox(L"Monitor.Header.Hook"));
 		SSDTAddressHeaderButton().Content(tbox(L"Common.Address"));
 		SSDTSourceAddressHeaderButton().Content(tbox(L"Monitor.Header.SourceAddress"));
-		SSDTIndexHeaderButton().Content(tbox(L"Monitor.Header.Index"));
+		SSDTIndexHeaderButton().Content(tbox(L"Common.Index"));
 		SSSDTNameModuleHeaderButton().Content(tbox(L"Monitor.Header.NameModule"));
 		SSSDTHookHeaderButton().Content(tbox(L"Monitor.Header.Hook"));
 		SSSDTAddressHeaderButton().Content(tbox(L"Common.Address"));
 		SSSDTSourceAddressHeaderButton().Content(tbox(L"Monitor.Header.SourceAddress"));
-		SSSDTIndexHeaderButton().Content(tbox(L"Monitor.Header.Index"));
+		SSSDTIndexHeaderButton().Content(tbox(L"Common.Index"));
 		IoTimerModuleHeaderButton().Content(tbox(L"Common.Module"));
 		IoTimerAddressHeaderButton().Content(tbox(L"Common.Address"));
-		IoTimerIndexHeaderButton().Content(tbox(L"Monitor.Header.Index"));
+		IoTimerIndexHeaderButton().Content(tbox(L"Common.Index"));
 		ExCallbackNameModuleHeaderButton().Content(tbox(L"Monitor.Header.NameModule"));
 		ExCallbackEntryHeaderButton().Content(tbox(L"Monitor.Header.Entry"));
 		ExCallbackObjectHeaderButton().Content(tbox(L"Monitor.Header.Object"));

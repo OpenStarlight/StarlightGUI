@@ -148,7 +148,7 @@
                         CornerRadius="0"
                         Tag="Size" />
                     <Button
-                        x:Name="LoadOrderHeaderButton"
+                        x:Name="IndexHeaderButton"
                         Grid.Column="4"
                         Height="32"
                         HorizontalAlignment="Stretch"
@@ -157,7 +157,7 @@
                         Click="ColumnHeader_Click"
                         Content="加载顺序"
                         CornerRadius="0"
-                        Tag="LoadOrder" />
+                        Tag="Index" />
                     <ct:GridSplitter
                         Grid.Column="0"
                         Width="9"
@@ -294,7 +294,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding LoadOrder}" />
+                                        Text="{Binding Index}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

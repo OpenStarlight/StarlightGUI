@@ -14,7 +14,6 @@
 		UInt64 SizeULong{ get; set; };
 		String DriverObject{ get; set; };
 		UInt64 DriverObjectULong{ get; set; };
-		String LoadOrder{ get; set; };
-		UInt64 LoadOrderULong{ get; set; };
+		UInt64 Index{ get; set; };
 	}
 }
