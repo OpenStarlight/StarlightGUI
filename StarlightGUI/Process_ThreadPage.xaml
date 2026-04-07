@@ -124,50 +124,50 @@
                         Grid.Column="0"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                     <ct:GridSplitter
                         Grid.Column="1"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                     <ct:GridSplitter
                         Grid.Column="2"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                     <ct:GridSplitter
                         Grid.Column="3"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                     <ct:GridSplitter
                         Grid.Column="4"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                 </Grid>
@@ -197,89 +197,85 @@
                         IsActive="False" />
 
                     <ListView
-                            Grid.ColumnSpan="6"
-                            x:Name="ThreadListView"
-                            Background="Transparent"
-                            ContainerContentChanging="ThreadListView_ContainerContentChanging"
-                            ItemContainerStyle="{StaticResource ListViewItemStyle}"
-                            RightTapped="ThreadListView_RightTapped">
+                        x:Name="ThreadListView"
+                        Grid.ColumnSpan="6"
+                        Background="Transparent"
+                        ContainerContentChanging="ThreadListView_ContainerContentChanging"
+                        ItemContainerStyle="{StaticResource ListViewItemStyle}"
+                        RightTapped="ThreadListView_RightTapped">
 
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid x:Name="ThreadRowGrid" Height="50">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="80" />
-                                            <ColumnDefinition Width="150" />
-                                            <ColumnDefinition Width="150" />
-                                            <ColumnDefinition Width="80" />
-                                            <ColumnDefinition Width="80" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid x:Name="ThreadRowGrid" Height="50">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
 
-                                        <!--  TID  -->
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            Margin="-32,0,0,0"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Id}" />
+                                    <!--  TID  -->
+                                    <TextBlock
+                                        Grid.Column="0"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding Id}" />
 
-                                        <!--  ETHREAD  -->
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Margin="-32,0,0,0"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding EThread}" />
+                                    <!--  ETHREAD  -->
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding EThread}" />
 
-                                        <!--  地址  -->
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            Margin="-32,0,0,0"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Address}" />
+                                    <!--  地址  -->
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding Address}" />
 
-                                        <!--  状态  -->
-                                        <TextBlock
-                                            Grid.Column="3"
-                                            Margin="-32,0,0,0"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Status}" />
+                                    <!--  状态  -->
+                                    <TextBlock
+                                        Grid.Column="3"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding Status}" />
 
-                                        <!--  优先级  -->
-                                        <TextBlock
-                                            Grid.Column="4"
-                                            Margin="-32,0,0,0"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Priority}" />
+                                    <!--  优先级  -->
+                                    <TextBlock
+                                        Grid.Column="4"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding Priority}" />
 
-                                        <!--  模块  -->
-                                        <TextBlock
-                                            Grid.Column="5"
-                                            Margin="4,0,0,0"
-                                            HorizontalAlignment="Left"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Module}" />
+                                    <!--  模块  -->
+                                    <essential:MarqueeText
+                                        Grid.Column="5"
+                                        Margin="4,0,0,0"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
+                                        Behavior="Looping"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding Module}" />
 
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
                     <Border
                         Grid.Column="1"
                         HorizontalAlignment="Left"

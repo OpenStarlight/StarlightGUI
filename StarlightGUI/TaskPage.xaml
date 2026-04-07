@@ -174,50 +174,50 @@
                         Grid.Column="0"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                     <ct:GridSplitter
                         Grid.Column="1"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                     <ct:GridSplitter
                         Grid.Column="2"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                     <ct:GridSplitter
                         Grid.Column="3"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                     <ct:GridSplitter
                         Grid.Column="4"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                 </Grid>
@@ -273,22 +273,19 @@
                                         Grid.Column="0"
                                         Width="16"
                                         Height="16"
-                                        Margin="0,0,16,0"
+                                        Margin="16,0,12,0"
                                         VerticalAlignment="Center"
                                         Source="{Binding Icon}" />
 
                                     <!--  进程名  -->
-                                    <StackPanel
-                                        x:Name="ProcessTextContainer"
-                                        Grid.Column="1"
-                                        VerticalAlignment="Center">
-                                        <TextBlock
-                                            x:Name="ProcessNameTextBlock"
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <essential:MarqueeText
+                                            Behavior="Looping"
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                             Text="{Binding Name}" />
-                                        <TextBlock
-                                            x:Name="ProcessDescriptionTextBlock"
+                                        <essential:MarqueeText
+                                            Behavior="Looping"
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                             Text="{Binding Description}" />
@@ -297,7 +294,6 @@
                                     <!--  EPROCESS  -->
                                     <TextBlock
                                         Grid.Column="2"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -307,7 +303,6 @@
                                     <!--  CPU  -->
                                     <TextBlock
                                         Grid.Column="3"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -317,7 +312,6 @@
                                     <!--  内存使用  -->
                                     <TextBlock
                                         Grid.Column="4"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -327,7 +321,6 @@
                                     <!--  状态  -->
                                     <TextBlock
                                         Grid.Column="5"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -337,7 +330,6 @@
                                     <!--  进程ID  -->
                                     <TextBlock
                                         Grid.Column="6"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"

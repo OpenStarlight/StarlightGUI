@@ -86,20 +86,20 @@
                         Grid.Column="0"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                     <ct:GridSplitter
                         Grid.Column="1"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                 </Grid>
@@ -126,61 +126,60 @@
                         IsActive="False" />
 
                     <ListView
-                            Grid.ColumnSpan="3"
-                            x:Name="ModuleListView"
-                            Background="Transparent"
-                            ContainerContentChanging="ModuleListView_ContainerContentChanging"
-                            ItemContainerStyle="{StaticResource ListViewItemStyle}"
-                            RightTapped="ModuleListView_RightTapped">
+                        x:Name="ModuleListView"
+                        Grid.ColumnSpan="3"
+                        Background="Transparent"
+                        ContainerContentChanging="ModuleListView_ContainerContentChanging"
+                        ItemContainerStyle="{StaticResource ListViewItemStyle}"
+                        RightTapped="ModuleListView_RightTapped">
 
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid x:Name="ModuleRowGrid" Height="50">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="150" />
-                                            <ColumnDefinition Width="80" />
-                                        </Grid.ColumnDefinitions>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid x:Name="ModuleRowGrid" Height="50">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="80" />
+                                    </Grid.ColumnDefinitions>
 
-                                        <!--  模块  -->
-                                        <StackPanel
-                                            x:Name="PrimaryTextContainer"
-                                            Grid.Column="0"
-                                            VerticalAlignment="Center">
-                                            <TextBlock
-                                                FontSize="14"
-                                                Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                                Text="{Binding Name}" />
-                                            <TextBlock
-                                                x:Name="SecondaryTextBlock"
-                                                FontSize="12"
-                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                Text="{Binding Path}" />
-                                        </StackPanel>
-
-                                        <!--  地址  -->
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Margin="24,0,0,0"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
+                                    <!--  模块  -->
+                                    <StackPanel
+                                        Grid.Column="0"
+                                        Margin="16,0,0,0"
+                                        VerticalAlignment="Center">
+                                        <essential:MarqueeText
+                                            Behavior="Looping"
+                                            FontSize="14"
+                                            Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                            Text="{Binding Name}" />
+                                        <essential:MarqueeText
+                                            Behavior="Looping"
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Address}" />
+                                            Text="{Binding Path}" />
+                                    </StackPanel>
 
-                                        <!--  大小  -->
-                                        <TextBlock
-                                            Grid.Column="2"
-                                            Margin="24,0,0,0"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Size}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
+                                    <!--  地址  -->
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding Address}" />
+
+                                    <!--  大小  -->
+                                    <TextBlock
+                                        Grid.Column="2"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding Size}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
                     <Border
                         Grid.Column="1"
                         HorizontalAlignment="Left"

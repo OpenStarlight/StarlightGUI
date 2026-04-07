@@ -228,22 +228,19 @@
                                         Grid.Column="0"
                                         Width="16"
                                         Height="16"
-                                        Margin="0,0,16,0"
+                                        Margin="16,0,12,0"
                                         VerticalAlignment="Center"
                                         Source="{Binding Icon}" />
 
                                     <!--  窗口名  -->
-                                    <StackPanel
-                                        x:Name="WindowTextContainer"
-                                        Grid.Column="1"
-                                        VerticalAlignment="Center">
-                                        <TextBlock
-                                            x:Name="WindowNameTextBlock"
+                                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                        <essential:MarqueeText
+                                            Behavior="Looping"
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                             Text="{Binding Name}" />
-                                        <TextBlock
-                                            x:Name="WindowDescriptionTextBlock"
+                                        <essential:MarqueeText
+                                            Behavior="Looping"
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                             Text="{Binding Description}" />
@@ -252,7 +249,6 @@
                                     <!--  ZBID  -->
                                     <TextBlock
                                         Grid.Column="2"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -262,7 +258,6 @@
                                     <!--  样式  -->
                                     <TextBlock
                                         Grid.Column="3"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -272,7 +267,6 @@
                                     <!--  HWND  -->
                                     <TextBlock
                                         Grid.Column="4"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"

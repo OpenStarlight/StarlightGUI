@@ -245,15 +245,16 @@
 
                                     <!--  模块  -->
                                     <StackPanel
-                                        x:Name="PrimaryTextContainer"
                                         Grid.Column="0"
+                                        Margin="16,0,0,0"
                                         VerticalAlignment="Center">
-                                        <TextBlock
+                                        <essential:MarqueeText
+                                            Behavior="Looping"
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                             Text="{Binding Name}" />
-                                        <TextBlock
-                                            x:Name="SecondaryTextBlock"
+                                        <essential:MarqueeText
+                                            Behavior="Looping"
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                             Text="{Binding Path}" />
@@ -262,7 +263,6 @@
                                     <!--  基址  -->
                                     <TextBlock
                                         Grid.Column="1"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -272,7 +272,6 @@
                                     <!--  驱动对象  -->
                                     <TextBlock
                                         Grid.Column="2"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -282,7 +281,6 @@
                                     <!--  大小  -->
                                     <TextBlock
                                         Grid.Column="3"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -292,7 +290,6 @@
                                     <!--  加载顺序  -->
                                     <TextBlock
                                         Grid.Column="4"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"

@@ -76,10 +76,10 @@
                         Grid.Column="0"
                         Width="9"
                         Margin="0,0,-5,0"
-                        Opacity="0"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Stretch"
                         Background="Transparent"
+                        Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
                 </Grid>
@@ -105,44 +105,44 @@
                         IsActive="False" />
 
                     <ListView
-                            Grid.ColumnSpan="2"
-                            x:Name="KCTListView"
-                            Background="Transparent"
-                            ContainerContentChanging="KCTListView_ContainerContentChanging"
-                            ItemContainerStyle="{StaticResource ListViewItemStyle}"
-                            RightTapped="KCTListView_RightTapped">
+                        x:Name="KCTListView"
+                        Grid.ColumnSpan="2"
+                        Background="Transparent"
+                        ContainerContentChanging="KCTListView_ContainerContentChanging"
+                        ItemContainerStyle="{StaticResource ListViewItemStyle}"
+                        RightTapped="KCTListView_RightTapped">
 
-                            <ListView.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid x:Name="KctRowGrid" Height="50">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="150" />
-                                        </Grid.ColumnDefinitions>
+                        <ListView.ItemTemplate>
+                            <DataTemplate>
+                                <Grid x:Name="KctRowGrid" Height="50">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="150" />
+                                    </Grid.ColumnDefinitions>
 
-                                        <!--  函数  -->
-                                        <TextBlock
-                                            Grid.Column="0"
-                                            Margin="4,0,0,0"
-                                            HorizontalAlignment="Left"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Name}" />
+                                    <!--  函数  -->
+                                    <essential:MarqueeText
+                                        Grid.Column="0"
+                                        Margin="16,0,0,0"
+                                        HorizontalAlignment="Left"
+                                        VerticalAlignment="Center"
+                                        Behavior="Looping"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding Name}" />
 
-                                        <!--  地址  -->
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Margin="24,0,0,0"
-                                            HorizontalAlignment="Center"
-                                            VerticalAlignment="Center"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Address}" />
-                                    </Grid>
-                                </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
+                                    <!--  地址  -->
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding Address}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
                     <Border
                         Grid.Column="1"
                         HorizontalAlignment="Left"

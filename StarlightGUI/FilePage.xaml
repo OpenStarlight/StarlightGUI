@@ -256,15 +256,16 @@
                                         Grid.Column="0"
                                         Width="16"
                                         Height="16"
-                                        Margin="0,0,12,0"
+                                        Margin="16,0,12,0"
                                         VerticalAlignment="Center"
                                         Source="{Binding Icon}" />
 
                                     <!--  文件名  -->
-                                    <TextBlock
+                                    <essential:MarqueeText
                                         Grid.Column="1"
-                                        Margin="0,-2,0,0"
+                                        Margin="0,-3,0,0"
                                         VerticalAlignment="Center"
+                                        Behavior="Looping"
                                         FontSize="16"
                                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                         Text="{Binding Name}" />
@@ -272,7 +273,6 @@
                                     <!--  修改日期  -->
                                     <TextBlock
                                         Grid.Column="2"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -282,7 +282,6 @@
                                     <!--  大小  -->
                                     <TextBlock
                                         Grid.Column="3"
-                                        Margin="24,0,0,0"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"

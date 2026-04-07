@@ -548,6 +548,8 @@
                 x:Name="ListViewItemStyle"
                 BasedOn="{StaticResource DefaultListViewItemStyle}"
                 TargetType="ListViewItem">
+                <Setter Property="Padding" Value="0" />
+                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="ListViewItem">
