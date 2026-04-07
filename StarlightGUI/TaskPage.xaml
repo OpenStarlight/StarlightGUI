@@ -104,7 +104,6 @@
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
-                        <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
 
                     <Button
@@ -150,17 +149,8 @@
                         CornerRadius="0"
                         Tag="MemoryUsage" />
                     <Button
-                        x:Name="StatusHeaderButton"
-                        Grid.Column="4"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="状态"
-                        CornerRadius="0" />
-                    <Button
                         x:Name="IdHeaderButton"
-                        Grid.Column="5"
+                        Grid.Column="4"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
@@ -210,16 +200,6 @@
                         Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
-                    <ct:GridSplitter
-                        Grid.Column="4"
-                        Width="9"
-                        Margin="0,0,-5,0"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Stretch"
-                        Background="Transparent"
-                        Opacity="0"
-                        ResizeBehavior="BasedOnAlignment"
-                        ResizeDirection="Columns" />
                 </Grid>
             </Border>
 
@@ -233,7 +213,6 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
@@ -262,7 +241,6 @@
                                         <ColumnDefinition Width="Auto" />
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="80" />
@@ -318,18 +296,9 @@
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding MemoryUsage}" />
 
-                                    <!--  状态  -->
-                                    <TextBlock
-                                        Grid.Column="5"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Status}" />
-
                                     <!--  进程ID  -->
                                     <TextBlock
-                                        Grid.Column="6"
+                                        Grid.Column="5"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -362,13 +331,6 @@
                         IsHitTestVisible="False" />
                     <Border
                         Grid.Column="4"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="5"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"

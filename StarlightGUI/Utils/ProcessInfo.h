@@ -35,9 +35,6 @@ namespace winrt::StarlightGUI::implementation
 		ULONG64 EProcessULong() { return m_eprocessULong; }
 		void EProcessULong(ULONG64 value) { m_eprocessULong = value; }
 
-		hstring Status() { return m_status; }
-		void Status(hstring const& value) { m_status = value; }
-
 		winrt::Microsoft::UI::Xaml::Media::ImageSource Icon() { return m_icon; }
 		void Icon(winrt::Microsoft::UI::Xaml::Media::ImageSource const& value) { m_icon = value; }
 
@@ -51,7 +48,6 @@ namespace winrt::StarlightGUI::implementation
 		hstring m_executablePath{ L"" };
 		hstring m_eprocess{ L"" };
 		ULONG64 m_eprocessULong{ 0 };
-		hstring m_status{ L"" };
 		winrt::Microsoft::UI::Xaml::Media::ImageSource m_icon{ nullptr };
 	};
 }

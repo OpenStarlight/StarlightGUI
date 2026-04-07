@@ -523,7 +523,6 @@ namespace winrt::StarlightGUI::implementation
 
                 existing.Name(process.Name());
                 existing.ExecutablePath(process.ExecutablePath());
-                existing.Status(process.Status());
                 existing.EProcess(process.EProcess());
                 existing.EProcessULong(process.EProcessULong());
                 existing.MemoryUsageByte(process.MemoryUsageByte());
@@ -691,7 +690,6 @@ namespace winrt::StarlightGUI::implementation
             if (process.MemoryUsageByte() != 0) process.MemoryUsage(FormatMemorySize(process.MemoryUsageByte()));
             else process.MemoryUsage(L"-1 " + t(L"Common.Unknown"));
 
-            if (process.Status().empty()) process.Status(t(L"Common.Unknown"));
             if (process.EProcess().empty()) process.EProcess(t(L"Common.Unknown"));
             UpdateRealizedItemMetrics(process);
 
@@ -846,9 +844,6 @@ namespace winrt::StarlightGUI::implementation
                 }
                 else if (column == 4) {
                     text.Text(process.MemoryUsage());
-                }
-                else if (column == 5) {
-                    text.Text(process.Status());
                 }
             }
         }
@@ -1307,12 +1302,5 @@ namespace winrt::StarlightGUI::implementation
         TerminateProcessButton().Label(t(L"Task.Button.Terminate"));
         NameHeaderButton().Content(tbox(L"Common.Process"));
         MemoryHeaderButton().Content(tbox(L"Common.Memory"));
-        StatusHeaderButton().Content(tbox(L"Common.Status"));
     }
 }
-
-
-
-
-
-

@@ -213,7 +213,6 @@ namespace winrt::StarlightGUI::implementation {
 				pi.EProcessULong((ULONG64)data.Eprocess);
 				pi.ExecutablePath(to_hstring(data.ImagePath));
 				pi.MemoryUsageByte(data.WorkingSetPrivateSize);
-				pi.Status(t(L"Msg.StatusRunning"));
 				targetList.push_back(pi);
 			}
 		}
@@ -253,7 +252,6 @@ namespace winrt::StarlightGUI::implementation {
 				pi.EProcess(ULongToHexString((ULONG64)data.pvoidaddressdata1));
 				pi.EProcessULong((ULONG64)data.pvoidaddressdata1);
 				pi.ExecutablePath(to_hstring(data.Module1));
-				pi.Status(t(L"Msg.StatusRunning"));
 				targetList.push_back(pi);
 			}
 		}
