@@ -61,22 +61,6 @@ namespace winrt::StarlightGUI::implementation
                 slg::SyncListViewColumnWidths(self->HeaderColumnsGrid(), self->BodyColumnsGrid(), self->WindowListView(), 1);
             }
             });
-        WindowListView().SizeChanged([weak = get_weak()](auto&&, auto&&) {
-            if (auto self = weak.get()) {
-                slg::UpdateVisibleListViewMarqueeByNames(
-                    self->WindowListView(),
-                    self->m_windowList.Size(),
-                    L"WindowTextContainer",
-                    L"WindowDescriptionTextBlock",
-                    L"WindowDescriptionMarquee");
-                slg::UpdateVisibleListViewMarqueeByNames(
-                    self->WindowListView(),
-                    self->m_windowList.Size(),
-                    L"WindowTextContainer",
-                    L"WindowNameTextBlock",
-                    L"WindowNameMarquee");
-            }
-            });
 
         this->Loaded([this](auto&&, auto&&) -> IAsyncAction {
             slg::SyncListViewColumnWidths(HeaderColumnsGrid(), BodyColumnsGrid(), WindowListView(), 1);
@@ -537,34 +521,6 @@ namespace winrt::StarlightGUI::implementation
 
         slg::ApplyHeaderColumnWidthsToContainer(HeaderColumnsGrid(), itemContainer, 1);
 
-        auto contentRoot = itemContainer.ContentTemplateRoot().try_as<winrt::Microsoft::UI::Xaml::FrameworkElement>();
-        if (!contentRoot) return;
-
-        slg::UpdateTextMarqueeByNames(
-            contentRoot,
-            L"WindowTextContainer",
-            L"WindowDescriptionTextBlock",
-            L"WindowDescriptionMarquee");
-        slg::UpdateTextMarqueeByNames(
-            contentRoot,
-            L"WindowTextContainer",
-            L"WindowNameTextBlock",
-            L"WindowNameMarquee");
-
-        DispatcherQueue().TryEnqueue([weak = get_weak(), contentRoot]() {
-            if (auto self = weak.get()) {
-                slg::UpdateTextMarqueeByNames(
-                    contentRoot,
-                    L"WindowTextContainer",
-                    L"WindowDescriptionTextBlock",
-                    L"WindowDescriptionMarquee");
-                slg::UpdateTextMarqueeByNames(
-                    contentRoot,
-                    L"WindowTextContainer",
-                    L"WindowNameTextBlock",
-                    L"WindowNameMarquee");
-            }
-            });
     }
 
     winrt::Windows::Foundation::IAsyncAction WindowPage::LoadWindowList()
@@ -625,18 +581,6 @@ namespace winrt::StarlightGUI::implementation
         WindowCountText().Text(t(L"Window.Detail", m_windowList.Size(), duration));
 
         LoadingRing().IsActive(false);
-        slg::UpdateVisibleListViewMarqueeByNames(
-            WindowListView(),
-            m_windowList.Size(),
-            L"WindowTextContainer",
-            L"WindowDescriptionTextBlock",
-            L"WindowDescriptionMarquee");
-        slg::UpdateVisibleListViewMarqueeByNames(
-            WindowListView(),
-            m_windowList.Size(),
-            L"WindowTextContainer",
-            L"WindowNameTextBlock",
-            L"WindowNameMarquee");
 
         LOG_INFO(__WFUNCTION__, L"Loaded window list, %d entry(s) in total.", m_windowList.Size());
         m_isLoadingWindows = false;

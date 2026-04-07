@@ -242,31 +242,11 @@
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                             Text="{Binding Name}" />
-                                        <essential:MarqueeText
-                                            x:Name="WindowNameMarquee"
-                                            Behavior="Looping"
-                                            Direction="Left"
-                                            FontSize="14"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            PauseOnHover="True"
-                                            Speed="40"
-                                            Text="{Binding Name}"
-                                            Visibility="Collapsed" />
                                         <TextBlock
                                             x:Name="WindowDescriptionTextBlock"
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                             Text="{Binding Description}" />
-                                        <essential:MarqueeText
-                                            x:Name="WindowDescriptionMarquee"
-                                            Behavior="Looping"
-                                            Direction="Left"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            PauseOnHover="True"
-                                            Speed="40"
-                                            Text="{Binding Description}"
-                                            Visibility="Collapsed" />
                                     </StackPanel>
 
                                     <!--  ZBID  -->

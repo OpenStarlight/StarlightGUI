@@ -46,16 +46,6 @@ namespace winrt::StarlightGUI::implementation
                 slg::SyncListViewColumnWidths(self->HeaderColumnsGrid(), self->BodyColumnsGrid(), self->ModuleListView(), 0);
             }
             });
-        ModuleListView().SizeChanged([weak = get_weak()](auto&&, auto&&) {
-            if (auto self = weak.get()) {
-                slg::UpdateVisibleListViewMarqueeByNames(
-                    self->ModuleListView(),
-                    self->m_moduleList.Size(),
-                    L"PrimaryTextContainer",
-                    L"SecondaryTextBlock",
-                    L"SecondaryMarquee");
-            }
-            });
 
         this->Loaded([this](auto&&, auto&&) {
             slg::SyncListViewColumnWidths(HeaderColumnsGrid(), BodyColumnsGrid(), ModuleListView(), 0);
@@ -131,24 +121,6 @@ namespace winrt::StarlightGUI::implementation
 
         slg::ApplyHeaderColumnWidthsToContainer(HeaderColumnsGrid(), itemContainer, 0);
 
-        auto contentRoot = itemContainer.ContentTemplateRoot().try_as<winrt::Microsoft::UI::Xaml::FrameworkElement>();
-        if (!contentRoot) return;
-
-        slg::UpdateTextMarqueeByNames(
-            contentRoot,
-            L"PrimaryTextContainer",
-            L"SecondaryTextBlock",
-            L"SecondaryMarquee");
-
-        DispatcherQueue().TryEnqueue([weak = get_weak(), contentRoot]() {
-            if (auto self = weak.get()) {
-                slg::UpdateTextMarqueeByNames(
-                    contentRoot,
-                    L"PrimaryTextContainer",
-                    L"SecondaryTextBlock",
-                    L"SecondaryMarquee");
-            }
-            });
     }
 
     winrt::Windows::Foundation::IAsyncAction Process_ModulePage::LoadModuleList()
@@ -196,12 +168,6 @@ namespace winrt::StarlightGUI::implementation
         // 更新模块数量文本
         ModuleCountText().Text(t(L"ProcModule.Detail", static_cast<size_t>(m_moduleList.Size()), static_cast<long long>(duration.count())));
         LoadingRing().IsActive(false);
-        slg::UpdateVisibleListViewMarqueeByNames(
-            ModuleListView(),
-            m_moduleList.Size(),
-            L"PrimaryTextContainer",
-            L"SecondaryTextBlock",
-            L"SecondaryMarquee");
 
         LOG_INFO(__WFUNCTION__, L"Loaded module list, %d entry(s) in total.", m_moduleList.Size());
     }

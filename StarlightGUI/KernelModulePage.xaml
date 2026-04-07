@@ -257,16 +257,6 @@
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                             Text="{Binding Path}" />
-                                        <essential:MarqueeText
-                                            x:Name="SecondaryMarquee"
-                                            Behavior="Looping"
-                                            Direction="Left"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            PauseOnHover="True"
-                                            Speed="40"
-                                            Text="{Binding Path}"
-                                            Visibility="Collapsed" />
                                     </StackPanel>
 
                                     <!--  基址  -->

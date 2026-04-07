@@ -296,7 +296,6 @@
                                 x:Name="ObjectListView"
                             Grid.ColumnSpan="2"
                                 Background="Transparent"
-                                ContainerContentChanging="MonitorListView_ContainerContentChanging"
                                 ItemContainerStyle="{StaticResource ListViewItemStyle}"
                                 RightTapped="ObjectListView_RightTapped">
                                 <ListView.ItemTemplate>
@@ -317,31 +316,11 @@
                                                     FontSize="14"
                                                     Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                                     Text="{Binding Name}" />
-                                                <essential:MarqueeText
-                                                    x:Name="PrimaryMarquee"
-                                                    Behavior="Looping"
-                                                    Direction="Left"
-                                                    FontSize="14"
-                                                    Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                                    PauseOnHover="True"
-                                                    Speed="40"
-                                                    Text="{Binding Name}"
-                                                    Visibility="Collapsed" />
                                                 <TextBlock
                                                     x:Name="SecondaryTextBlock"
                                                     FontSize="12"
                                                     Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                     Text="{Binding Path}" />
-                                                <essential:MarqueeText
-                                                    x:Name="SecondaryMarquee"
-                                                    Behavior="Looping"
-                                                    Direction="Left"
-                                                    FontSize="12"
-                                                    Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                    PauseOnHover="True"
-                                                    Speed="40"
-                                                    Text="{Binding Path}"
-                                                    Visibility="Collapsed" />
                                             </StackPanel>
 
                                             
@@ -477,7 +456,6 @@
                             x:Name="CallbackListView"
                             Grid.ColumnSpan="3"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}"
                             RightTapped="CallbackListView_RightTapped">
                             <ListView.ItemTemplate>
@@ -503,16 +481,6 @@
                                                 FontSize="12"
                                                 Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                 Text="{Binding String1}" />
-                                            <essential:MarqueeText
-                                                x:Name="SecondaryMarquee"
-                                                Behavior="Looping"
-                                                Direction="Left"
-                                                FontSize="12"
-                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                PauseOnHover="True"
-                                                Speed="40"
-                                                Text="{Binding String1}"
-                                                Visibility="Collapsed" />
                                         </StackPanel>
 
                                         
@@ -635,7 +603,6 @@
                             x:Name="MiniFilterListView"
                             Grid.ColumnSpan="4"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}"
                             RightTapped="MiniFilterListView_RightTapped">
                             <ListView.ItemTemplate>
@@ -662,16 +629,6 @@
                                                 FontSize="12"
                                                 Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                 Text="{Binding String1}" />
-                                            <essential:MarqueeText
-                                                x:Name="SecondaryMarquee"
-                                                Behavior="Looping"
-                                                Direction="Left"
-                                                FontSize="12"
-                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                PauseOnHover="True"
-                                                Speed="40"
-                                                Text="{Binding String1}"
-                                                Visibility="Collapsed" />
                                         </StackPanel>
 
                                         
@@ -813,7 +770,6 @@
                             x:Name="StdFilterListView"
                             Grid.ColumnSpan="4"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}"
                             RightTapped="StdFilterListView_RightTapped">
                             <ListView.ItemTemplate>
@@ -840,16 +796,6 @@
                                                 FontSize="12"
                                                 Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                 Text="{Binding String3}" />
-                                            <essential:MarqueeText
-                                                x:Name="SecondaryMarquee"
-                                                Behavior="Looping"
-                                                Direction="Left"
-                                                FontSize="12"
-                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                PauseOnHover="True"
-                                                Speed="40"
-                                                Text="{Binding String3}"
-                                                Visibility="Collapsed" />
                                         </StackPanel>
 
                                         
@@ -1002,7 +948,6 @@
                             x:Name="SSDTListView"
                             Grid.ColumnSpan="5"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}"
                             RightTapped="SSDTListView_RightTapped">
                             <ListView.ItemTemplate>
@@ -1197,7 +1142,6 @@
                             x:Name="SSSDTListView"
                             Grid.ColumnSpan="5"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}"
                             RightTapped="SSDTListView_RightTapped">
                             <ListView.ItemTemplate>
@@ -1370,7 +1314,6 @@
                             x:Name="IoTimerListView"
                             Grid.ColumnSpan="3"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
@@ -1507,7 +1450,6 @@
                             x:Name="ExCallbackListView"
                             Grid.ColumnSpan="4"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}"
                             RightTapped="ExCallbackListView_RightTapped">
                             <ListView.ItemTemplate>
@@ -1534,16 +1476,6 @@
                                                 FontSize="12"
                                                 Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                 Text="{Binding String2}" />
-                                            <essential:MarqueeText
-                                                x:Name="SecondaryMarquee"
-                                                Behavior="Looping"
-                                                Direction="Left"
-                                                FontSize="12"
-                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                PauseOnHover="True"
-                                                Speed="40"
-                                                Text="{Binding String2}"
-                                                Visibility="Collapsed" />
                                         </StackPanel>
 
                                         
@@ -1685,7 +1617,6 @@
                             x:Name="IDTListView"
                             Grid.ColumnSpan="4"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
@@ -1867,7 +1798,6 @@
                             x:Name="GDTListView"
                             Grid.ColumnSpan="6"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}">
                             <ListView.ItemTemplate>
                                 <DataTemplate>
@@ -2056,7 +1986,6 @@
                             x:Name="PiDDBListView"
                             Grid.ColumnSpan="3"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}"
                             RightTapped="PiDDBListView_RightTapped">
                             <ListView.ItemTemplate>
@@ -2175,7 +2104,6 @@
                             x:Name="HALDPTListView"
                             Grid.ColumnSpan="2"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}"
                             RightTapped="HALDPTListView_RightTapped">
                             <ListView.ItemTemplate>
@@ -2277,7 +2205,6 @@
                             x:Name="HALPDPTListView"
                             Grid.ColumnSpan="2"
                             Background="Transparent"
-                            ContainerContentChanging="MonitorListView_ContainerContentChanging"
                             ItemContainerStyle="{StaticResource ListViewItemStyle}"
                             RightTapped="HALDPTListView_RightTapped">
                             <ListView.ItemTemplate>

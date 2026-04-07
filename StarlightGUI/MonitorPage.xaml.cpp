@@ -183,57 +183,6 @@ namespace winrt::StarlightGUI::implementation
 		}
         InitializeColumnSyncBindings();
 
-		auto updateObjectMarquee = [weak = get_weak()](auto&&, auto&&) {
-			if (auto self = weak.get()) {
-				slg::UpdateVisibleListViewMarqueeByNames(
-					self->ObjectListView(),
-					self->m_objectList.Size(),
-					L"PrimaryTextContainer",
-					L"SecondaryTextBlock",
-					L"SecondaryMarquee");
-				slg::UpdateVisibleListViewMarqueeByNames(
-					self->ObjectListView(),
-					self->m_objectList.Size(),
-					L"PrimaryTextContainer",
-					L"PrimaryTextBlock",
-					L"PrimaryMarquee");
-			}
-			};
-		ObjectListView().SizeChanged(updateObjectMarquee);
-
-		auto updateGeneralMarquee = [weak = get_weak()](auto&&, auto&&) {
-			if (auto self = weak.get()) {
-				slg::UpdateVisibleListViewMarqueeByNames(
-					self->CallbackListView(),
-					self->m_generalList.Size(),
-					L"PrimaryTextContainer",
-					L"SecondaryTextBlock",
-					L"SecondaryMarquee");
-				slg::UpdateVisibleListViewMarqueeByNames(
-					self->MiniFilterListView(),
-					self->m_generalList.Size(),
-					L"PrimaryTextContainer",
-					L"SecondaryTextBlock",
-					L"SecondaryMarquee");
-				slg::UpdateVisibleListViewMarqueeByNames(
-					self->StdFilterListView(),
-					self->m_generalList.Size(),
-					L"PrimaryTextContainer",
-					L"SecondaryTextBlock",
-					L"SecondaryMarquee");
-				slg::UpdateVisibleListViewMarqueeByNames(
-					self->ExCallbackListView(),
-					self->m_generalList.Size(),
-					L"PrimaryTextContainer",
-					L"SecondaryTextBlock",
-					L"SecondaryMarquee");
-			}
-			};
-		CallbackListView().SizeChanged(updateGeneralMarquee);
-		MiniFilterListView().SizeChanged(updateGeneralMarquee);
-		StdFilterListView().SizeChanged(updateGeneralMarquee);
-		ExCallbackListView().SizeChanged(updateGeneralMarquee);
-
 		winrt::Microsoft::UI::Xaml::Application::Current().Resources().MergedDictionaries();
 
 		Unloaded([this](auto&&, auto&&) {
@@ -305,19 +254,6 @@ namespace winrt::StarlightGUI::implementation
 
 			m_objectList.Append(object);
 		}
-
-		slg::UpdateVisibleListViewMarqueeByNames(
-			ObjectListView(),
-			m_objectList.Size(),
-			L"PrimaryTextContainer",
-			L"SecondaryTextBlock",
-			L"SecondaryMarquee");
-		slg::UpdateVisibleListViewMarqueeByNames(
-			ObjectListView(),
-			m_objectList.Size(),
-			L"PrimaryTextContainer",
-			L"PrimaryTextBlock",
-			L"PrimaryMarquee");
 
 		LOG_INFO(__WFUNCTION__, L"Loaded object list, %d entry(s) in total.", m_objectList.Size());
 		m_isLoading = false;
@@ -488,21 +424,6 @@ namespace winrt::StarlightGUI::implementation
 			m_generalList.Append(entry);
 		}
 
-		switch (requestedIndex) {
-		case 2:
-			slg::UpdateVisibleListViewMarqueeByNames(CallbackListView(), m_generalList.Size(), L"PrimaryTextContainer", L"SecondaryTextBlock", L"SecondaryMarquee");
-			break;
-		case 3:
-			slg::UpdateVisibleListViewMarqueeByNames(MiniFilterListView(), m_generalList.Size(), L"PrimaryTextContainer", L"SecondaryTextBlock", L"SecondaryMarquee");
-			break;
-		case 4:
-			slg::UpdateVisibleListViewMarqueeByNames(StdFilterListView(), m_generalList.Size(), L"PrimaryTextContainer", L"SecondaryTextBlock", L"SecondaryMarquee");
-			break;
-		case 8:
-			slg::UpdateVisibleListViewMarqueeByNames(ExCallbackListView(), m_generalList.Size(), L"PrimaryTextContainer", L"SecondaryTextBlock", L"SecondaryMarquee");
-			break;
-		}
-
 		LOG_INFO(__WFUNCTION__, L"Loaded general list, %d entry(s) in total.", m_generalList.Size());
 		m_isLoading = false;
 	}
@@ -652,45 +573,6 @@ namespace winrt::StarlightGUI::implementation
 
 		flyout.ShowAt(ObjectListView(), options);
 	}
-
-    void MonitorPage::MonitorListView_ContainerContentChanging(
-        winrt::Microsoft::UI::Xaml::Controls::ListViewBase const& sender,
-        winrt::Microsoft::UI::Xaml::Controls::ContainerContentChangingEventArgs const& args)
-    {
-		if (args.InRecycleQueue()) return;
-
-		auto itemContainer = args.ItemContainer().try_as<winrt::Microsoft::UI::Xaml::Controls::ListViewItem>();
-		if (!itemContainer) return;
-
-		auto contentRoot = itemContainer.ContentTemplateRoot().try_as<winrt::Microsoft::UI::Xaml::FrameworkElement>();
-		if (!contentRoot) return;
-
-		slg::UpdateTextMarqueeByNames(
-			contentRoot,
-			L"PrimaryTextContainer",
-			L"SecondaryTextBlock",
-			L"SecondaryMarquee");
-		slg::UpdateTextMarqueeByNames(
-			contentRoot,
-			L"PrimaryTextContainer",
-			L"PrimaryTextBlock",
-			L"PrimaryMarquee");
-
-		DispatcherQueue().TryEnqueue([weak = get_weak(), contentRoot]() {
-			if (auto self = weak.get()) {
-				slg::UpdateTextMarqueeByNames(
-					contentRoot,
-					L"PrimaryTextContainer",
-					L"SecondaryTextBlock",
-					L"SecondaryMarquee");
-				slg::UpdateTextMarqueeByNames(
-					contentRoot,
-					L"PrimaryTextContainer",
-					L"PrimaryTextBlock",
-					L"PrimaryMarquee");
-			}
-			});
-    }
 
 	void MonitorPage::CallbackListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
 	{

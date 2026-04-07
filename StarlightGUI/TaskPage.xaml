@@ -292,16 +292,6 @@
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                             Text="{Binding Description}" />
-                                        <essential:MarqueeText
-                                            x:Name="ProcessDescriptionMarquee"
-                                            Behavior="Looping"
-                                            Direction="Left"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            PauseOnHover="True"
-                                            Speed="40"
-                                            Text="{Binding Description}"
-                                            Visibility="Collapsed" />
                                     </StackPanel>
 
                                     <!--  EPROCESS  -->

@@ -188,9 +188,6 @@ namespace winrt::StarlightGUI::implementation
 		void ExCallbackListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
 		void PiDDBListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
 		void HALDPTListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
-        void MonitorListView_ContainerContentChanging(
-            winrt::Microsoft::UI::Xaml::Controls::ListViewBase const& sender,
-            winrt::Microsoft::UI::Xaml::Controls::ContainerContentChangingEventArgs const& args);
 
         slg::coroutine RefreshButton_Click(IInspectable const&, RoutedEventArgs const&);
         slg::coroutine DbgViewButton_Click(IInspectable const&, RoutedEventArgs const&);
