@@ -263,10 +263,10 @@
                                     <!--  文件名  -->
                                     <essential:MarqueeText
                                         Grid.Column="1"
-                                        Margin="0,-3,0,0"
+                                        Margin="0,-2,0,0"
                                         VerticalAlignment="Center"
                                         Behavior="Looping"
-                                        FontSize="16"
+                                        FontSize="14"
                                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                         Text="{Binding Name}" />
 

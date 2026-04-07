@@ -206,7 +206,7 @@
 
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid x:Name="ThreadRowGrid" Height="50">
+                                <Grid x:Name="ThreadRowGrid" Height="45">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="150" />

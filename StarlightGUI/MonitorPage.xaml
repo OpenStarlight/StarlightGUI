@@ -1279,7 +1279,7 @@
                         ItemContainerStyle="{StaticResource ListViewItemStyle}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Height="50">
+                                <Grid Height="45">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="150" />
@@ -1289,10 +1289,10 @@
                                     <!--  模块  -->
                                     <essential:MarqueeText
                                         Grid.Column="0"
-                                        Margin="16,-3,0,0"
+                                        Margin="16,-2,0,0"
                                         VerticalAlignment="Center"
                                         Behavior="Looping"
-                                        FontSize="16"
+                                        FontSize="14"
                                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                         Text="{Binding String1}" />
 
@@ -1569,7 +1569,7 @@
                         ItemContainerStyle="{StaticResource ListViewItemStyle}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Height="50">
+                                <Grid Height="45">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="150" />
@@ -1580,10 +1580,10 @@
                                     <!--  模块  -->
                                     <essential:MarqueeText
                                         Grid.Column="0"
-                                        Margin="16,-3,0,0"
+                                        Margin="16,-2,0,0"
                                         VerticalAlignment="Center"
                                         Behavior="Looping"
-                                        FontSize="16"
+                                        FontSize="14"
                                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                         Text="{Binding String1}" />
 
@@ -1742,7 +1742,7 @@
                         ItemContainerStyle="{StaticResource ListViewItemStyle}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Height="50">
+                                <Grid Height="45">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="150" />
@@ -1755,7 +1755,7 @@
                                     <!--  名称  -->
                                     <essential:MarqueeText
                                         Grid.Column="0"
-                                        Margin="16,-3,0,0"
+                                        Margin="15,-2,0,0"
                                         VerticalAlignment="Center"
                                         Behavior="Looping"
                                         FontSize="16"
@@ -1917,7 +1917,7 @@
                         RightTapped="PiDDBListView_RightTapped">
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid Height="50">
+                                <Grid Height="45">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="100" />
@@ -1927,10 +1927,10 @@
                                     <!--  模块  -->
                                     <essential:MarqueeText
                                         Grid.Column="0"
-                                        Margin="16,-3,0,0"
+                                        Margin="16,-2,0,0"
                                         VerticalAlignment="Center"
                                         Behavior="Looping"
-                                        FontSize="16"
+                                        FontSize="14"
                                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                         Text="{Binding String1}" />
 
@@ -2150,10 +2150,10 @@
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                             Text="{Binding String1}" />
                                         <essential:MarqueeText
+                                            Behavior="Looping"
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding String2}"
-                                            Behavior="Looping" />
+                                            Text="{Binding String2}" />
                                     </StackPanel>
 
                                     <!--  地址  -->

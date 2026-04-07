@@ -114,7 +114,7 @@
 
                         <ListView.ItemTemplate>
                             <DataTemplate>
-                                <Grid x:Name="KctRowGrid" Height="50">
+                                <Grid x:Name="KctRowGrid" Height="45">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="150" />
