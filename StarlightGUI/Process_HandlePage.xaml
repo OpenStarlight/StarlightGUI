@@ -53,11 +53,11 @@
                 CornerRadius="5,5,0,0">
                 <Grid x:Name="HeaderColumnsGrid">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="80" />
-                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
                     <Button
                         x:Name="TypeHeaderButton"
@@ -153,11 +153,11 @@
                 CornerRadius="0,0,5,5">
                 <Grid x:Name="BodyColumnsGrid">
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="80" />
-                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
 
                     <ProgressRing
@@ -192,8 +192,8 @@
                                         Margin="16,0,0,0"
                                         HorizontalAlignment="Left"
                                         VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        FontSize="14"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                         Text="{Binding Type}" />
 
                                     <!--  地址  -->

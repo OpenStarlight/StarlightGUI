@@ -127,8 +127,8 @@
                                         HorizontalAlignment="Left"
                                         VerticalAlignment="Center"
                                         Behavior="Looping"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        FontSize="14"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                         Text="{Binding Name}" />
 
                                     <!--  地址  -->
