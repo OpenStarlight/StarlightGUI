@@ -21,6 +21,7 @@
   "Common.Path": "路径",
   "Common.Type": "类型",
   "Common.Value": "值",
+  "Common.Index": "序号",
   "Common.Unknown": "(未知)",
   "Common.None": "(无)",
   "Common.Version": "版本",
@@ -182,7 +183,6 @@
   "KernelModule.Detail": "共 %d 个内核模块 (%d ms)",
 
   "KernelModule.Header.DriverObj": "驱动对象",
-  "KernelModule.Header.LoadOrder": "加载顺序",
 
   "KernelModule.Button.LoadDriver": "加载驱动",
   "KernelModule.Button.UnloadModule": "卸载模块",
@@ -294,7 +294,6 @@
   "Monitor.Header.NameModule": "名称/模块",
   "Monitor.Header.Hook": "钩子",
   "Monitor.Header.SourceAddress": "源地址",
-  "Monitor.Header.Index": "序号",
   "Monitor.Header.Object": "对象",
   "Monitor.Header.Timestamp": "时间戳",
   "Monitor.Header.Limit": "段界限",
