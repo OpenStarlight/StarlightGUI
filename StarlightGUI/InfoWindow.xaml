@@ -8,7 +8,7 @@
     xmlns:essential="using:WinUI3Package"
     xmlns:local="using:StarlightGUI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    Title="Starlight GUI Info"
+    Title="Starlight GUI Process Info"
     mc:Ignorable="d">
 
     <Grid x:Name="InfoWindowGrid">
@@ -26,8 +26,10 @@
 
             <TitleBar
                 x:Name="AppTitleBar"
+                Title="Process Name"
                 IsPaneToggleButtonVisible="True"
-                PaneToggleRequested="AppTitleBar_PaneToggleRequested">
+                PaneToggleRequested="AppTitleBar_PaneToggleRequested"
+                Subtitle="(PID)">
                 <TitleBar.IconSource>
                     <ImageIconSource ImageSource="/Assets/Starlight.png" />
                 </TitleBar.IconSource>

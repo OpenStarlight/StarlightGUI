@@ -70,7 +70,7 @@ namespace winrt::StarlightGUI::implementation
         MainFrame().Navigate(xaml_typename<StarlightGUI::Process_ThreadPage>());
         RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(0));
         AppTitleBar().Title(processForInfoWindow.Name());
-        AppTitleBar().Subtitle(to_hstring(processForInfoWindow.Id()));
+        AppTitleBar().Subtitle(L"(" + to_hstring(processForInfoWindow.Id()) + L")");
         Title(processForInfoWindow.Name());
 
         auto iconSource = Microsoft::UI::Xaml::Controls::ImageIconSource();
