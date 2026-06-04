@@ -41,6 +41,8 @@
   "Msg.Failed": "无法完成操作, 错误码: %d",
   "Msg.FailedWithArg": "无法%s, 错误码: %d",
   "Msg.FailedWithArgNoError": "无法%s%s!",
+  "Msg.DriverError.Code": "操作失败，错误代码: %s",
+  "Msg.DriverError.Detail": "操作失败，错误信息: %s",
   "Msg.CopyToClipboard.Success": "已成功复制至剪贴板!",
   "Msg.CopyToClipboard.Failed": "无法复制至剪贴板!",
   "Msg.ShowDialog.Success": "成功显示对话框!",
