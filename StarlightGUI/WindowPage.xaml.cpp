@@ -49,6 +49,18 @@ namespace winrt::StarlightGUI::implementation
     static WTMSetWindowBand_t WTMSetWindowBand = nullptr;
     static WTMGetWindowBand_t WTMGetWindowBand = nullptr;
 
+    static hstring GetDriverErrorMessage()
+    {
+        auto errorMsg = KernelInstance::GetLastErrorMessage();
+        if (errorMsg.empty()) {
+            auto errorCode = KernelInstance::GetLastErrorCode();
+            wchar_t hexCode[32];
+            swprintf_s(hexCode, L"0x%X", errorCode);
+            return t(L"Msg.DriverError.Code", hexCode);
+        }
+        return t(L"Msg.DriverError.Detail", errorMsg.c_str());
+    }
+
     WindowPage::WindowPage() {
         InitializeComponent();
         SetupLocalization();
@@ -125,11 +137,11 @@ namespace winrt::StarlightGUI::implementation
         auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", t(L"Window.Menu.CloseKernel").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             DWORD pid;
 			GetWindowThreadProcessId((HWND)item.Hwnd(), &pid);
-            if (KernelInstance::_ZwTerminateProcess(pid)) {
+            if (KernelInstance::SiTerminateProcess(pid)) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 

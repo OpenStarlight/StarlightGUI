@@ -115,9 +115,6 @@
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
     <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
-    <ClCompile Include="Utils\KernelBase.cpp">
-      <Filter>Utils\Advanced</Filter>
-    </ClCompile>
     <ClCompile Include="Utils\DriverUtils.cpp">
       <Filter>Utils\Advanced</Filter>
     </ClCompile>
@@ -193,17 +190,11 @@
     <ClInclude Include="Utils\TaskUtils.h">
       <Filter>Utils\Advanced</Filter>
     </ClInclude>
-    <ClInclude Include="IOBase.h">
-      <Filter>Utils\Advanced</Filter>
-    </ClInclude>
     <ClInclude Include="Utils\ProcessInfo.h">
       <Filter>Utils\Types</Filter>
     </ClInclude>
     <ClInclude Include="Utils\ThreadInfo.h">
       <Filter>Utils\Types</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils\AstralIO.h">
-      <Filter>Utils\Advanced</Filter>
     </ClInclude>
     <ClInclude Include="Utils\HandleInfo.h">
       <Filter>Utils\Types</Filter>
@@ -238,6 +229,12 @@
     </ClInclude>
     <ClInclude Include="Utils\GeneralEntry.h">
       <Filter>Utils\Types</Filter>
+    </ClInclude>
+    <ClInclude Include="SiriusIO.h">
+      <Filter>Utils\Advanced</Filter>
+    </ClInclude>
+    <ClInclude Include="SiriusError.h">
+      <Filter>Utils\Advanced</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -308,12 +305,6 @@
   <ItemGroup>
     <None Include="packages.config" />
     <None Include="StarlightGUI_TemporaryKey.pfx" />
-    <None Include="Assets\kernel.sys">
-      <Filter>Assets</Filter>
-    </None>
-    <None Include="Assets\AstralX.sys">
-      <Filter>Assets</Filter>
-    </None>
     <None Include="nvml.dll">
       <Filter>Assets</Filter>
     </None>
@@ -324,6 +315,12 @@
       <Filter>Assets</Filter>
     </None>
     <None Include="capstone.dll">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="$(_WindowsMLLocalNativePath)\onnxruntime.dll" />
+    <None Include="$(_WindowsMLLocalNativePath)\DirectML.dll" />
+    <None Include="$(_WindowsMLLocalNativePath)\Microsoft.Windows.AI.MachineLearning.dll" />
+    <None Include="Assets\Sirius.sys">
       <Filter>Assets</Filter>
     </None>
   </ItemGroup>

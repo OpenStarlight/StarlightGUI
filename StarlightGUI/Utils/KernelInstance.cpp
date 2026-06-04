@@ -1,337 +1,287 @@
 ﻿#include "pch.h"
 #include "KernelBase.h"
 #include "CppUtils.h"
-
-typedef struct _PROCESS_INPUT {
-	ULONG PID;
-} PROCESS_INPUT, * PPROCESS_INPUT;
-
-typedef struct _DRIVER_INPUT {
-	PVOID DriverObj;
-} DRIVER_INPUT, * PDRIVER_INPUT;
+#include <string>
 
 namespace winrt::StarlightGUI::implementation {
 	static HANDLE driverDevice = NULL;
-	static HANDLE driverDevice2 = NULL;
+	static SISTATUS lastErrorCode = SI_SUCCESS;
+	static std::wstring lastErrorMessage = L"";
 
-	BOOL KernelInstance::_ZwTerminateProcess(ULONG pid) noexcept {
-		if (pid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		PROCESS_INPUT in = { pid };
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_TERMINATE_PROCESS, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_TERMINATE_PROCESS, &in, sizeof(in), 0, 0, 0, NULL);
+	SISTATUS KernelInstance::GetLastErrorCode() noexcept {
+		return lastErrorCode;
 	}
 
-	BOOL KernelInstance::MurderProcess(ULONG pid) noexcept {
-		if (pid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		PROCESS_INPUT in = { pid };
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_FORCE_TERMINATE_PROCESS, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_FORCE_TERMINATE_PROCESS, &in, sizeof(in), 0, 0, 0, NULL);
+	std::wstring KernelInstance::GetLastErrorMessage() noexcept {
+		return lastErrorMessage;
 	}
 
-	BOOL KernelInstance::_SuspendProcess(ULONG pid) noexcept {
-		if (pid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
+	void KernelInstance::QueryError() noexcept {
+		if (driverDevice == NULL) {
+			lastErrorCode = SI_ERROR;
+			lastErrorMessage = L"Driver device not initialized.";
+			return;
+		}
 
-		PROCESS_INPUT in = { pid };
+		SISTATUS errorCode = SI_SUCCESS;
+		if (!DeviceIoControl(driverDevice, IOCTL_SIRIUS_GET_ERROR_CODE, NULL, 0, &errorCode, sizeof(SISTATUS), 0, NULL)) {
+			lastErrorCode = SI_ERROR;
+			lastErrorMessage = L"Failed to query error code from driver.";
+			return;
+		}
 
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_SUSPEND_PROCESS, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_SUSPEND_PROCESS, &in, sizeof(in), 0, 0, 0, NULL);
+		lastErrorCode = errorCode;
+
+		if (ERROR(errorCode)) {
+			SI_ERROR_DETAIL errorDetail = { 0 };
+			if (DeviceIoControl(driverDevice, IOCTL_SIRIUS_GET_ERROR_DETAIL, NULL, 0, &errorDetail, sizeof(SI_ERROR_DETAIL), 0, NULL)) {
+				lastErrorMessage = std::wstring(errorDetail.Data);
+			} else {
+				lastErrorMessage = L"Failed to query error detail from driver.";
+			}
+		} else {
+			lastErrorMessage = L"";
+		}
 	}
 
-	BOOL KernelInstance::_ResumeProcess(ULONG pid) noexcept {
-		if (pid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		PROCESS_INPUT in = { pid };
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_RESUME_PROCESS, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_RESUME_PROCESS, &in, sizeof(in), 0, 0, 0, NULL);
+	BOOL KernelInstance::SiTerminateProcess(ULONG pid) noexcept {
+		BOOL result = SiSetProcessInformation(ProcessSetInformation::Terminate, pid, NULL, 0);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::HideProcess(ULONG pid) noexcept {
-		if (pid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
+	BOOL KernelInstance::SiTerminateProcessEx(ULONG pid) noexcept {
+		BOOL result = SiSetProcessInformation(ProcessSetInformation::Terminate, pid, NULL, 2);
+		QueryError();
+		return result;
+	}
 
-		PROCESS_INPUT in = { pid };
+	BOOL KernelInstance::SiSuspendProcess(ULONG pid) noexcept {
+		BOOL result = SiSetProcessInformation(ProcessSetInformation::Suspend, pid, NULL, 0);
+		QueryError();
+		return result;
+	}
 
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_HIDE_PROCESS, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_HIDE_PROCESS, &in, sizeof(in), 0, 0, 0, NULL);
+	BOOL KernelInstance::SiResumeProcess(ULONG pid) noexcept {
+		BOOL result = SiSetProcessInformation(ProcessSetInformation::Resume, pid, NULL, 0);
+		QueryError();
+		return result;
+	}
+
+	BOOL KernelInstance::SiHideProcess(ULONG pid) noexcept {
+		BOOL result = SiSetProcessInformation(ProcessSetInformation::Hide, pid, NULL, 0);
+		QueryError();
+		return result;
 	}
 
 	BOOL KernelInstance::SetPPL(ULONG pid, int level) noexcept {
-		if (pid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG PID;
-			int level;
-		};
-
-		INPUT in = { pid, level };
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_SET_PPL, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_SET_PPL, &in, sizeof(in), 0, 0, 0, NULL);
+		SI_PROCESS_PROTECTION in = { PsProtectedTypeProtectedLight, level };
+		BOOL result = SiSetProcessInformation(ProcessSetInformation::Protection, pid, &in, 0);
+		QueryError();
+		return result;
 	}
 
 	BOOL KernelInstance::SetCriticalProcess(ULONG pid) noexcept {
-		if (pid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		PROCESS_INPUT in = { pid };
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_SET_CRITICAL_PROCESS, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_SET_CRITICAL_PROCESS, &in, sizeof(in), 0, 0, 0, NULL);
+		BOOLEAN state = TRUE;
+		BOOL result = SiSetProcessInformation(ProcessSetInformation::Critical, pid, &state, 0);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::InjectDLLToProcess(ULONG pid, PWCHAR dllPath) noexcept {
-		if (pid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG PID;
-			UNICODE_STRING DllPath[MAX_PATH];
-		};
-
-		INPUT in = { 0 };
-		in.PID = pid;
-		RtlInitUnicodeString(in.DllPath, dllPath);
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_SHELLCODE_INJECT_DLL, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_SHELLCODE_INJECT_DLL, &in, sizeof(in), 0, 0, 0, NULL);
+	BOOL KernelInstance::InjectDLLToProcess(ULONG pid, PWCHAR dllPath, ULONG size) noexcept {
+		SI_INJECT_DLL in = { 0 };
+		RtlCopyMemory(in.DllPath, dllPath, size < RTL_NUMBER_OF(in.DllPath) ? size : RTL_NUMBER_OF(in.DllPath));
+		in.Method = 0;
+		BOOL result = SiSetProcessInformation(ProcessSetInformation::InjectDll, pid, &in, 0);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::ModifyProcessToken(ULONG pid, ULONG type) noexcept {
-		if (pid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG PID;
-			ULONG Type;
-		};
-
-		INPUT in = { 0 };
-		in.PID = pid;
-		in.Type = type;
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_MODIFY_PROCESS_TOKEN, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_MODIFY_PROCESS_TOKEN, &in, sizeof(in), 0, 0, 0, NULL);
+	BOOL KernelInstance::ModifyProcessToken(ULONG sourcePID, ULONG targetPID) noexcept {
+		BOOL result = SiSetProcessInformation(ProcessSetInformation::Token, targetPID, &sourcePID, 0);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::_ZwTerminateThread(ULONG tid) noexcept {
-		if (tid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		PROCESS_INPUT in = { tid };
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_TERMINATE_THREAD, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_TERMINATE_THREAD, &in, sizeof(in), 0, 0, 0, NULL);
+	BOOL KernelInstance::SiTerminateThread(ULONG tid) noexcept {
+		BOOL result = SiSetThreadInformation(ThreadSetInformation::Terminate, tid, NULL, 0);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::MurderThread(ULONG tid) noexcept {
-		if (tid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		PROCESS_INPUT in = { tid };
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_FORCE_TERMINATE_THREAD, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_FORCE_TERMINATE_THREAD, &in, sizeof(in), 0, 0, 0, NULL);
+	BOOL KernelInstance::SiTerminateThreadEx(ULONG tid) noexcept {
+		BOOL result = SiSetThreadInformation(ThreadSetInformation::Terminate, tid, NULL, 1);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::_SuspendThread(ULONG tid) noexcept {
-		if (tid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		PROCESS_INPUT in = { tid };
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_SUSPEND_THREAD, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_SUSPEND_THREAD, &in, sizeof(in), 0, 0, 0, NULL);
+	BOOL KernelInstance::SiSuspendThread(ULONG tid) noexcept {
+		BOOL result = SiSetThreadInformation(ThreadSetInformation::Suspend, tid, NULL, 0);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::_ResumeThread(ULONG tid) noexcept {
-		if (tid == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		PROCESS_INPUT in = { tid };
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_RESUME_THREAD, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_RESUME_THREAD, &in, sizeof(in), 0, 0, 0, NULL);
+	BOOL KernelInstance::SiResumeThread(ULONG tid) noexcept {
+		BOOL result = SiSetThreadInformation(ThreadSetInformation::Resume, tid, NULL, 0);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::UnloadDriver(ULONG64 driverObj) noexcept {
+	BOOL KernelInstance::SiUnloadDriver(ULONG64 driverObj) noexcept {
 		if (driverObj == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
 
-		DRIVER_INPUT in = { (PVOID)driverObj };
+		SI_UNLOAD_IMAGE input = { 0 };
+		input.Base = (PVOID)driverObj;
+		input.UnloadAsDriver = TRUE;
 
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_UNLOAD_DRIVER, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_UNLOAD_DRIVER, &in, sizeof(in), 0, 0, 0, NULL);
+		BOOL result = SiSetSystemInformation(SystemSetInformation::UnloadImage, &input, 0);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::HideDriver(ULONG64 driverObj) noexcept {
-		if (driverObj == 0) return FALSE;
-		if (!GetDriverDevice()) return FALSE;
-
-		DRIVER_INPUT in = { (PVOID)driverObj };
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_HIDE_DRIVER, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_HIDE_DRIVER, &in, sizeof(in), 0, 0, 0, NULL);
+	BOOL KernelInstance::SiHideDriver(ULONG64 driverObj) noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented.";
+		return FALSE;
 	}
 
-	BOOL KernelInstance::EnumProcesses(std::vector<winrt::StarlightGUI::ProcessInfo>& targetList) noexcept {
-		if (!GetDriverDevice2()) return FALSE;
-
-		BOOL bRet = FALSE;
-		ENUM_PROCESS input = { 0 };
-
-		PPROCESS_DATA pProcessInfo = NULL;
-
-		input.BufferSize = sizeof(PROCESS_DATA) * 500;
-		input.Buffer = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.BufferSize);
-		input.ProcessCount = 0;
-
-		BOOL status;
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_AX_ENUM_PROCESSES, __WFUNCTION__.c_str());
-		status = DeviceIoControl(driverDevice2, IOCTL_AX_ENUM_PROCESSES, &input, sizeof(ENUM_PROCESS), &input, sizeof(ENUM_PROCESS), 0, NULL);
-
-		if (status)
-		{
-			pProcessInfo = (PPROCESS_DATA)input.Buffer;
-			for (ULONG i = 0; i < input.ProcessCount; i++)
-			{
-				PROCESS_DATA data = pProcessInfo[i];
-				auto pi = winrt::make<winrt::StarlightGUI::implementation::ProcessInfo>();
-				pi.Id(data.Pid);
-				pi.Name(to_hstring(data.ImageName));
-				pi.EProcess(ULongToHexString((ULONG64)data.Eprocess));
-				pi.EProcessULong((ULONG64)data.Eprocess);
-				pi.ExecutablePath(to_hstring(data.ImagePath));
-				pi.MemoryUsageByte(data.WorkingSetPrivateSize);
-				targetList.push_back(pi);
-			}
-		}
-		bRet = HeapFree(GetProcessHeap(), 0, input.Buffer);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumProcesses2(std::vector<winrt::StarlightGUI::ProcessInfo>& targetList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		struct INPUT
-		{
-			ULONG_PTR nSize;
-			PVOID ProcessInfo;
-		};
-
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 500;
-		input.ProcessInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		BOOL status;
-		ULONG nRet = 0;
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_PROCESS, __WFUNCTION__.c_str());
-
-		status = DeviceIoControl(driverDevice, IOCTL_ENUM_PROCESS, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-		if (status && input.ProcessInfo)
-		{
-			pProcessInfo = (PDATA_INFO)input.ProcessInfo;
-			for (ULONG i = 0; i < nRet; i++)
-			{
-				DATA_INFO data = pProcessInfo[i];
-				auto pi = winrt::make<winrt::StarlightGUI::implementation::ProcessInfo>();
-				pi.Id(data.ulongdata1);
-				pi.Name(to_hstring(data.Module));
-				pi.EProcess(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-				pi.EProcessULong((ULONG64)data.pvoidaddressdata1);
-				pi.ExecutablePath(to_hstring(data.Module1));
-				targetList.push_back(pi);
-			}
-		}
-		status = HeapFree(GetProcessHeap(), 0, input.ProcessInfo);
-		return status;
-	}
-
-	BOOL KernelInstance::EnumProcessThreads(ULONG64 eprocess, std::vector<winrt::StarlightGUI::ThreadInfo>& threads) noexcept
+	BOOL KernelInstance::QueryFile(std::wstring path, std::vector<winrt::StarlightGUI::FileInfo>& files) noexcept
 	{
 		if (!GetDriverDevice()) return FALSE;
-		BOOL status = FALSE;
 
-		struct INPUT
-		{
-			ULONG nSize;
-			ULONG64 pEprocess;
-			PDATA_INFO pBuffer;
-		};
+		WCHAR targetPath[MAX_PATH];
+		wcscpy_s(targetPath, L"\\??\\");
+		wcscat_s(targetPath, path.c_str());
 
-		INPUT inputs = { 0 };
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_FILE_DATA) * 10000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 
-		ULONG nRet = 0;
-		inputs.pEprocess = eprocess;
-		inputs.nSize = sizeof(DATA_INFO) * 1000;
-		inputs.pBuffer = (PDATA_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputs.nSize);
+		BOOL result = FALSE;
 
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_PROCESS_THREAD_CIDTABLE, __WFUNCTION__.c_str());
-		status = DeviceIoControl(driverDevice, IOCTL_ENUM_PROCESS_THREAD_CIDTABLE, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
+		if (enum_file_mode == 2) {
+			// NTFSPARSER: enum NTFS MFT
+			result = SiQueryFileInformation(FileGetInformation::DirectoryFileByNTFS, targetPath, &enumData, 0);
+		}
+		else {
+			// NTAPI (0) or NTFSIO (1)
+			result = SiQueryFileInformation(FileGetInformation::DirectoryFile, targetPath, &enumData, enum_file_mode);
+		}
 
-		if (nRet > 1000) nRet = 1000;
+		QueryError();
 
-		if (status && nRet > 0 && inputs.pBuffer)
-		{
-			for (ULONG i = 0; i < nRet; i++)
-			{
-				DATA_INFO data = inputs.pBuffer[i];
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			if (enum_file_mode == 2) {
+				// NTFSPARSER mode: remove duplicates
+				PSI_FILE_DATA_FULL fileData = (PSI_FILE_DATA_FULL)enumData.Buffer;
+				for (ULONG i = 0; i < enumData.Count; i++) {
+					auto fileInfo = winrt::make<winrt::StarlightGUI::implementation::FileInfo>();
+					fileInfo.Name(fileData[i].Name);
+					fileInfo.Path(path + L"\\" + std::wstring(fileData[i].Name));
+					fileInfo.Directory(fileData[i].Directory);
+					fileInfo.Flag(fileData[i].NtfsFlags);
+					fileInfo.Size(FormatMemorySize(fileData[i].DataSize));
+					fileInfo.SizeULong(fileData[i].DataSize);
+					fileInfo.MFTID(fileData[i].FileReference);
+					files.push_back(fileInfo);
+				}
+			}
+			else {
+				// NTAPI or NTFSIO mode
+				PSI_FILE_DATA fileData = (PSI_FILE_DATA)enumData.Buffer;
+				for (ULONG i = 0; i < enumData.Count; i++) {
+					auto fileInfo = winrt::make<winrt::StarlightGUI::implementation::FileInfo>();
+					fileInfo.Name(fileData[i].Name);
+					fileInfo.Path(path + L"\\" + std::wstring(fileData[i].Name));
+					fileInfo.Directory(fileData[i].Directory);
+					fileInfo.Flag(fileData[i].FileAttributes);
+					fileInfo.Size(FormatMemorySize(fileData[i].DataSize));
+					fileInfo.SizeULong(fileData[i].DataSize);
+					files.push_back(fileInfo);
+				}
+			}
+		}
+
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+
+	BOOL KernelInstance::SiEnumProcesses(std::vector<winrt::StarlightGUI::ProcessInfo>& targetList, bool strengthen) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_PROCESS_DATA) * 500;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		if (strengthen) {
+			ULONG strengthenFlag = 1;
+			enumData.Arg = &strengthenFlag;
+		}
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::Process, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_PROCESS_DATA processData = (PSI_PROCESS_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto pi = winrt::make<winrt::StarlightGUI::implementation::ProcessInfo>();
+				pi.Id(processData[i].Pid);
+				pi.Name(to_hstring(processData[i].ImageName));
+				pi.EProcess(ULongToHexString((ULONG64)processData[i].Eprocess));
+				pi.EProcessULong((ULONG64)processData[i].Eprocess);
+				pi.ExecutablePath(to_hstring(processData[i].ImagePath));
+				pi.MemoryUsageByte(processData[i].WorkingSetPrivateSize);
+				targetList.push_back(pi);
+			}
+		}
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+	
+	BOOL KernelInstance::SiEnumProcessThreads(ULONG pid, std::vector<winrt::StarlightGUI::ThreadInfo>& threads) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_THREAD_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		enumData.Arg = (PVOID)&pid;
+	
+		BOOL result = SiQueryProcessInformation(ProcessGetInformation::Thread, pid, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_THREAD_DATA threadData = (PSI_THREAD_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto threadInfo = winrt::make<winrt::StarlightGUI::implementation::ThreadInfo>();
-				threadInfo.Id(data.ulongdata3);
-				threadInfo.EThread(ULongToHexString(data.ulong64data1));
-				threadInfo.Address(ULongToHexString(data.ulong64data2));
-				threadInfo.Priority(data.ulongdata2);
-				threadInfo.ModuleInfo(winrt::to_hstring(data.Module));
-				switch (data.ulongdata1)
-				{
-				case ThreadState_Initialized:
+				threadInfo.Id(threadData[i].Tid);
+				threadInfo.EThread(ULongToHexString((ULONG64)threadData[i].Ethread));
+				threadInfo.Address(ULongToHexString((ULONG64)threadData[i].Win32StartAddress));
+				threadInfo.ModuleInfo(L"");
+	
+				switch (threadData[i].State) {
+				case Initialized:
 					threadInfo.Status(t(L"Msg.Thread.Initialized"));
 					break;
-
-				case ThreadState_Ready:
+				case Ready:
 					threadInfo.Status(t(L"Msg.Thread.Ready"));
 					break;
-
-				case ThreadState_Running:
+				case Running:
 					threadInfo.Status(t(L"Msg.Thread.Running"));
 					break;
-
-				case ThreadState_Standby:
+				case Standby:
 					threadInfo.Status(t(L"Msg.Thread.Standby"));
 					break;
-
-				case ThreadState_Terminated:
+				case Terminated:
 					threadInfo.Status(t(L"Msg.Thread.Terminated"));
 					break;
-
-				case ThreadState_Waiting:
+				case Waiting:
 					threadInfo.Status(t(L"Msg.Thread.Waiting"));
 					break;
-
-				case ThreadState_Transition:
-					threadInfo.Status(L"Msg.Thread.Transition");
+				case KTHREAD_STATE::Transition:
+					threadInfo.Status(t(L"Msg.Thread.Transition"));
 					break;
-
-				case ThreadState_DeferredReady:
-					threadInfo.Status(L"Msg.Thread.DeferredReady");
+				case DeferredReady:
+					threadInfo.Status(t(L"Msg.Thread.DeferredReady"));
 					break;
-
-				case ThreadState_GateWait:
-					threadInfo.Status(L"Msg.Thread.GateWait");
+				case GateWaitObsolete:
+					threadInfo.Status(t(L"Msg.Thread.GateWait"));
 					break;
-
 				default:
 					threadInfo.Status(t(L"Msg.Thread.Unknown"));
 					break;
@@ -339,340 +289,406 @@ namespace winrt::StarlightGUI::implementation {
 				threads.push_back(threadInfo);
 			}
 		}
-
-		status = HeapFree(GetProcessHeap(), 0, inputs.pBuffer);
-		return status;
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
 	}
-
-	BOOL KernelInstance::EnumProcessHandles(ULONG pid, std::vector<winrt::StarlightGUI::HandleInfo>& handles) noexcept
-	{
-		if (!GetDriverDevice()) return FALSE;
-		BOOL bRet = FALSE;
-		ULONG nRet = 0;
-
-		struct INPUT
-		{
-			ULONG nSize;
-			ULONG PID;
-			PDATA_INFO pBuffer;
-		};
-		PDATA_INFO pProcessInfo = NULL;
-		INPUT inputs = { 0 };
-
-		inputs.nSize = sizeof(DATA_INFO) * 1000;
-		inputs.pBuffer = (PDATA_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputs.nSize);
-		inputs.PID = pid;
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_PROCESS_EXIST_HANDLE, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_PROCESS_EXIST_HANDLE, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && inputs.pBuffer) {
-			pProcessInfo = (PDATA_INFO)inputs.pBuffer;
-			for (ULONG i = 0; i < nRet; i++)
-			{
-				DATA_INFO data = pProcessInfo[i];
+	
+	BOOL KernelInstance::SiEnumProcessHandles(ULONG pid, std::vector<winrt::StarlightGUI::HandleInfo>& handles) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_HANDLE_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		enumData.Arg = (PVOID)&pid;
+	
+		BOOL result = SiQueryProcessInformation(ProcessGetInformation::Handle, pid, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_HANDLE_DATA handleData = (PSI_HANDLE_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto handleInfo = winrt::make<winrt::StarlightGUI::implementation::HandleInfo>();
-				handleInfo.Type(to_hstring(data.Module));
-				handleInfo.Object(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-				handleInfo.Handle(ULongToHexString(data.ulong64data3));
-				handleInfo.Access(ULongToHexString(data.ulong64data1, 0, false, true));
-				handleInfo.Attributes(ULongToHexString(data.ulong64data2, 0, false, true));
+				handleInfo.Type(to_hstring(handleData[i].TypeName));
+				handleInfo.Object(ULongToHexString((ULONG64)handleData[i].Object));
+				handleInfo.Handle(ULongToHexString((ULONG64)handleData[i].Handle));
+				handleInfo.Access(ULongToHexString(handleData[i].GrantedAccess, 0, false, true));
+				handleInfo.Attributes(ULongToHexString(handleData[i].Attributes, 0, false, true));
 				handles.push_back(handleInfo);
 			}
 		}
-
-		OutputDebugString(std::to_wstring(nRet).c_str());
-
-		bRet = HeapFree(GetProcessHeap(), 0, inputs.pBuffer);
-		return bRet;
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
 	}
-
-	BOOL KernelInstance::EnumProcessModules(ULONG64 eprocess, std::vector<winrt::StarlightGUI::MokuaiInfo>& modules) noexcept
-	{
-		if (!GetDriverDevice()) return FALSE;
-		BOOL bRet = FALSE;
-		ULONG nRet = 0;
-
-		struct INPUT
-		{
-			ULONG nSize;
-			PVOID eproc;
-			PDATA_INFO pBuffer;
-		};
-		PDATA_INFO pProcessInfo = NULL;
-		INPUT inputs = { 0 };
-
-		inputs.nSize = sizeof(DATA_INFO) * 1000;
-		inputs.pBuffer = (PDATA_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputs.nSize);
-		inputs.eproc = (PVOID)eprocess;
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_PROCESS_MODULE, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_PROCESS_MODULE, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && inputs.pBuffer) {
-			pProcessInfo = (PDATA_INFO)inputs.pBuffer;
-			for (ULONG i = 0; i < nRet; i++)
-			{
-				DATA_INFO data = pProcessInfo[i];
+	
+	BOOL KernelInstance::SiEnumProcessModules(ULONG pid, std::vector<winrt::StarlightGUI::MokuaiInfo>& modules) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_MODULE_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		enumData.Arg = (PVOID)&pid;
+	
+		BOOL result = SiQueryProcessInformation(ProcessGetInformation::Module, pid, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_MODULE_DATA moduleData = (PSI_MODULE_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto moduleInfo = winrt::make<winrt::StarlightGUI::implementation::MokuaiInfo>();
-				moduleInfo.Name(to_hstring(data.Module));
-				moduleInfo.Address(ULongToHexString(data.ulong64data1));
-				moduleInfo.Size(ULongToHexString(data.ulong64data2, 0, false, true));
-				moduleInfo.Path(to_hstring(data.Module1));
+				moduleInfo.Name(to_hstring(moduleData[i].Name));
+				moduleInfo.Address(ULongToHexString((ULONG64)moduleData[i].Base));
+				moduleInfo.Size(ULongToHexString(moduleData[i].Size, 0, false, true));
+				moduleInfo.Path(to_hstring(moduleData[i].Path));
 				modules.push_back(moduleInfo);
 			}
 		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, inputs.pBuffer);
-		return bRet;
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
 	}
-
-	BOOL KernelInstance::EnumProcessKernelCallbackTable(ULONG64 eprocess, std::vector<winrt::StarlightGUI::KCTInfo>& modules) noexcept
-	{
-		if (!GetDriverDevice()) return FALSE;
-		BOOL bRet = FALSE;
-		ULONG nRet = 0;
-
-		struct INPUT
-		{
-			ULONG nSize;
-			PVOID eproc;
-			PDATA_INFO pBuffer;
-		};
-		PDATA_INFO pProcessInfo = NULL;
-		INPUT inputs = { 0 };
-
-		inputs.nSize = sizeof(DATA_INFO) * 1000;
-		inputs.pBuffer = (PDATA_INFO)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputs.nSize);
-		inputs.eproc = (PVOID)eprocess;
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_KERNELCALLBACKTABLE, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_KERNELCALLBACKTABLE, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && inputs.pBuffer) {
-			pProcessInfo = (PDATA_INFO)inputs.pBuffer;
-			for (ULONG i = 0; i < nRet; i++)
-			{
-				DATA_INFO data = pProcessInfo[i];
+	
+	BOOL KernelInstance::SiEnumProcessKernelCallbackTable(ULONG pid, std::vector<winrt::StarlightGUI::KCTInfo>& kcts) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		enumData.Arg = (PVOID)&pid;
+	
+		BOOL result = SiQueryProcessInformation(ProcessGetInformation::KernelCallbackTable, pid, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto kctInfo = winrt::make<winrt::StarlightGUI::implementation::KCTInfo>();
-				kctInfo.Name(to_hstring(data.Module));
-				kctInfo.Address(ULongToHexString(data.ulong64data1));
-				modules.push_back(kctInfo);
+				kctInfo.Name(to_hstring(functionData[i].Name));
+				kctInfo.Address(ULongToHexString((ULONG64)functionData[i].Address));
+				kcts.push_back(kctInfo);
 			}
 		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, inputs.pBuffer);
-		return bRet;
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
 	}
-
-	BOOL KernelInstance::EnumDrivers(std::vector<winrt::StarlightGUI::KernelModuleInfo>& kernelModules) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG nSize;
-			PALL_DRIVERS pBuffer;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-
-		PPROCESS_DATA pProcessInfo = NULL;
-
-		input.nSize = sizeof(ALL_DRIVERS) * 1000;
-		input.pBuffer = (PALL_DRIVERS)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_DRIVERS, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_DRIVERS, &input, sizeof(INPUT), 0, 0, 0, NULL);
-
-		if (status && input.pBuffer && input.pBuffer->nCnt > 0)
-		{
-			for (ULONG i = 0; i < input.pBuffer->nCnt; i++)
-			{
-				DRIVER_INFO data = input.pBuffer->Drivers[i];
+	
+	BOOL KernelInstance::SiEnumDrivers(std::vector<winrt::StarlightGUI::KernelModuleInfo>& kernelModules) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_MODULE_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::Module, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_MODULE_DATA moduleData = (PSI_MODULE_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto di = winrt::make<winrt::StarlightGUI::implementation::KernelModuleInfo>();
-				di.Name(to_hstring(data.szDriverName));
-				di.Path(to_hstring(data.szDriverPath));
-				di.ImageBase(ULongToHexString(data.nBase));
-				di.ImageBaseULong(data.nBase);
-				di.Size(ULongToHexString(data.nSize, 0, false, true));
-				di.SizeULong(data.nSize);
-				di.Index(data.nLoadOrder);
-				di.DriverObject(ULongToHexString(data.nDriverObject));
-				di.DriverObjectULong(data.nDriverObject);
+				di.Name(to_hstring(moduleData[i].Name));
+				di.Path(to_hstring(moduleData[i].Path));
+				di.ImageBase(ULongToHexString((ULONG64)moduleData[i].Base));
+				di.ImageBaseULong((ULONG64)moduleData[i].Base);
+				di.Size(ULongToHexString(moduleData[i].Size, 0, false, true));
+				di.SizeULong(moduleData[i].Size);
+				di.Index(i);
+				di.DriverObject(ULongToHexString((ULONG64)moduleData[i].DriverObject));
+				di.DriverObjectULong((ULONG64)moduleData[i].DriverObject);
 				kernelModules.push_back(di);
 			}
 		}
-		bRet = HeapFree(GetProcessHeap(), 0, input.pBuffer);
-		return status && bRet;
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
 	}
-
-	BOOL KernelInstance::QueryFile(std::wstring path, std::vector<winrt::StarlightGUI::FileInfo>& files) noexcept
-	{
-		if (!GetDriverDevice()) return FALSE;
-		BOOL bRet = FALSE;
-		ULONG nRet = 0;
-
-		struct INPUT
-		{
-			ULONG_PTR nSize;
-			PDATA_INFO pBuffer;
-			UNICODE_STRING path[MAX_PATH];
-		};
-
-		LOG_WARNING(L"KernelInstance", L"Enum file mode: %d", enum_file_mode);
-
-		INPUT inputs = { 0 };
-
-		if (enum_file_mode == 1)
-		{
-			RtlInitUnicodeString(inputs.path, path.c_str());
-		}
-		else
-		{
-			WCHAR targetPath[MAX_PATH];
-			wcscpy_s(targetPath, L"\\??\\");
-			wcscat_s(targetPath, path.c_str());
-			RtlInitUnicodeString(inputs.path, targetPath);
-		}
-
-		inputs.nSize = sizeof(DATA_INFO) * 10000;
-		inputs.pBuffer = (DATA_INFO*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputs.nSize);
-		if (enum_file_mode == 2)
-		{
-            LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_NTFS_PARSER_ENUM_FILE2, __WFUNCTION__.c_str());
-			bRet = DeviceIoControl(driverDevice, IOCTL_NTFS_PARSER_ENUM_FILE2, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, 0);
-			if (bRet && nRet > 0 && nRet < 10000)
-			{
-				std::vector<winrt::StarlightGUI::FileInfo> result;
-				for (ULONG i = 0; i < nRet; i++)
-				{
-					DATA_INFO data = inputs.pBuffer[i];
-					auto fileInfo = winrt::make<winrt::StarlightGUI::implementation::FileInfo>();
-					fileInfo.Name(data.wcstr);
-					fileInfo.Path(path + L"\\" + data.wcstr);
-					fileInfo.Flag(data.ulongdata1);
-					fileInfo.Directory(data.ulongdata1 != MFT_RECORD_FLAG_FILE);
-					fileInfo.Size(FormatMemorySize(data.ulong64data2));
-					fileInfo.SizeULong(data.ulong64data2);
-					fileInfo.MFTID(data.ulong64data1);
-					result.push_back(fileInfo);
-				}
-				// Remove duplicated MFT indexes
-				std::unordered_map<ULONG64, size_t> keep;
-				for (size_t i = 0; i < result.size(); ++i) {
-					ULONG64 mft = result[i].MFTID();
-					auto it = keep.find(mft);
-
-					if (it == keep.end()) keep[mft] = i;
-					else {
-						std::wstring_view curr = result[i].Name(), kept = result[it->second].Name();
-						bool cHas = curr.find(L'~') != std::wstring_view::npos;
-						bool kHas = kept.find(L'~') != std::wstring_view::npos;
-
-						if ((!cHas && kHas) || (cHas == kHas && curr.length() < kept.length())) {
-							it->second = i;
-						}
-					}
-				}
-
-				result.reserve(keep.size());
-				for (auto& [mft, idx] : keep) files.push_back(std::move(result[idx]));
+	
+	BOOL KernelInstance::SiEnumMiniFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& filterList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_MINIFILTER_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::Minifilter, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_MINIFILTER_DATA minifilterData = (PSI_MINIFILTER_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(to_hstring(minifilterData[i].Name));
+				entry.String2(to_hstring(GetMiniFilterMajorFunction(minifilterData[i].MajorFunction)));
+				entry.String3(ULongToHexString((ULONG64)minifilterData[i].PreOperation));
+				entry.String4(ULongToHexString((ULONG64)minifilterData[i].PostOperation));
+				entry.String5(ULongToHexString((ULONG64)minifilterData[i].Base));
+				entry.ULongLong1((ULONG64)minifilterData[i].PreOperation);
+				entry.ULongLong2((ULONG64)minifilterData[i].PostOperation);
+				entry.ULongLong3((ULONG64)minifilterData[i].Base);
+				filterList.push_back(entry);
 			}
 		}
-		else if (enum_file_mode == 0)
-		{
-            LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_QUERY_FILE2, __WFUNCTION__.c_str());
-			bRet = DeviceIoControl(driverDevice, IOCTL_QUERY_FILE2, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, 0);
-			if (bRet && nRet > 0 && nRet < 10000)
-			{
-				for (ULONG i = 0; i < nRet; i++)
-				{
-					DATA_INFO data = inputs.pBuffer[i];
-					auto fileInfo = winrt::make<winrt::StarlightGUI::implementation::FileInfo>();
-					fileInfo.Name(data.wcstr);
-					fileInfo.Path(path + L"\\" + data.wcstr);
-					if (data.ulongdata4 == FALSE)
-					{
-						fileInfo.Flag(MFT_RECORD_FLAG_FILE);
-						fileInfo.Directory(false);
-					}
-					else
-					{
-						fileInfo.Flag(MFT_RECORD_FLAG_DIRECTORY);
-						fileInfo.Directory(true);
-					}
-					files.push_back(fileInfo);
-				}
-			}
-		}
-		else if (enum_file_mode == 1)
-		{
-            LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_QUERY_FILE_IRP, __WFUNCTION__.c_str());
-			bRet = DeviceIoControl(driverDevice, IOCTL_QUERY_FILE_IRP, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, 0);
-			if (bRet && nRet > 0 && nRet < 10000)
-			{
-				for (ULONG i = 0; i < nRet; i++)
-				{
-					DATA_INFO data = inputs.pBuffer[i];
-					auto fileInfo = winrt::make<winrt::StarlightGUI::implementation::FileInfo>();
-					fileInfo.Name(data.wcstr);
-					fileInfo.Path(path + L"\\" + data.wcstr);
-					if (data.ulongdata4 == FALSE)
-					{
-						fileInfo.Flag(MFT_RECORD_FLAG_FILE);
-						fileInfo.Directory(false);
-					}
-					else
-					{
-						fileInfo.Flag(MFT_RECORD_FLAG_DIRECTORY);
-						fileInfo.Directory(true);
-					}
-					files.push_back(fileInfo);
-				}
-			}
-		}
-		bRet = HeapFree(GetProcessHeap(), 0, inputs.pBuffer);
-		return bRet;
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
 	}
+	
+	BOOL KernelInstance::SiEnumStandardFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& filterList) noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented.";
+		return FALSE;
+	}
+	
+	BOOL KernelInstance::SiEnumSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& ssdtList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::SSDT, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(to_hstring(functionData[i].Name));
+				entry.String2(L"");
+				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
+				entry.String4(L"");
+				entry.String5(L"-");
+				entry.ULongLong1((ULONG64)functionData[i].Address);
+				entry.ULongLong2(0);
+				entry.ULong1(i);
+				entry.Bool1(false);
+				ssdtList.push_back(entry);
+			}
+		}
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+	
+	BOOL KernelInstance::SiEnumSSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& sssdtList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 3000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::ShadowSSDT, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(to_hstring(functionData[i].Name));
+				entry.String2(L"");
+				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
+				entry.String4(L"");
+				entry.String5(L"-");
+				entry.ULongLong1((ULONG64)functionData[i].Address);
+				entry.ULongLong2(0);
+				entry.ULong1(i);
+				entry.Bool1(false);
+				sssdtList.push_back(entry);
+			}
+		}
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+	
+	BOOL KernelInstance::SiEnumIoTimer(std::vector<winrt::StarlightGUI::GeneralEntry>& timerList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_IO_TIMER_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::IOTimer, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_IO_TIMER_DATA timerData = (PSI_IO_TIMER_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(to_hstring(timerData[i].Path));
+				entry.String2(ULongToHexString((ULONG64)timerData[i].TimerRoutine));
+				entry.String3(ULongToHexString((ULONG64)timerData[i].DeviceObject));
+				entry.ULongLong1((ULONG64)timerData[i].TimerRoutine);
+				entry.ULongLong2((ULONG64)timerData[i].DeviceObject);
+				timerList.push_back(entry);
+			}
+		}
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+	
+	BOOL KernelInstance::SiEnumExCallback(std::vector<winrt::StarlightGUI::GeneralEntry>& callbackList) noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented.";
+		return FALSE;
+	}
+	
+	BOOL KernelInstance::SiEnumIDT(std::vector<winrt::StarlightGUI::GeneralEntry>& idtList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_IDT_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::IDT, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_IDT_DATA idtData = (PSI_IDT_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(L"");
+				entry.String2(ULongToHexString((ULONG64)idtData[i].Offset));
+				entry.ULongLong1((ULONG64)idtData[i].Offset);
+				entry.ULong1(i);
+				entry.ULong2(idtData[i].Selector);
+				idtList.push_back(entry);
+			}
+		}
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+	
+	BOOL KernelInstance::SiEnumGDT(std::vector<winrt::StarlightGUI::GeneralEntry>& gdtList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_GDT_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::GDT, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_GDT_DATA gdtData = (PSI_GDT_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(L"");
+				entry.String2(ULongToHexString((ULONG64)gdtData[i].Base));
+				entry.String3(ULongToHexString(gdtData[i].Limit));
+				entry.ULongLong1((ULONG64)gdtData[i].Base);
+				entry.ULongLong2(gdtData[i].Limit);
+				entry.ULong1(i);
+				entry.ULong2(gdtData[i].Type);
+				entry.ULong3(gdtData[i].Dpl);
+				gdtList.push_back(entry);
+			}
+		}
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+	
+	BOOL KernelInstance::SiEnumPiDDBCacheTable(std::vector<winrt::StarlightGUI::GeneralEntry>& piddbList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_PIDDB_CACHE_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::PiDDBCacheTable, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_PIDDB_CACHE_DATA piddbData = (PSI_PIDDB_CACHE_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(to_hstring(piddbData[i].Name));
+				entry.ULong1(piddbData[i].LoadStatus);
+				entry.ULong2(piddbData[i].Timestamp);
+				piddbList.push_back(entry);
+			}
+		}
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+	
+	BOOL KernelInstance::SiEnumHalDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::HalDispatchTable, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(to_hstring(functionData[i].Name));
+				entry.String2(L"");
+				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
+				entry.ULongLong1((ULONG64)functionData[i].Address);
+				halList.push_back(entry);
+			}
+		}
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+	
+	BOOL KernelInstance::SiEnumHalPrivateDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halPrivateList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::HalPrivateDispatchTable, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(to_hstring(functionData[i].Name));
+				entry.String2(L"");
+				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
+				entry.ULongLong1((ULONG64)functionData[i].Address);
+				halPrivateList.push_back(entry);
+			}
+		}
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+	
+	BOOL KernelInstance::SiEnumNotifies(std::vector<winrt::StarlightGUI::GeneralEntry>& callbackList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+		enumData.BufferSize = sizeof(SI_CALLBACK_DATA) * 1000;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+	
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::Callback, &enumData, 0);
+		QueryError();
+	
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_CALLBACK_DATA callbackData = (PSI_CALLBACK_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto callback = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				callback.String1(to_hstring(callbackData[i].Path));
+				callback.String2(L"Callback");
+				callback.String3(ULongToHexString((ULONG64)callbackData[i].Address));
+				callback.ULongLong1((ULONG64)callbackData[i].Address);
+				callback.String4(ULongToHexString((ULONG64)callbackData[i].Address2));
+				callback.ULongLong2((ULONG64)callbackData[i].Address2);
+				callback.ULong1(callbackData[i].Index);
+				callbackList.push_back(callback);
+			}
+		}
+	
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+	
 
-	BOOL KernelInstance::_DeleteFile(std::wstring path) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		WCHAR targetPath[MAX_PATH];
+	BOOL KernelInstance::SiDeleteFile(std::wstring path) noexcept {
+		WCHAR targetPath[512];
 		wcscpy_s(targetPath, L"\\??\\");
 		wcscat_s(targetPath, path.c_str());
 
-		UNICODE_STRING filePath[MAX_PATH];
-		RtlInitUnicodeString(filePath, targetPath);
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_DELETE_FILE_UNICODE, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_DELETE_FILE_UNICODE, filePath, sizeof(filePath), NULL, 0, 0, NULL);
+		BOOL result = SiSetFileInformation(FileSetInformation::Delete, targetPath, NULL, 0);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::MurderFile(std::wstring path) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		WCHAR targetPath[MAX_PATH];
+	BOOL KernelInstance::SiDeleteFileForce(std::wstring path) noexcept {
+		WCHAR targetPath[512];
 		wcscpy_s(targetPath, L"\\??\\");
 		wcscat_s(targetPath, path.c_str());
 
-		UNICODE_STRING filePath[MAX_PATH];
-		RtlInitUnicodeString(filePath, targetPath);
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_FORCE_DELETE_UNICODE, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_FORCE_DELETE_UNICODE, filePath, sizeof(filePath), NULL, 0, 0, NULL);
-
-		if (status) {
-			status = DeleteFileW(path.c_str());
-			LOG_INFO(L"KernelInstance", L"Post-deleted file.");
-		}
-
+		BOOL status = SiSetFileInformation(FileSetInformation::Delete, targetPath, NULL, 1);
+		QueryError();
 		return status;
 	}
 
@@ -698,21 +714,21 @@ namespace winrt::StarlightGUI::implementation {
 		}
 	}
 
-	BOOL KernelInstance::_DeleteFileAuto(std::wstring path) noexcept {
+	BOOL KernelInstance::SiDeleteFileAuto(std::wstring path) noexcept {
 		if (!fs::exists(path)) {
 			return FALSE;
 		}
 
 		if (!fs::is_directory(path)) {
-			return _DeleteFile(path);
+			return SiDeleteFile(path);
 		}
 		else {
 			for (const auto& entry : fs::directory_iterator(path)) {
 				if (fs::is_directory(entry)) {
-					_DeleteFileAuto(entry.path().wstring());
+					SiDeleteFileAuto(entry.path().wstring());
 				}
 				if (fs::is_regular_file(entry)) {
-					_DeleteFile(entry.path().wstring());
+					SiDeleteFile(entry.path().wstring());
 				}
 			}
 			LOG_INFO(L"KernelInstance", L"Post-deleted directory.");
@@ -720,21 +736,21 @@ namespace winrt::StarlightGUI::implementation {
 		}
 	}
 
-	BOOL KernelInstance::MurderFileAuto(std::wstring path) noexcept {
+	BOOL KernelInstance::SiDeleteFileEx(std::wstring path) noexcept {
 		if (!fs::exists(path)) {
 			return FALSE;
 		}
 
 		if (!fs::is_directory(path)) {
-			return MurderFile(path);
+			return SiDeleteFileForce(path);
 		}
 		else {
 			for (const auto& entry : fs::directory_iterator(path)) {
 				if (fs::is_directory(entry)) {
-					MurderFileAuto(entry.path().wstring());
+					SiDeleteFileEx(entry.path().wstring());
 				}
 				if (fs::is_regular_file(entry)) {
-					MurderFile(entry.path().wstring());
+					SiDeleteFileForce(entry.path().wstring());
 				}
 			}
 			LOG_INFO(L"KernelInstance", L"Post-deleted directory.");
@@ -742,287 +758,227 @@ namespace winrt::StarlightGUI::implementation {
 		}
 	}
 
-	BOOL KernelInstance::LockFile(std::wstring path) noexcept {
-		if (!GetDriverDevice()) return FALSE;
+	BOOL KernelInstance::SiLockFile(std::wstring path) noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented.";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::SiCopyFile(std::wstring from, std::wstring to, std::wstring name) noexcept {
+		WCHAR sourcePath[MAX_PATH];
+		wcscpy_s(sourcePath, L"\\??\\");
+		wcscat_s(sourcePath, from.c_str());
+		wcscat_s(sourcePath, L"\\");
+		wcscat_s(sourcePath, name.c_str());
 
 		WCHAR targetPath[MAX_PATH];
-		wcscpy_s(targetPath, L"\\??\\");
-		wcscat_s(targetPath, path.c_str());
+		wcscpy_s(targetPath, to.c_str());
 
-		UNICODE_STRING filePath[MAX_PATH];
-		RtlInitUnicodeString(filePath, targetPath);
-
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\", parameters: [path=%s]", IOCTL_LOCK_FILE_UNICODE, __WFUNCTION__.c_str(), path.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_LOCK_FILE_UNICODE, filePath, sizeof(filePath), NULL, 0, 0, NULL);
+		BOOL result = SiSetFileInformation(FileSetInformation::Copy, sourcePath, targetPath, 1);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::_CopyFile(std::wstring from, std::wstring to, std::wstring name) noexcept {
-		if (!GetDriverDevice()) return FALSE;
+	BOOL KernelInstance::SiRenameFile(std::wstring from, std::wstring to) noexcept {
+		WCHAR sourcePath[MAX_PATH];
+		wcscpy_s(sourcePath, L"\\??\\");
+		wcscat_s(sourcePath, from.c_str());
 
-		struct INPUT
-		{
-			UNICODE_STRING FilePath[MAX_PATH];
-			UNICODE_STRING FileName[MAX_PATH];
-			UNICODE_STRING TargetFilePath[MAX_PATH];
-		};
+		WCHAR targetPath[MAX_PATH];
+		wcsncpy_s(targetPath, to.c_str(), _TRUNCATE);
 
-		WCHAR fromPath[MAX_PATH];
-		wcscpy_s(fromPath, from.c_str());
-		WCHAR toPath[MAX_PATH];
-		wcscpy_s(toPath, to.c_str());
-
-		INPUT input = { 0 };
-		RtlInitUnicodeString(input.FilePath, fromPath);
-		RtlInitUnicodeString(input.FileName, name.c_str());
-		RtlInitUnicodeString(input.TargetFilePath, toPath);
-
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_NTFS_COPY_FILE, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_NTFS_COPY_FILE, &input, sizeof(INPUT), NULL, 0, NULL, 0);
-	}
-
-	BOOL KernelInstance::_RenameFile(std::wstring from, std::wstring to) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT
-		{
-			UNICODE_STRING FilePath[MAX_PATH];
-			UNICODE_STRING TargetName[MAX_PATH];
-		};
-
-		INPUT input = { 0 };
-		RtlInitUnicodeString(input.FilePath, from.c_str());
-		RtlInitUnicodeString(input.TargetName, to.c_str());
-
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_IRP_RENAME_FILE, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_IRP_RENAME_FILE, &input, sizeof(INPUT), NULL, 0, NULL, 0);
+		BOOL result = SiSetFileInformation(FileSetInformation::Rename, sourcePath, targetPath, 0);
+		QueryError();
+		return result;
 	}
 
 	BOOL KernelInstance::EnableHVM() noexcept {
 		if (!GetDriverDevice()) return FALSE;
 
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_CHECK_HVM, __WFUNCTION__.c_str());
-		BOOL result = DeviceIoControl(driverDevice, IOCTL_CHECK_HVM, NULL, 0, NULL, 0, NULL, NULL);
-		
-		if (DeviceIoControl(driverDevice, IOCTL_CHECK_HVM, NULL, 0, NULL, 0, NULL, NULL)) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_INIT_HVM, __WFUNCTION__.c_str());
-			result = DeviceIoControl(driverDevice, IOCTL_INIT_HVM, NULL, 0, NULL, 0, NULL, NULL);
+		BOOL supported = FALSE;
+		if (!DeviceIoControl(driverDevice, IOCTL_METAVERSE_CHECK_SUPPORT, NULL, 0, &supported, sizeof(BOOL), 0, NULL)) {
+			QueryError();
+			return FALSE;
 		}
 
+		if (!supported) {
+			lastErrorCode = SI_NOT_AVAILABLE;
+			lastErrorMessage = L"Virtualization not supported on this system";
+			return FALSE;
+		}
+
+		BOOL result = DeviceIoControl(driverDevice, IOCTL_METAVERSE_INITIALIZE, NULL, 0, NULL, 0, NULL, NULL);
+		QueryError();
 		return result;
 	}
 
 	BOOL KernelInstance::EnableCreateProcess() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_UNPROHIBIT_CREATEPROCESS, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_UNPROHIBIT_CREATEPROCESS, NULL, 0, NULL, 0, NULL, NULL);
+		BOOLEAN state = TRUE;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::CreateProcessState, &state, 0);
+		QueryError();
+		return result;
 	}
 
 	BOOL KernelInstance::DisableCreateProcess() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_PROHIBIT_CREATEPROCESS, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_PROHIBIT_CREATEPROCESS, NULL, 0, NULL, 0, NULL, NULL);
+		BOOLEAN state = FALSE;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::CreateProcessState, &state, 0);
+		QueryError();
+		return result;
 	}
 
 	BOOL KernelInstance::EnableCreateFile() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_UNPROHIBIT_CREATEFILE, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_UNPROHIBIT_CREATEFILE, NULL, 0, NULL, 0, NULL, NULL);
+		BOOLEAN state = TRUE;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::CreateFileState, &state, 0);
+		QueryError();
+		return result;
 	}
 
 	BOOL KernelInstance::DisableCreateFile() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_PROHIBIT_CREATEFILE, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_PROHIBIT_CREATEFILE, NULL, 0, NULL, 0, NULL, NULL);
+		BOOLEAN state = FALSE;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::CreateFileState, &state, 0);
+		QueryError();
+		return result;
 	}
 
 	BOOL KernelInstance::EnableLoadDriver() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_UNPROHIBIT_LOADDRIVER, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_UNPROHIBIT_LOADDRIVER, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::DisableLoadDriver() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_PROHIBIT_LOADDRIVER, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_PROHIBIT_LOADDRIVER, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::EnableUnloadDriver() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_UNPROHIBIT_UNLOADDRIVER, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_UNPROHIBIT_UNLOADDRIVER, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::DisableUnloadDriver() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-        LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_PROHIBIT_UNLOADDRIVER, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_PROHIBIT_UNLOADDRIVER, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::EnableModifyRegistry() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_UNPROHIBIT_MODIFY_REGISTRY, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_UNPROHIBIT_MODIFY_REGISTRY, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::DisableModifyRegistry() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_PROHIBIT_MODIFY_REGISTRY, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_PROHIBIT_MODIFY_REGISTRY, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::ProtectDisk() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_PROTECT_DISK, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_PROTECT_DISK, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::UnprotectDisk() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_UNPROTECT_DISK, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_UNPROTECT_DISK, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::EnableObCallback() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		if (hypervisor_mode) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENABLE_OBCALLBACK_HVM, __WFUNCTION__.c_str());
-			return DeviceIoControl(driverDevice, IOCTL_ENABLE_OBCALLBACK_HVM, NULL, 0, NULL, 0, NULL, NULL);
-		}
-		else {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENABLE_OBCALLBACK, __WFUNCTION__.c_str());
-			return DeviceIoControl(driverDevice, IOCTL_ENABLE_OBCALLBACK, NULL, 0, NULL, 0, NULL, NULL);
-		}
-	}
-
-	BOOL KernelInstance::DisableObCallback() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		if (hypervisor_mode) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_DISABLE_OBCALLBACK_HVM, __WFUNCTION__.c_str());
-			return DeviceIoControl(driverDevice, IOCTL_DISABLE_OBCALLBACK_HVM, NULL, 0, NULL, 0, NULL, NULL);
-		}
-		else {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_DISABLE_OBCALLBACK, __WFUNCTION__.c_str());
-			return DeviceIoControl(driverDevice, IOCTL_DISABLE_OBCALLBACK, NULL, 0, NULL, 0, NULL, NULL);
-		}
-	}
-
-	BOOL KernelInstance::EnableDSE() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		if (hypervisor_mode) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENABLE_DSE_HVM, __WFUNCTION__.c_str());
-			return DeviceIoControl(driverDevice, IOCTL_ENABLE_DSE, NULL, 0, NULL, 0, NULL, NULL);
-		}
-		else {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENABLE_DSE, __WFUNCTION__.c_str());
-			return DeviceIoControl(driverDevice, IOCTL_ENABLE_DSE_HVM, NULL, 0, NULL, 0, NULL, NULL);
-		}
-	}
-
-	BOOL KernelInstance::DisableDSE() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		if (hypervisor_mode) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_DISABLE_DSE_HVM, __WFUNCTION__.c_str());
-			return DeviceIoControl(driverDevice, IOCTL_DISABLE_DSE_HVM, NULL, 0, NULL, 0, NULL, NULL);
-		}
-		else {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_DISABLE_DSE, __WFUNCTION__.c_str());
-			return DeviceIoControl(driverDevice, IOCTL_DISABLE_DSE, NULL, 0, NULL, 0, NULL, NULL);
-		}
-	}
-
-	BOOL KernelInstance::EnableCmpCallback() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENABLE_CMPCALLBACK, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_ENABLE_CMPCALLBACK, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::DisableCmpCallback() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_DISABLE_CMPCALLBACK, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_DISABLE_CMPCALLBACK, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::EnableLKD() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENABLE_LKD, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_ENABLE_LKD, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::DisableLKD() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_DISABLE_LKD, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_DISABLE_LKD, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::EnableEPTScan() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENABLE_SCAN_EPT_HOOK, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_ENABLE_SCAN_EPT_HOOK, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::DisableEPTScan() noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_DISABLE_SCAN_EPT_HOOK, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_DISABLE_SCAN_EPT_HOOK, NULL, 0, NULL, 0, NULL, NULL);
-	}
-
-	BOOL KernelInstance::DisablePatchGuard(int type) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		if (type == 0) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\", parameters: [type=%d]", IOCTL_DISABLE_PATCHGUARD_EFI, __WFUNCTION__, type);
-			return DeviceIoControl(driverDevice, IOCTL_DISABLE_PATCHGUARD_EFI, NULL, 0, NULL, 0, NULL, NULL);
-		}
-		else if (type == 1) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\", parameters: [type=%d]", IOCTL_DISABLE_PATCHGUARD_BIOS, __WFUNCTION__, type);
-			return DeviceIoControl(driverDevice, IOCTL_DISABLE_PATCHGUARD_BIOS, NULL, 0, NULL, 0, NULL, NULL);
-		}
-		else if (type == 2) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\", parameters: [type=%d]", IOCTL_DISABLE_PATCHGUARD_DYNAMIC, __WFUNCTION__, type);
-			return DeviceIoControl(driverDevice, IOCTL_DISABLE_PATCHGUARD_DYNAMIC, NULL, 0, NULL, 0, NULL, NULL);
-		}
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
 		return FALSE;
 	}
 
+	BOOL KernelInstance::DisableLoadDriver() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::EnableUnloadDriver() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::DisableUnloadDriver() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::EnableModifyRegistry() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::DisableModifyRegistry() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::ProtectDisk() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::UnprotectDisk() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::EnableObCallback() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::DisableObCallback() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::EnableDSE() noexcept {
+		BOOLEAN state = TRUE;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::DSEState, &state, 0);
+		QueryError();
+		return result;
+	}
+
+	BOOL KernelInstance::DisableDSE() noexcept {
+		BOOLEAN state = FALSE;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::DSEState, &state, 0);
+		QueryError();
+		return result;
+	}
+
+	BOOL KernelInstance::EnableCmpCallback() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::DisableCmpCallback() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::EnableLKD() noexcept {
+		BOOL result = SiSetSystemInformation(SystemSetInformation::LKDState, NULL, 0);
+		QueryError();
+		return result;
+	}
+
+	BOOL KernelInstance::DisableLKD() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::EnableEPTScan() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::DisableEPTScan() noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
+	}
+
+	BOOL KernelInstance::DisablePatchGuard(int type) noexcept {
+		BOOL result = SiSetSystemInformation(SystemSetInformation::DisablePatchGuard, NULL, type);
+		QueryError();
+		return result;
+	}
+
 	BOOL KernelInstance::Shutdown() {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_SHUTDOWN, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_SHUTDOWN, NULL, 0, NULL, 0, NULL, NULL);
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
 	}
 
 	BOOL KernelInstance::Reboot() {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_REBOOT, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_REBOOT, NULL, 0, NULL, 0, NULL, NULL);
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
 	}
 
 	BOOL KernelInstance::RebootForce() {
-		if (!GetDriverDevice()) return FALSE;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_FORCE_REBOOT, __WFUNCTION__.c_str());
-		return DeviceIoControl(driverDevice, IOCTL_FORCE_REBOOT, NULL, 0, NULL, 0, NULL, NULL);
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
 	}
 
 	BOOL KernelInstance::BlueScreen(int color) {
-		if (!GetDriverDevice()) return FALSE;
-
-		if (color == -1) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\", parameters: [color=-1]", IOCTL_BLUESCREEN, __WFUNCTION__.c_str());
-			return DeviceIoControl(driverDevice, IOCTL_BLUESCREEN, NULL, 0, NULL, 0, NULL, NULL);
-		}
-		else {
-			struct INPUT {
-				ULONG color;
-			};
-			INPUT input = { color };
-
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\", parameters: [color=%d]", IOCTL_CRASH_SYSTEM_SET_COLOR, __WFUNCTION__, color);
-			return DeviceIoControl(driverDevice, IOCTL_CRASH_SYSTEM_SET_COLOR, &input, sizeof(input), NULL, 0, NULL, NULL);
-		}
+		ULONG colorValue = (color == -1) ? 0 : (ULONG)color;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::TriggerBugCheck, &colorValue, (color == -1) ? 0 : 1);
+		QueryError();
+		return result;
 	}
 
 	static NtQueryDirectoryObject_t NtQueryDirectoryObject = nullptr;
@@ -1047,7 +1003,7 @@ namespace winrt::StarlightGUI::implementation {
 	static NtOpenIoCompletion_t NtOpenIoCompletion = nullptr;
 	static NtOpenPartition_t NtOpenPartition = nullptr;
 
-	BOOL KernelInstance::EnumObjectsByDirectory(std::wstring objectPath, std::vector<winrt::StarlightGUI::ObjectEntry>& objectList) noexcept {
+	BOOL KernelInstance::SiEnumObjectsByDirectory(std::wstring objectPath, std::vector<winrt::StarlightGUI::ObjectEntry>& objectList) noexcept {
 		if (!NtQueryDirectoryObject || !NtQuerySymbolicLinkObject || !NtQueryEvent || !NtQueryMutant || !NtQuerySemaphore || !NtQuerySection || !NtQueryTimer || !NtQueryIoCompletion
 			|| !NtOpenDirectoryObject || !NtOpenSymbolicLinkObject || !NtOpenEvent || !NtOpenMutant || !NtOpenSemaphore || !NtOpenSection || !NtOpenTimer || !NtOpenFile
 			|| !NtOpenSession || !NtOpenCpuPartition || !NtOpenJobObject || !NtOpenIoCompletion || !NtOpenPartition) {
@@ -1094,7 +1050,6 @@ namespace winrt::StarlightGUI::implementation {
 			return FALSE;
 		}
 
-		// 枚举对象
 		ULONG context = 0;
 		ULONG returnLength = 0;
 		std::vector<BYTE> buffer(4096);
@@ -1116,7 +1071,6 @@ namespace winrt::StarlightGUI::implementation {
 				entry.Type(type);
 				entry.Path(FixBackSplash(path));
 
-				// 只获取符号链接的详细信息，其他类型获取详细信息会很慢
 				if (type == L"SymbolicLink") {
 					KernelInstance::GetObjectDetails(name, type, entry);
 				}
@@ -1296,871 +1250,68 @@ namespace winrt::StarlightGUI::implementation {
 		return NT_SUCCESS(status);
 	}
 
-	BOOL KernelInstance::RemoveNotify(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		struct INPUT {
-			PVOID Address;
-			PVOID Handle;
-			ULONG Type;
-		};
-
-		INPUT input = { 0 };
-		input.Address = (PVOID)entry.ULongLong1();
-		input.Handle = (PVOID)entry.ULongLong2();
+		BOOL KernelInstance::RemoveNotify(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+		SI_REMOVE_CALLBACK input = { 0 };
 		input.Type = entry.ULong1();
+		input.Address = (PVOID)entry.ULongLong1();
+		input.Address2 = (PVOID)entry.ULongLong2();
 
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_REMOVE_NOTIFY, __WFUNCTION__.c_str());
-
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_REMOVE_NOTIFY, &input, sizeof(INPUT), 0, 0, 0, NULL);
-
-		return status;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::RemoveCallback, &input, 0);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::RemoveMiniFilter(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		struct INPUT {
-			PVOID Address;
-		};
-
-		INPUT input = { 0 };
+		BOOL KernelInstance::RemoveMiniFilter(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+		SI_REMOVE_CALLBACK input = { 0 };
 		input.Address = (PVOID)entry.ULongLong1();
 
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_REMOVE_MINIFILTER2, __WFUNCTION__.c_str());
-
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_REMOVE_MINIFILTER2, &input, sizeof(INPUT), 0, 0, 0, NULL);
-
-		return status;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::RemoveCallback, &input, 1);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::RemoveStandardFilter(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-		struct INPUT {
-			ULONG64 TargetDriverObject;
-			ULONG64 DeviceObject;
-		};
-
-		INPUT input = { 0 };
-		input.DeviceObject = entry.ULongLong1();
-		input.TargetDriverObject = entry.ULongLong2();
-
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_REMOVE_MINIFILTER2, __WFUNCTION__.c_str());
-
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_REMOVE_MINIFILTER2, &input, sizeof(INPUT), 0, 0, 0, NULL);
-
-		return status;
+		BOOL KernelInstance::RemoveStandardFilter(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented.";
+		return FALSE;
 	}
 
-	BOOL KernelInstance::UnhookSSDT(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		BOOL status = FALSE;
-
-		if (entry.Bool1()) {
-			struct INPUT {
-				ULONG Index;
-			};
-			INPUT input = { entry.ULong1() };
-
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_UNHOOK_SSDT_INLINEHOOK, __WFUNCTION__.c_str());
-
-			status = DeviceIoControl(driverDevice, IOCTL_UNHOOK_SSDT_INLINEHOOK, &input, sizeof(INPUT), 0, 0, 0, NULL);
-		}
-		else {
-			struct INPUT {
-				PVOID OriginalAddress;
-				ULONG Index;
-			};
-
-			INPUT input = { (PVOID)entry.ULongLong2(), entry.ULong1() };
-
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_REMOVE_SSDTHOOK, __WFUNCTION__.c_str());
-
-			status = DeviceIoControl(driverDevice, IOCTL_REMOVE_SSDTHOOK, &input, sizeof(INPUT), 0, 0, 0, NULL);
-		}
-
-		return status;
+		BOOL KernelInstance::UnhookSSDT(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented.";
+		return FALSE;
 	}
 
-	BOOL KernelInstance::UnhookSSSDT(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG Index;
-			ULONG64 OriginalAddress;
-			ULONG IsInlineHook;
-		};
-		INPUT input = { entry.ULong1(), entry.ULongLong2(), entry.Bool1() ? 1 : 0 };
-
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_UNHOOK_SSSDT, __WFUNCTION__.c_str());
-
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_UNHOOK_SSSDT, &input, sizeof(INPUT), 0, 0, 0, NULL);
-
-		return status;
+		BOOL KernelInstance::UnhookSSSDT(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented.";
+		return FALSE;
 	}
 
-	BOOL KernelInstance::RemoveExCallback(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		if (!GetDriverDevice()) return FALSE;
+		BOOL KernelInstance::RemoveExCallback(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+		SI_REMOVE_CALLBACK input = { 0 };
+		input.Address = (PVOID)entry.ULongLong3();
 
-		struct INPUT {
-			PVOID Address;
-		};
-		INPUT input = { (PVOID)entry.ULongLong3() };
-
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_REMOVE_EXCALLBACK, __WFUNCTION__.c_str());
-
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_REMOVE_EXCALLBACK, &input, sizeof(INPUT), 0, 0, 0, NULL);
-
-		return status;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::RemoveCallback, &input, 2);
+		QueryError();
+		return result;
 	}
 
-	BOOL KernelInstance::RemovePiDDBCache(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG Time;
-		};
-		INPUT input = { entry.ULong2() };
-
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_REMOVE_PIDDBCACHE, __WFUNCTION__.c_str());
-
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_REMOVE_PIDDBCACHE, &input, sizeof(INPUT), 0, 0, 0, NULL);
-
-		return status;
-	}
-
-	BOOL KernelInstance::EnumNotifies(std::vector<winrt::StarlightGUI::GeneralEntry>& callbackList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID pBuffer;
-		};
-
-		BOOL bRet = FALSE;
-		ULONG nRet = 0;
-		PDATA_INFO pProcessInfo = NULL;
-
-		// 定义所有回调类型
-		const struct {
-			DWORD id;
-			DWORD ioctl;
-			const wchar_t* type;
-		} callbackTypes[] = {
-			{ 0, IOCTL_ENUM_CREATE_PROCESS_NOTIFY, L"CreateProcess" },
-			{ 1, IOCTL_ENUM_CREATE_THREAD_NOTIFY, L"CreateThread" },
-			{ 3, IOCTL_ENUM_LOADIMAGE_NOTIFY, L"LoadImage" },
-			{ 2, IOCTL_ENUM_REGISTRY_CALLBACK, L"Registry" },
-			{ 4, IOCTL_ENUM_BUGCHECK_CALLBACK, L"BugCheck" },
-			{ 5, IOCTL_ENUM_BUGCHECKREASON_CALLBACK, L"BugCheckReason" },
-			{ 6, IOCTL_ENUM_SHUTDOWN_NOTIFY, L"Shutdown" },
-			{ 7, IOCTL_ENUM_LASTSHUTDOWN_NOTIFY, L"LastChanceShutdown" },
-			{ 8, IOCTL_ENUM_FS_NOTIFY, L"FileSystemNotify" },
-			{ 11, IOCTL_ENUM_PRIORIRY_NOTIFY, L"PriorityCallback" },
-			{ 15, IOCTL_ENUM_PLUGPLAY_NOTIFY, L"PlugPlay" },
-			{ 10, IOCTL_ENUM_COALESCING_NOTIFY, L"CoalescingCallback" },
-			{ 12, IOCTL_ENUM_DBGPRINT_CALLBACK, L"DbgPrint" },
-			{ 16, IOCTL_ENUM_EMP_CALLBACK, L"EmpCallback" },
-			{ 14, IOCTL_ENUM_NMI_CALLBACK, L"NmiCallback" }
-		};
-
-		// 处理常规回调
-		for (const auto& cbType : callbackTypes) {
-			INPUT inputs = { 0 };
-			inputs.nSize = sizeof(DATA_INFO) * 1000;
-			inputs.pBuffer = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputs.nSize);
-
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", cbType.ioctl, __WFUNCTION__.c_str());
-			BOOL status = DeviceIoControl(driverDevice, cbType.ioctl, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-			if (nRet > 1000) nRet = 1000;
-
-			if (status && nRet > 0 && inputs.pBuffer) {
-				pProcessInfo = (PDATA_INFO)inputs.pBuffer;
-				for (ULONG i = 0; i < nRet; i++) {
-					DATA_INFO data = pProcessInfo[i];
-					auto callback = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-					callback.String1(to_hstring(data.Module));
-					callback.String2(cbType.type);
-					callback.String3(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-					callback.ULongLong1((ULONG64)data.pvoidaddressdata1);
-					callback.String4(ULongToHexString((ULONG64)data.pvoidaddressdata2));
-					callback.ULongLong2((ULONG64)data.pvoidaddressdata2);
-					callback.ULong1(cbType.id);
-					callbackList.push_back(callback);
-				}
-			}
-
-			bRet = HeapFree(GetProcessHeap(), 0, inputs.pBuffer);
-		}
-
-		// 处理 ObCallback - PsProcessType
-		{
-			INPUT inputs = { 0 };
-			inputs.nSize = sizeof(DATA_INFO) * 1000;
-			inputs.pBuffer = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputs.nSize);
-
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_OB_PROCESS_CALLBACK, __WFUNCTION__.c_str());
-			BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_OB_PROCESS_CALLBACK, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-			if (nRet > 1000) nRet = 1000;
-
-			if (status && nRet > 0 && inputs.pBuffer) {
-				pProcessInfo = (PDATA_INFO)inputs.pBuffer;
-				for (ULONG i = 0; i < nRet; i++) {
-					DATA_INFO data = pProcessInfo[i];
-					if (data.pvoidaddressdata1 != NULL) {
-						auto callback = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-						callback.String1(to_hstring(data.Module));
-						callback.String2(L"ObCallback-PsProcessType");
-						callback.String3(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-						callback.ULongLong1((ULONG64)data.pvoidaddressdata1);
-						callback.String4(ULongToHexString((ULONG64)data.pvoidaddressdata2));
-						callback.ULongLong2((ULONG64)data.pvoidaddressdata2);
-						callback.ULong1(13);
-						callbackList.push_back(callback);
-					}
-				}
-			}
-
-			bRet = HeapFree(GetProcessHeap(), 0, inputs.pBuffer);
-		}
-
-		// 处理 ObCallback - PsThreadType
-		{
-			INPUT inputs = { 0 };
-			inputs.nSize = sizeof(DATA_INFO) * 1000;
-			inputs.pBuffer = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputs.nSize);
-
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_OB_THREAD_CALLBACK, __WFUNCTION__.c_str());
-			BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_OB_THREAD_CALLBACK, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-			if (nRet > 1000) nRet = 1000;
-
-			if (status && nRet > 0 && inputs.pBuffer) {
-				pProcessInfo = (PDATA_INFO)inputs.pBuffer;
-				for (ULONG i = 0; i < nRet; i++) {
-					DATA_INFO data = pProcessInfo[i];
-					if (data.pvoidaddressdata1 != NULL) {
-						auto callback = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-						callback.String1(to_hstring(data.Module));
-						callback.String2(L"ObCallback-PsThreadType");
-						callback.String3(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-						callback.ULongLong1((ULONG64)data.pvoidaddressdata1);
-						callback.String4(ULongToHexString((ULONG64)data.pvoidaddressdata2));
-						callback.ULongLong2((ULONG64)data.pvoidaddressdata2);
-						callback.ULong1(13);
-						callbackList.push_back(callback);
-					}
-				}
-			}
-
-			bRet = HeapFree(GetProcessHeap(), 0, inputs.pBuffer);
-		}
-
-		// 处理 ObCallback - Desktop
-		{
-			INPUT inputs = { 0 };
-			inputs.nSize = sizeof(DATA_INFO) * 1000;
-			inputs.pBuffer = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, inputs.nSize);
-
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_OB_THREAD_CALLBACK, __WFUNCTION__.c_str());
-			BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_OB_THREAD_CALLBACK, &inputs, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-			if (nRet > 1000) nRet = 1000;
-
-			if (status && nRet > 0 && inputs.pBuffer) {
-				pProcessInfo = (PDATA_INFO)inputs.pBuffer;
-				for (ULONG i = 0; i < nRet; i++) {
-					DATA_INFO data = pProcessInfo[i];
-					if (data.pvoidaddressdata1 != NULL) {
-						auto callback = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-						callback.String1(to_hstring(data.Module));
-						callback.String2(L"ObCallback-Desktop");
-						callback.String3(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-						callback.ULongLong1((ULONG64)data.pvoidaddressdata1);
-						callback.String4(ULongToHexString((ULONG64)data.pvoidaddressdata2));
-						callback.ULongLong2((ULONG64)data.pvoidaddressdata2);
-						callback.ULong1(13);
-						callbackList.push_back(callback);
-					}
-				}
-			}
-
-			bRet = HeapFree(GetProcessHeap(), 0, inputs.pBuffer);
-		}
-
-		return TRUE;
-	}
-
-	BOOL KernelInstance::EnumMiniFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& filterList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 1000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_MINIFILTER, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_MINIFILTER, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(data.Module));
-				entry.String2(to_hstring(GetMiniFilterMajorFunction(data.ulongdata1)));
-				entry.String3(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-				entry.String4(ULongToHexString((ULONG64)data.pvoidaddressdata2));
-				entry.String5(ULongToHexString((ULONG64)data.pvoidaddressdata3));
-				entry.ULongLong1((ULONG64)data.pvoidaddressdata1);
-				entry.ULongLong2((ULONG64)data.pvoidaddressdata2);
-				entry.ULongLong3((ULONG64)data.pvoidaddressdata3);
-				filterList.push_back(entry);
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumStandardFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& filterList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 1000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_STANDARD_FILTER, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_STANDARD_FILTER, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				if (pProcessInfo[i].ulongdata1 == ft_Unknown)
-				{
-					entry.String1(L"Unknown");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_File)
-				{
-					entry.String1(L"File");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_Disk)
-				{
-					entry.String1(L"Disk");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_Volume)
-				{
-					entry.String1(L"Volume");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_Keyboard)
-				{
-					entry.String1(L"Keyboard");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_Mouse)
-				{
-					entry.String1(L"Mouse");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_I8042prt)
-				{
-					entry.String1(L"I8042prt");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_Tcpip)
-				{
-					entry.String1(L"Tcpip");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_Ndis)
-				{
-					entry.String1(L"Ndis");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_PnpManager)
-				{
-					entry.String1(L"PnpManager");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_Tdx)
-				{
-					entry.String1(L"Tdx");
-				}
-				else if (pProcessInfo[i].ulongdata1 == ft_Raw)
-				{
-					entry.String1(L"Raw (ntoskrnl)");
-				}
-				entry.String2(to_hstring(data.wcstr) + L" -> " + to_hstring(data.wcstr1));
-				entry.String3(data.wcstr2);
-				entry.String4(ULongToHexString(data.ulong64data1));
-				entry.String5(ULongToHexString(data.ulong64data2));
-				entry.ULongLong1(data.ulong64data1);
-				entry.ULongLong2(data.ulong64data2);
-				entry.ULong1(data.ulongdata1);
-
-				filterList.push_back(entry);
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& ssdtList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 1000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_SSDT, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_SSDT, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				if (data.pvoidaddressdata1 != NULL) {
-					auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-					entry.String1(to_hstring(data.Module));
-					entry.String2(to_hstring(data.Module1));
-					entry.String3(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-					entry.String4(ULongToHexString((ULONG64)data.pvoidaddressdata2));
-
-					std::wstring hookType = L"-";
-					if (data.pvoidaddressdata2 != NULL) {
-						if (data.pvoidaddressdata1 != data.pvoidaddressdata2) {
-							hookType = L"SSDT Hook";
-						}
-						else if (data.ulongdata2 == TRUE) {
-							hookType = L"Inline Hook";
-						}
-						else if (data.ulongdata4 == TRUE) {
-							hookType = L"EPT/NPT Hook";
-						}
-					}
-					else {
-						hookType = L"Unknown";
-					}
-
-					entry.String5(hookType);
-					entry.ULongLong1((ULONG64)data.pvoidaddressdata1);
-					entry.ULongLong2((ULONG64)data.pvoidaddressdata2);
-					entry.ULong1(data.ulongdata1);
-					entry.Bool1(data.ulongdata2 == TRUE);
-					ssdtList.push_back(entry);
-				}
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumSSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& sssdtList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 3000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_SSSDT, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_SSSDT, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 3000) nRet = 3000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				if (data.pvoidaddressdata1 != NULL) {
-					auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-					entry.String1(to_hstring(data.Module1));
-					entry.String2(to_hstring(data.Module));
-					entry.String3(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-					entry.String4(ULongToHexString((ULONG64)data.pvoidaddressdata2));
-
-					std::wstring hookType = L"-";
-					if (data.pvoidaddressdata2 == NULL) {
-						hookType = L"Unknown";
-					}
-					else if (data.ulongdata2 == TRUE) {
-						hookType = L"Inline Hook";
-					}
-					else if (data.pvoidaddressdata1 != data.pvoidaddressdata2) {
-						hookType = L"SSSDT Hook";
-					}
-
-					entry.String5(hookType);
-					entry.ULongLong1((ULONG64)data.pvoidaddressdata1);
-					entry.ULongLong2((ULONG64)data.pvoidaddressdata2);
-					entry.ULong1(data.ulongdata1);
-					entry.Bool1(data.ulongdata2 == TRUE);
-					sssdtList.push_back(entry);
-				}
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumIoTimer(std::vector<winrt::StarlightGUI::GeneralEntry>& timerList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 1000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_IO_TIMER, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_IO_TIMER, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(data.Module));
-				entry.String2(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-				entry.String3(ULongToHexString((ULONG64)data.pvoidaddressdata2));
-				entry.ULongLong1((ULONG64)data.pvoidaddressdata1);
-				entry.ULongLong2((ULONG64)data.pvoidaddressdata2);
-				timerList.push_back(entry);
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumExCallback(std::vector<winrt::StarlightGUI::GeneralEntry>& callbackList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 1000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_EXCALLBACK, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_EXCALLBACK, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(data.Module));
-				entry.String2(to_hstring(data.Module1));
-				entry.String3(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-				entry.String4(ULongToHexString((ULONG64)data.pvoidaddressdata2));
-				entry.String5(ULongToHexString((ULONG64)data.pvoidaddressdata3));
-				entry.ULongLong1((ULONG64)data.pvoidaddressdata1);
-				entry.ULongLong2((ULONG64)data.pvoidaddressdata2);
-				entry.ULongLong3((ULONG64)data.pvoidaddressdata3);
-				callbackList.push_back(entry);
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumIDT(std::vector<winrt::StarlightGUI::GeneralEntry>& idtList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 1000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_IDT, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_IDT, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(data.Module));
-				entry.String2(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-				entry.ULongLong1((ULONG64)data.pvoidaddressdata1);
-				entry.ULong1(data.ulongdata1);
-				entry.ULong2(data.ulongdata2);
-				idtList.push_back(entry);
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumGDT(std::vector<winrt::StarlightGUI::GeneralEntry>& gdtList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 1000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_GDT, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_GDT, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(data.Module));
-				entry.String2(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-				entry.String3(ULongToHexString((ULONG64)data.pvoidaddressdata2));
-				entry.ULongLong1((ULONG64)data.pvoidaddressdata1);
-				entry.ULongLong2((ULONG64)data.pvoidaddressdata2);
-				entry.ULong1(data.ulongdata1);
-				entry.ULong2(data.ulongdata2);
-				entry.ULong3(data.ulongdata3);
-				gdtList.push_back(entry);
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumPiDDBCacheTable(std::vector<winrt::StarlightGUI::GeneralEntry>& piddbList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 1000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_PIDDBCACHE_TABLE, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_PIDDBCACHE_TABLE, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(data.Module));
-				entry.ULong1(data.ulongdata1);
-				entry.ULong2(data.ulongdata2);
-				piddbList.push_back(entry);
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumHalDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 1000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_HALDISPATCHTABLE, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_HALDISPATCHTABLE, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(data.Module));
-				entry.String2(to_hstring(data.Module1));
-				entry.String3(ULongToHexString((ULONG64)data.pvoidaddressdata1));
-				entry.ULongLong1((ULONG64)data.pvoidaddressdata1);
-				halList.push_back(entry);
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::EnumHalPrivateDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halPrivateList) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		struct INPUT {
-			ULONG_PTR nSize;
-			PVOID MiniFilterInfo;
-		};
-
-		BOOL bRet = FALSE;
-		INPUT input = { 0 };
-		PDATA_INFO pProcessInfo = NULL;
-
-		input.nSize = sizeof(DATA_INFO) * 1000;
-		input.MiniFilterInfo = (PVOID)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, input.nSize);
-
-		ULONG nRet = 0;
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_ENUM_HALPRIVATEDISPATCHTABLE, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_ENUM_HALPRIVATEDISPATCHTABLE, &input, sizeof(INPUT), &nRet, sizeof(ULONG), 0, NULL);
-
-		if (nRet > 1000) nRet = 1000;
-
-		if (status && nRet > 0 && input.MiniFilterInfo) {
-			pProcessInfo = (PDATA_INFO)input.MiniFilterInfo;
-			for (ULONG i = 0; i < nRet; i++) {
-				DATA_INFO data = pProcessInfo[i];
-				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(data.Module));
-				entry.String2(to_hstring(data.Module1));
-				entry.String3(ULongToHexString(data.ulong64data1));
-				entry.ULongLong1(data.ulong64data1);
-				halPrivateList.push_back(entry);
-			}
-		}
-
-		bRet = HeapFree(GetProcessHeap(), 0, input.MiniFilterInfo);
-		return status && bRet;
-	}
-
-	BOOL KernelInstance::DeuteriumInvoke(DEUTERIUM_PROXY_INVOKE& function) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_AX_DEUTERIUM_INVOKE, __WFUNCTION__.c_str());
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_AX_DEUTERIUM_INVOKE, &function, sizeof(DEUTERIUM_PROXY_INVOKE), &function, sizeof(DEUTERIUM_PROXY_INVOKE), 0, NULL);
-
-		return status;
-	}
-
-	BOOL KernelInstance::DeuteriumAlloc(DEUTERIUM_PROXY_ALLOCATE& function, bool map) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		BOOL status = FALSE;
-		if (map) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_AX_DEUTERIUM_ALLOCATE_MODERN, __WFUNCTION__.c_str());
-			status = DeviceIoControl(driverDevice, IOCTL_AX_DEUTERIUM_ALLOCATE_MODERN, &function, sizeof(DEUTERIUM_PROXY_ALLOCATE), &function, sizeof(DEUTERIUM_PROXY_ALLOCATE), 0, NULL);
-		}
-		else {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_AX_DEUTERIUM_ALLOCATE, __WFUNCTION__.c_str());
-			status = DeviceIoControl(driverDevice, IOCTL_AX_DEUTERIUM_ALLOCATE, &function, sizeof(DEUTERIUM_PROXY_ALLOCATE), &function, sizeof(DEUTERIUM_PROXY_ALLOCATE), 0, NULL);
-		}
-
-		return status;
-	}
-
-	BOOL KernelInstance::DeuteriumFree(DEUTERIUM_PROXY_FREE& function, bool map) noexcept {
-		if (!GetDriverDevice()) return FALSE;
-
-		BOOL status = FALSE;
-		if (map) {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_AX_DEUTERIUM_FREE_MODERN, __WFUNCTION__.c_str());
-			status = DeviceIoControl(driverDevice, IOCTL_AX_DEUTERIUM_FREE_MODERN, &function, sizeof(DEUTERIUM_PROXY_FREE), &function, sizeof(DEUTERIUM_PROXY_FREE), 0, NULL);
-		}
-		else {
-			LOG_WARNING(L"KernelInstance", L"Calling 0x%x from \"%s\"", IOCTL_AX_DEUTERIUM_FREE, __WFUNCTION__.c_str());
-			status = DeviceIoControl(driverDevice, IOCTL_AX_DEUTERIUM_FREE, &function, sizeof(DEUTERIUM_PROXY_FREE), &function, sizeof(DEUTERIUM_PROXY_FREE), 0, NULL);
-		}
-
-		return status;
+		BOOL KernelInstance::RemovePiDDBCache(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+		SI_REMOVE_PIDDB_CACHE input = { 0 };
+		wcsncpy_s(input.Name, entry.String1().c_str(), _TRUNCATE);
+		input.Timestamp = entry.ULong2();
+
+		BOOL result = SiSetSystemInformation(SystemSetInformation::RemoveFromPiDDBCacheTable, &input, 0);
+		QueryError();
+		return result;
 	}
 
 	BOOL KernelInstance::ReadMemory(std::vector<BYTE>& data, PVOID address, ULONG size) noexcept {
-		if (!GetDriverDevice()) return FALSE;
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented.";
+		return FALSE;
+		/*if (!GetDriverDevice()) return FALSE;
 
 		struct CHECK_INPUT
 		{
@@ -2191,11 +1342,14 @@ namespace winrt::StarlightGUI::implementation {
 		}
 		delete[] read_input.Data;
 
-		return status && !data.empty();
+		return status && !data.empty(); */
 	}
 
 	BOOL KernelInstance::WriteMemory(PVOID address, PVOID data, ULONG size) noexcept {
-		if (!GetDriverDevice()) return FALSE;
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented.";
+		return FALSE;
+		/*if (!GetDriverDevice()) return FALSE;
 
 		struct INPUT
 		{
@@ -2210,7 +1364,7 @@ namespace winrt::StarlightGUI::implementation {
 
 		BOOL status = DeviceIoControl(driverDevice, IOCTL_WRITE_MEMORY, &input, sizeof(INPUT), 0, 0, 0, NULL);
 
-		return status;
+		return status; */
 	}
 
 	// =================================
@@ -2222,9 +1376,9 @@ namespace winrt::StarlightGUI::implementation {
 	*/
 	BOOL KernelInstance::GetDriverDevice() noexcept {
 		if (driverDevice != NULL) return TRUE;
-		if (!DriverUtils::LoadKernelDriver(kernelPath.c_str())) return FALSE;
+		if (!DriverUtils::LoadKernelDriver(siriusPath.c_str())) return FALSE;
 
-		HANDLE device = CreateFile(L"\\\\.\\ArkDrv64", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+		HANDLE device = CreateFile(L"\\\\.\\Sirius", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
 		if (device == INVALID_HANDLE_VALUE) return FALSE;
 
@@ -2232,16 +1386,94 @@ namespace winrt::StarlightGUI::implementation {
 		return TRUE;
 	}
 
-	BOOL KernelInstance::GetDriverDevice2() noexcept {
-		if (driverDevice2 != NULL) return TRUE;
-		if (!DriverUtils::LoadKernelDriver(astralPath.c_str())) return FALSE;
+	BOOL KernelInstance::SiSetProcessInformation(ProcessSetInformation processInformation, ULONG pid, PVOID buffer, ULONG argument) noexcept {
+		if (!GetDriverDevice()) return FALSE;
 
-		HANDLE device = CreateFile(L"\\\\.\\AstralX", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+		SI_PROCESS_INFORMATION request = { (ULONG)processInformation, pid, buffer, argument };
+		BOOL status = DeviceIoControl(driverDevice, IOCTL_SIRIUS_SET_PROCESS_INFORMATION, &request, sizeof(SI_PROCESS_INFORMATION), 0, 0, 0, NULL);
 
-		if (device == INVALID_HANDLE_VALUE) return FALSE;
+		return status;
+	}
 
-		driverDevice2 = device;
-		return TRUE;
+	BOOL KernelInstance::SiQueryProcessInformation(ProcessGetInformation processInformation, ULONG pid, PVOID buffer, ULONG argument) noexcept {
+		if (!GetDriverDevice()) return FALSE;
+
+		SI_PROCESS_INFORMATION request = { (ULONG)processInformation, pid, buffer, argument };
+		BOOL status = DeviceIoControl(driverDevice, IOCTL_SIRIUS_QUERY_PROCESS_INFORMATION, &request, sizeof(SI_PROCESS_INFORMATION), &request, sizeof(SI_PROCESS_INFORMATION), 0, NULL);
+
+		return status;
+	}
+
+	BOOL KernelInstance::SiSetThreadInformation(ThreadSetInformation threadInformation, ULONG tid, PVOID buffer, ULONG argument) noexcept {
+		if (!GetDriverDevice()) return FALSE;
+
+		SI_THREAD_INFORMATION request = { (ULONG)threadInformation, tid, buffer, argument };
+		BOOL status = DeviceIoControl(driverDevice, IOCTL_SIRIUS_SET_THREAD_INFORMATION, &request, sizeof(SI_THREAD_INFORMATION), 0, 0, 0, NULL);
+
+		return status;
+	}
+
+	BOOL KernelInstance::SiQueryThreadInformation(ThreadGetInformation threadInformation, ULONG tid, PVOID buffer, ULONG argument) noexcept {
+		if (!GetDriverDevice()) return FALSE;
+
+		SI_THREAD_INFORMATION request = { (ULONG)threadInformation, tid, buffer, argument };
+		BOOL status = DeviceIoControl(driverDevice, IOCTL_SIRIUS_QUERY_THREAD_INFORMATION, &request, sizeof(SI_THREAD_INFORMATION), &request, sizeof(SI_THREAD_INFORMATION), 0, NULL);
+
+		return status;
+	}
+
+	BOOL KernelInstance::SiSetFileInformation(FileSetInformation fileInformation, LPCWSTR filePath, PVOID buffer, ULONG argument) noexcept {
+		if (!GetDriverDevice()) return FALSE;
+
+		SI_FILE_INFORMATION request = { 0 };
+		request.FileInformation = (ULONG)fileInformation;
+		wcsncpy_s(request.File, filePath, _TRUNCATE);
+		request.Buffer = buffer;
+		request.Argument = argument;
+
+		BOOL status = DeviceIoControl(driverDevice, IOCTL_SIRIUS_SET_FILE_INFORMATION, &request, sizeof(SI_FILE_INFORMATION), 0, 0, 0, NULL);
+
+		return status;
+	}
+
+	BOOL KernelInstance::SiQueryFileInformation(FileGetInformation fileInformation, LPCWSTR filePath, PVOID buffer, ULONG argument) noexcept {
+		if (!GetDriverDevice()) return FALSE;
+
+		SI_FILE_INFORMATION request = { 0 };
+		request.FileInformation = (ULONG)fileInformation;
+		wcsncpy_s(request.File, filePath, _TRUNCATE);
+		request.Buffer = buffer;
+		request.Argument = argument;
+
+		BOOL status = DeviceIoControl(driverDevice, IOCTL_SIRIUS_QUERY_FILE_INFORMATION, &request, sizeof(SI_FILE_INFORMATION), &request, sizeof(SI_FILE_INFORMATION), 0, NULL);
+
+		return status;
+	}
+
+	BOOL KernelInstance::SiSetSystemInformation(SystemSetInformation systemInformation, PVOID buffer, ULONG argument) noexcept {
+		if (!GetDriverDevice()) return FALSE;
+
+		SI_SYSTEM_INFORMATION request = { 0 };
+		request.SystemInformation = (ULONG)systemInformation;
+		request.Buffer = buffer;
+		request.Argument = argument;
+
+		BOOL status = DeviceIoControl(driverDevice, IOCTL_SIRIUS_SET_SYSTEM_INFORMATION, &request, sizeof(SI_SYSTEM_INFORMATION), 0, 0, 0, NULL);
+
+		return status;
+	}
+
+	BOOL KernelInstance::SiQuerySystemInformation(SystemGetInformation systemInformation, PVOID buffer, ULONG argument) noexcept {
+		if (!GetDriverDevice()) return FALSE;
+
+		SI_SYSTEM_INFORMATION request = { 0 };
+		request.SystemInformation = (ULONG)systemInformation;
+		request.Buffer = buffer;
+		request.Argument = argument;
+
+		BOOL status = DeviceIoControl(driverDevice, IOCTL_SIRIUS_QUERY_SYSTEM_INFORMATION, &request, sizeof(SI_SYSTEM_INFORMATION), &request, sizeof(SI_SYSTEM_INFORMATION), 0, NULL);
+
+		return status;
 	}
 
 	std::string KernelInstance::GetMiniFilterMajorFunction(ULONG64 Index) noexcept

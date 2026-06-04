@@ -40,6 +40,8 @@
   "Msg.Failed": "Failed to complete operation, error code: %d",
   "Msg.FailedWithArg": "Failed to %s, error code: %d",
   "Msg.FailedWithArgNoError": "Failed to %s%s!",
+  "Msg.DriverError.Code": "Operation failed, error code: %s",
+  "Msg.DriverError.Detail": "Operation failed, error message: %s",
   "Msg.CopyToClipboard.Success": "Successfully copied to clipboard!",
   "Msg.CopyToClipboard.Failed": "Failed to copy to clipboard!",
   "Msg.ShowDialog.Success": "Dialog displayed successfully!",

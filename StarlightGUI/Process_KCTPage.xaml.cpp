@@ -114,11 +114,6 @@ namespace winrt::StarlightGUI::implementation
     winrt::Windows::Foundation::IAsyncAction Process_KCTPage::LoadKCTList()
     {
         if (!processForInfoWindow) co_return;
-        // 跳过内核进程，获取可能导致异常或蓝屏
-        if (processForInfoWindow.Name() == L"Idle" || processForInfoWindow.Name() == L"System" || processForInfoWindow.Name() == L"Registry" || processForInfoWindow.Name() == L"Memory Compression" || processForInfoWindow.Name() == L"Secure System" || processForInfoWindow.Name() == L"Unknown") {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcKCT.Msg.NoInfo").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
-            co_return;
-        }
 
         LOG_INFO(__WFUNCTION__, L"Loading kernel callback table list... (pid=%d)", processForInfoWindow.Id());
         m_kctList.Clear();
@@ -134,7 +129,7 @@ namespace winrt::StarlightGUI::implementation
         kcts.reserve(500);
 
         // 获取回调表
-        KernelInstance::EnumProcessKernelCallbackTable(processForInfoWindow.EProcessULong(), kcts);
+        KernelInstance::SiEnumProcessKernelCallbackTable(processForInfoWindow.Id(), kcts);
         LOG_INFO(__WFUNCTION__, L"Enumerated kernel callback tables, %d entry(s).", kcts.size());
 
         co_await wil::resume_foreground(DispatcherQueue());

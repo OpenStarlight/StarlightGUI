@@ -44,16 +44,14 @@ namespace winrt::StarlightGUI::implementation
         return ToLowerCase(value);
     }
 
-    static hstring GetDriverErrorMessage()
+    static std::wstring GetDriverErrorMessage()
     {
         auto errorMsg = KernelInstance::GetLastErrorMessage();
         if (errorMsg.empty()) {
             auto errorCode = KernelInstance::GetLastErrorCode();
-            wchar_t hexCode[32];
-            swprintf_s(hexCode, L"0x%X", errorCode);
-            return t(L"Msg.DriverError.Code", hexCode);
+            errorMsg = L"Error code: 0x" + std::to_wstring(errorCode);
         }
-        return t(L"Msg.DriverError.Detail", errorMsg.c_str());
+        return errorMsg;
     }
 
     static std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource> iconCache;
@@ -132,7 +130,9 @@ namespace winrt::StarlightGUI::implementation
                 WaitAndReloadAsync(1000);
             }
             else {
-                slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+                auto errorMsg = KernelInstance::GetLastErrorMessage();
+                if (errorMsg.empty()) errorMsg = std::to_wstring(KernelInstance::GetLastErrorCode());
+                slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), errorMsg, InfoBarSeverity::Error, g_mainWindowInstance);
             }
             co_return;
             });
@@ -144,7 +144,7 @@ namespace winrt::StarlightGUI::implementation
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
-                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             }
             else {
                 safeAcceptedPID = item.Id();
@@ -163,7 +163,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_1.Items().Append(item2_1_sub1);
@@ -172,7 +172,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_1.Items().Append(item2_1_sub2);
@@ -183,7 +183,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
@@ -196,7 +196,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub1);
@@ -205,7 +205,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub2);
@@ -214,7 +214,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub3);
@@ -223,7 +223,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub4);
@@ -232,7 +232,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub5);
@@ -241,7 +241,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub6);
@@ -250,7 +250,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub7);
@@ -259,7 +259,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
         item2_3.Items().Append(item2_3_sub8);
@@ -271,7 +271,7 @@ namespace winrt::StarlightGUI::implementation
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
-                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             }
             else {
                 safeAcceptedPID = item.Id();
@@ -440,7 +440,15 @@ namespace winrt::StarlightGUI::implementation
         processes.reserve(200);
         visibleProcesses.reserve(200);
 
-        KernelInstance::SiEnumProcesses(processes, enum_strengthen);
+        // 对于 Windows 11，我们使用 AstralX 进行枚举
+        // 对于 Windows 10 及以下版本，我们使用 SKT64 进行枚举
+        if (TaskUtils::GetWindowsBuildNumber() >= 22000 && !enum_strengthen) {
+            KernelInstance::EnumProcesses(processes);
+        }
+        else {
+            KernelInstance::EnumProcesses2(processes);
+        }
+
         LOG_INFO(__WFUNCTION__, L"Enumerated processes, %d entry(s).", processes.size());
 
         co_await wil::resume_foreground(DispatcherQueue());
@@ -1218,7 +1226,7 @@ namespace winrt::StarlightGUI::implementation
                     WaitAndReloadAsync(1000);
                 }
                 else {
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
                 }
             }
         }
@@ -1249,8 +1257,16 @@ namespace winrt::StarlightGUI::implementation
                     WaitAndReloadAsync(1000);
                 }
                 else {
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
                 }
+            }
+        }
+        catch (winrt::hresult_error const& ex) {
+            slg::CreateInfoBarAndDisplay(t(L"Common.Error"), (t(L"Msg.ShowDialog.Failed") + ex.message()).c_str(),
+                InfoBarSeverity::Error, g_mainWindowInstance);
+        }
+        co_return;
+    }
             }
         }
         catch (winrt::hresult_error const& ex) {
@@ -1278,7 +1294,7 @@ namespace winrt::StarlightGUI::implementation
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
         }
         co_return;
     }

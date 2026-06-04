@@ -481,7 +481,7 @@ namespace winrt::StarlightGUI::implementation
         // 选项2.2
         auto item2_2 = slg::CreateMenuItem(flyoutStyles, L"\ue733", t(L"File.Menu.DeleteKernel").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
             for (const auto& item : selectedFiles) {
-                if (KernelInstance::_DeleteFileAuto(item.Path().c_str())) {
+                if (KernelInstance::SiDeleteFileAuto(item.Path().c_str())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
@@ -492,7 +492,7 @@ namespace winrt::StarlightGUI::implementation
         // 选项2.3
         auto item2_3 = slg::CreateMenuItem(flyoutStyles, L"\uf5ab", t(L"File.Menu.DeleteMurder").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
             for (const auto& item : selectedFiles) {
-                if (KernelInstance::MurderFileAuto(item.Path().c_str())) {
+                if (KernelInstance::SiDeleteFileEx(item.Path().c_str())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
@@ -503,7 +503,7 @@ namespace winrt::StarlightGUI::implementation
         // 选项2.4
         auto item2_4 = slg::CreateMenuItem(flyoutStyles, L"\ue72e", t(L"File.Menu.Lock").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
             for (const auto& item : selectedFiles) {
-                if (KernelInstance::LockFile(item.Path().c_str())) {
+                if (KernelInstance::SiLockFile(item.Path().c_str())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }

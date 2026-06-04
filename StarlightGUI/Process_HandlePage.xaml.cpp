@@ -106,11 +106,6 @@ namespace winrt::StarlightGUI::implementation
     winrt::Windows::Foundation::IAsyncAction Process_HandlePage::LoadHandleList()
     {
         if (!processForInfoWindow) co_return;
-        // 跳过内核进程，获取可能导致异常或蓝屏
-        if (processForInfoWindow.Name() == L"Idle" || processForInfoWindow.Name() == L"System" || processForInfoWindow.Name() == L"Registry" || processForInfoWindow.Name() == L"Memory Compression" || processForInfoWindow.Name() == L"Secure System" || processForInfoWindow.Name() == L"Unknown") {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcHandle.Msg.NoInfo").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
-            co_return;
-        }
 
         LOG_INFO(__WFUNCTION__, L"Loading handle list... (pid=%d)", processForInfoWindow.Id());
         m_handleList.Clear();
@@ -126,7 +121,7 @@ namespace winrt::StarlightGUI::implementation
         handles.reserve(500);
 
         // 获取句柄列表
-        KernelInstance::EnumProcessHandles(processForInfoWindow.Id(), handles);
+        KernelInstance::SiEnumProcessHandles(processForInfoWindow.Id(), handles);
         LOG_INFO(__WFUNCTION__, L"Enumerated handles, %d entry(s).", handles.size());
 
         co_await wil::resume_foreground(DispatcherQueue());

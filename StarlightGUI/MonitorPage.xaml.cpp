@@ -18,147 +18,17 @@ namespace winrt::StarlightGUI::implementation
 {
 	static std::vector<winrt::StarlightGUI::ObjectEntry> partitions;
 
-    static hstring GetMonitorSuggestionKey(int segmentedIndex, winrt::StarlightGUI::GeneralEntry const& entry)
-    {
-        switch (segmentedIndex) {
-        case 4:
-            if (!entry.String2().empty()) return entry.String2();
-            if (!entry.String3().empty()) return entry.String3();
-            return entry.String1();
-        case 7:
-        case 9:
-        case 10:
-        case 11:
-            return entry.String1();
-        default:
-            if (!entry.String1().empty()) return entry.String1();
-            if (!entry.String2().empty()) return entry.String2();
-            return entry.String3();
-        }
-    }
-
-    void MonitorPage::EnsureHeaderSplitters(winrt::Microsoft::UI::Xaml::Controls::Grid const& headerGrid)
-    {
-        if (!headerGrid) return;
-
-        auto columns = headerGrid.ColumnDefinitions();
-        if (columns.Size() < 2) return;
-
-        for (uint32_t column = 0; column + 1 < columns.Size(); ++column) {
-            bool exists = false;
-            for (auto const& child : headerGrid.Children()) {
-                auto splitter = child.try_as<GridSplitter>();
-                if (!splitter) continue;
-                if (Grid::GetColumn(splitter) != static_cast<int>(column)) continue;
-                exists = true;
-                break;
-            }
-
-            if (exists) continue;
-
-            GridSplitter splitter;
-            splitter.Width(9);
-            splitter.Margin(ThicknessHelper::FromLengths(0, 0, -5, 0));
-            splitter.Opacity(0);
-            splitter.HorizontalAlignment(HorizontalAlignment::Right);
-            splitter.VerticalAlignment(VerticalAlignment::Stretch);
-            splitter.Background(SolidColorBrush(Windows::UI::Colors::Transparent()));
-            splitter.ResizeBehavior(GridResizeBehavior::BasedOnAlignment);
-            splitter.ResizeDirection(GridResizeDirection::Columns);
-            Grid::SetColumn(splitter, column);
-
-            headerGrid.Children().Append(splitter);
-        }
-    }
-
-    void MonitorPage::AttachColumnSyncToSection(winrt::Microsoft::UI::Xaml::Controls::Grid const& sectionRoot, uint32_t rowOffset)
-    {
-        if (!sectionRoot) return;
-
-        Grid headerGrid{ nullptr };
-        Grid bodyGrid{ nullptr };
-
-        auto tryResolveHeaderBody = [&](Grid const& container) -> bool {
-            if (!container) return false;
-
-            Grid header{ nullptr };
-            Grid body{ nullptr };
-            for (auto const& child : container.Children()) {
-                auto border = child.try_as<Border>();
-                if (!border) continue;
-
-                auto grid = border.Child().try_as<Grid>();
-                if (!grid) continue;
-
-                int row = Grid::GetRow(border);
-                if (row == 0) header = grid;
-                else if (row == 1) body = grid;
-            }
-
-            if (header && body) {
-                headerGrid = header;
-                bodyGrid = body;
-                return true;
-            }
-            return false;
-            };
-
-        if (!tryResolveHeaderBody(sectionRoot)) {
-            for (auto const& child : sectionRoot.Children()) {
-                auto childGrid = child.try_as<Grid>();
-                if (!childGrid) continue;
-                if (tryResolveHeaderBody(childGrid)) break;
-            }
-        }
-
-        if (!headerGrid || !bodyGrid) return;
-
-        auto listView = slg::FindVisualChild<ListView>(bodyGrid);
-        if (!listView) return;
-
-        EnsureHeaderSplitters(headerGrid);
-
-        m_columnSyncBindings.push_back({ headerGrid, bodyGrid, listView, rowOffset });
-
-        auto weak = get_weak();
-        headerGrid.LayoutUpdated([weak, headerGrid, bodyGrid, listView, rowOffset](auto&&, auto&&) {
-            if (auto self = weak.get()) {
-                slg::SyncListViewColumnWidths(headerGrid, bodyGrid, listView, rowOffset);
-            }
-            });
-
-        listView.ContainerContentChanging([weak, headerGrid, rowOffset](auto&&, auto&& args) {
-            if (args.InRecycleQueue()) return;
-            auto itemContainer = args.ItemContainer().try_as<ListViewItem>();
-            if (!itemContainer) return;
-            if (auto self = weak.get()) {
-                slg::ApplyHeaderColumnWidthsToContainer(headerGrid, itemContainer, rowOffset);
-            }
-            });
-    }
-
-    void MonitorPage::InitializeColumnSyncBindings()
-    {
-        m_columnSyncBindings.clear();
-
-        AttachColumnSyncToSection(ObjectGrid(), 0);
-        AttachColumnSyncToSection(CallbackGrid(), 0);
-        AttachColumnSyncToSection(MiniFilterGrid(), 0);
-        AttachColumnSyncToSection(StdFilterGrid(), 0);
-        AttachColumnSyncToSection(SSDTGrid(), 0);
-        AttachColumnSyncToSection(SSSDTGrid(), 0);
-        AttachColumnSyncToSection(IoTimerGrid(), 0);
-        AttachColumnSyncToSection(ExCallbackGrid(), 0);
-        AttachColumnSyncToSection(IDTGrid(), 0);
-        AttachColumnSyncToSection(GDTGrid(), 0);
-        AttachColumnSyncToSection(PiDDBGrid(), 0);
-        AttachColumnSyncToSection(HALDPTGrid(), 0);
-        AttachColumnSyncToSection(HALPDPTGrid(), 0);
-
-        for (auto const& binding : m_columnSyncBindings) {
-            slg::SyncListViewColumnWidths(binding.HeaderGrid, binding.BodyGrid, binding.ListView, binding.RowOffset);
-        }
-    }
+	static hstring GetDriverErrorMessage()
+	{
+		auto errorMsg = KernelInstance::GetLastErrorMessage();
+		if (errorMsg.empty()) {
+			auto errorCode = KernelInstance::GetLastErrorCode();
+			wchar_t hexCode[32];
+			swprintf_s(hexCode, L"0x%X", errorCode);
+			return t(L"Msg.DriverError.Code", hexCode);
+		}
+		return t(L"Msg.DriverError.Detail", errorMsg.c_str());
+	}
 
 	MonitorPage::MonitorPage() {
 		InitializeComponent();
@@ -207,7 +77,11 @@ namespace winrt::StarlightGUI::implementation
 
 		std::vector<winrt::StarlightGUI::ObjectEntry> partitionsInPath;
 
-		KernelInstance::EnumObjectsByDirectory(path, partitionsInPath);
+		if (!KernelInstance::SiEnumObjectsByDirectory(path, partitionsInPath)) {
+			slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+			co_return;
+		}
+
 		for (const auto& object : partitionsInPath) {
 			if (object.Type() == L"Directory") {
 				partitions.push_back(object);
@@ -238,7 +112,12 @@ namespace winrt::StarlightGUI::implementation
 
 		// 获取对象逻辑
 		winrt::StarlightGUI::ObjectEntry& selectedPartition = partitions[index];
-		KernelInstance::EnumObjectsByDirectory(selectedPartition.Path().c_str(), objects);
+		if (!KernelInstance::SiEnumObjectsByDirectory(selectedPartition.Path().c_str(), objects)) {
+			co_await wil::resume_foreground(DispatcherQueue());
+			slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+			m_isLoading = false;
+			co_return;
+		}
 
 		co_await wil::resume_foreground(DispatcherQueue());
 
@@ -283,7 +162,12 @@ namespace winrt::StarlightGUI::implementation
 		switch (requestedIndex) {
 		case 2:
 			if (force || callbackCache.empty()) {
-				KernelInstance::EnumNotifies(entries);
+				if (!KernelInstance::SiEnumNotifies(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				callbackCache = entries;
 				entriesSource = &entries;
 			}
@@ -291,7 +175,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 3:
 			if (force || minifilterCache.empty()) {
-				KernelInstance::EnumMiniFilter(entries);
+				if (!KernelInstance::SiEnumMiniFilter(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				minifilterCache = entries;
 				entriesSource = &entries;
 			}
@@ -299,7 +188,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 4:
 			if (force || standardfilterCache.empty()) {
-				KernelInstance::EnumStandardFilter(entries);
+				if (!KernelInstance::SiEnumStandardFilter(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				standardfilterCache = entries;
 				entriesSource = &entries;
 			}
@@ -307,7 +201,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 5:
 			if (force || ssdtCache.empty()) {
-				KernelInstance::EnumSSDT(entries);
+				if (!KernelInstance::SiEnumSSDT(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				ssdtCache = entries;
 				entriesSource = &entries;
 			}
@@ -315,7 +214,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 6:
 			if (force || sssdtCache.empty()) {
-				KernelInstance::EnumSSSDT(entries);
+				if (!KernelInstance::SiEnumSSSDT(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				sssdtCache = entries;
 				entriesSource = &entries;
 			}
@@ -323,7 +227,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 7:
 			if (force || ioTimerCache.empty()) {
-				KernelInstance::EnumIoTimer(entries);
+				if (!KernelInstance::SiEnumIoTimer(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				ioTimerCache = entries;
 				entriesSource = &entries;
 			}
@@ -331,7 +240,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 8:
 			if (force || exCallbackCache.empty()) {
-				KernelInstance::EnumExCallback(entries);
+				if (!KernelInstance::SiEnumExCallback(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				exCallbackCache = entries;
 				entriesSource = &entries;
 			}
@@ -339,7 +253,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 9:
 			if (force || idtCache.empty()) {
-				KernelInstance::EnumIDT(entries);
+				if (!KernelInstance::SiEnumIDT(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				idtCache = entries;
 				entriesSource = &entries;
 			}
@@ -347,7 +266,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 10:
 			if (force || gdtCache.empty()) {
-				KernelInstance::EnumGDT(entries);
+				if (!KernelInstance::SiEnumGDT(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				gdtCache = entries;
 				entriesSource = &entries;
 			}
@@ -355,7 +279,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 11:
 			if (force || piddbCache.empty()) {
-				KernelInstance::EnumPiDDBCacheTable(entries);
+				if (!KernelInstance::SiEnumPiDDBCacheTable(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				piddbCache = entries;
 				entriesSource = &entries;
 			}
@@ -363,7 +292,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 12:
 			if (force || halDptCache.empty()) {
-				KernelInstance::EnumHalDispatchTable(entries);
+				if (!KernelInstance::SiEnumHalDispatchTable(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				halDptCache = entries;
 				entriesSource = &entries;
 			}
@@ -371,7 +305,12 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 13:
 			if (force || halPdptCache.empty()) {
-				KernelInstance::EnumHalPrivateDispatchTable(entries);
+				if (!KernelInstance::SiEnumHalPrivateDispatchTable(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
 				halPdptCache = entries;
 				entriesSource = &entries;
 			}
@@ -1123,7 +1062,22 @@ namespace winrt::StarlightGUI::implementation
             }
             else if (segmentedIndex >= 2 && segmentedIndex <= 13) {
                 for (auto const& entry : m_generalList) {
-                    hstring key = GetMonitorSuggestionKey(segmentedIndex, entry);
+					hstring key;
+					switch (segmentedIndex) {
+					case 4:
+						if (!entry.String2().empty()) key = entry.String2();
+						if (!entry.String3().empty()) key = entry.String3();
+						key = entry.String1();
+					case 7:
+					case 9:
+					case 10:
+					case 11:
+						key = entry.String1();
+					default:
+						if (!entry.String1().empty()) key = entry.String1();
+						if (!entry.String2().empty()) key = entry.String2();
+						key = entry.String3();
+					}
                     std::wstring text = key.c_str();
                     if (text.empty()) continue;
 
@@ -1278,7 +1232,7 @@ namespace winrt::StarlightGUI::implementation
 		if (!IsLoaded()) return;
 		if (!MainSegmented().SelectedItem()) return;
 		if (m_isLoading) {
-			if (segmentedIndex != MainSegmented().SelectedIndex()) slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Monitor.Msg.WaitForLoading").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+			if (segmentedIndex != MainSegmented().SelectedIndex()) slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Monitor.Msg.WaitForLoading"), InfoBarSeverity::Warning, g_mainWindowInstance);
 			MainSegmented().SelectedIndex(segmentedIndex);
 			return;
 		}
@@ -1478,6 +1432,129 @@ namespace winrt::StarlightGUI::implementation
 		HALDPTAddressHeaderButton().Content(tbox(L"Common.Address"));
 		HALPDPTNameModuleHeaderButton().Content(tbox(L"Monitor.Header.NameModule"));
 		HALPDPTAddressHeaderButton().Content(tbox(L"Common.Address"));
+	}
+
+	void MonitorPage::EnsureHeaderSplitters(winrt::Microsoft::UI::Xaml::Controls::Grid const& headerGrid)
+	{
+		if (!headerGrid) return;
+
+		auto columns = headerGrid.ColumnDefinitions();
+		if (columns.Size() < 2) return;
+
+		for (uint32_t column = 0; column + 1 < columns.Size(); ++column) {
+			bool exists = false;
+			for (auto const& child : headerGrid.Children()) {
+				auto splitter = child.try_as<GridSplitter>();
+				if (!splitter) continue;
+				if (Grid::GetColumn(splitter) != static_cast<int>(column)) continue;
+				exists = true;
+				break;
+			}
+
+			if (exists) continue;
+
+			GridSplitter splitter;
+			splitter.Width(9);
+			splitter.Margin(ThicknessHelper::FromLengths(0, 0, -5, 0));
+			splitter.Opacity(0);
+			splitter.HorizontalAlignment(HorizontalAlignment::Right);
+			splitter.VerticalAlignment(VerticalAlignment::Stretch);
+			splitter.Background(SolidColorBrush(Windows::UI::Colors::Transparent()));
+			splitter.ResizeBehavior(GridResizeBehavior::BasedOnAlignment);
+			splitter.ResizeDirection(GridResizeDirection::Columns);
+			Grid::SetColumn(splitter, column);
+
+			headerGrid.Children().Append(splitter);
+		}
+	}
+
+	void MonitorPage::AttachColumnSyncToSection(winrt::Microsoft::UI::Xaml::Controls::Grid const& sectionRoot, uint32_t rowOffset)
+	{
+		if (!sectionRoot) return;
+
+		Grid headerGrid{ nullptr };
+		Grid bodyGrid{ nullptr };
+
+		auto tryResolveHeaderBody = [&](Grid const& container) -> bool {
+			if (!container) return false;
+
+			Grid header{ nullptr };
+			Grid body{ nullptr };
+			for (auto const& child : container.Children()) {
+				auto border = child.try_as<Border>();
+				if (!border) continue;
+
+				auto grid = border.Child().try_as<Grid>();
+				if (!grid) continue;
+
+				int row = Grid::GetRow(border);
+				if (row == 0) header = grid;
+				else if (row == 1) body = grid;
+			}
+
+			if (header && body) {
+				headerGrid = header;
+				bodyGrid = body;
+				return true;
+			}
+			return false;
+			};
+
+		if (!tryResolveHeaderBody(sectionRoot)) {
+			for (auto const& child : sectionRoot.Children()) {
+				auto childGrid = child.try_as<Grid>();
+				if (!childGrid) continue;
+				if (tryResolveHeaderBody(childGrid)) break;
+			}
+		}
+
+		if (!headerGrid || !bodyGrid) return;
+
+		auto listView = slg::FindVisualChild<ListView>(bodyGrid);
+		if (!listView) return;
+
+		EnsureHeaderSplitters(headerGrid);
+
+		m_columnSyncBindings.push_back({ headerGrid, bodyGrid, listView, rowOffset });
+
+		auto weak = get_weak();
+		headerGrid.LayoutUpdated([weak, headerGrid, bodyGrid, listView, rowOffset](auto&&, auto&&) {
+			if (auto self = weak.get()) {
+				slg::SyncListViewColumnWidths(headerGrid, bodyGrid, listView, rowOffset);
+			}
+			});
+
+		listView.ContainerContentChanging([weak, headerGrid, rowOffset](auto&&, auto&& args) {
+			if (args.InRecycleQueue()) return;
+			auto itemContainer = args.ItemContainer().try_as<ListViewItem>();
+			if (!itemContainer) return;
+			if (auto self = weak.get()) {
+				slg::ApplyHeaderColumnWidthsToContainer(headerGrid, itemContainer, rowOffset);
+			}
+			});
+	}
+
+	void MonitorPage::InitializeColumnSyncBindings()
+	{
+		m_columnSyncBindings.clear();
+
+		AttachColumnSyncToSection(ObjectGrid(), 0);
+		AttachColumnSyncToSection(CallbackGrid(), 0);
+		AttachColumnSyncToSection(MiniFilterGrid(), 0);
+		AttachColumnSyncToSection(StdFilterGrid(), 0);
+		AttachColumnSyncToSection(SSDTGrid(), 0);
+		AttachColumnSyncToSection(SSSDTGrid(), 0);
+		AttachColumnSyncToSection(IoTimerGrid(), 0);
+		AttachColumnSyncToSection(ExCallbackGrid(), 0);
+		AttachColumnSyncToSection(IDTGrid(), 0);
+		AttachColumnSyncToSection(GDTGrid(), 0);
+		AttachColumnSyncToSection(PiDDBGrid(), 0);
+		AttachColumnSyncToSection(HALDPTGrid(), 0);
+		AttachColumnSyncToSection(HALPDPTGrid(), 0);
+
+		for (auto const& binding : m_columnSyncBindings) {
+			slg::SyncListViewColumnWidths(binding.HeaderGrid, binding.BodyGrid, binding.ListView, binding.RowOffset);
+		}
 	}
 }
 

@@ -4,6 +4,6 @@
     runtimeclass ModifyTokenDialog : Microsoft.UI.Xaml.Controls.ContentDialog
     {
         ModifyTokenDialog();
-        Int32 Token{ get; };
+        UInt32 TargetPID{ get; };
     }
 }

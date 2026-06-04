@@ -487,7 +487,7 @@ namespace winrt::StarlightGUI::implementation
                     }
                 }
                 else if (latestBuildNumber < currentBuildNumber) {
-                    LOG_INFO(L"Updater", L"Latest < current, maybe we are on a dev environment.", kernelPath.c_str());
+                    LOG_INFO(L"Updater", L"Latest < current, maybe we are on a dev environment.");
                     slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Updater.Dev"), InfoBarSeverity::Informational, g_mainWindowInstance);
                 }
             }
@@ -500,31 +500,28 @@ namespace winrt::StarlightGUI::implementation
     }
 
     IAsyncAction MainWindow::LoadModules() {
-        if (kernelPath.empty() || astralPath.empty() || wtmPath.empty() || iamKeyHackerPath.empty()) {
+        if (siriusPath.empty() || wtmPath.empty() || iamKeyHackerPath.empty()) {
             try {
                 co_await winrt::resume_background();
 
                 LOG_INFO(L"Driver", L"Loading necessary modules...");
 
                 int failedCount = 0;
-                auto kernelFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\Assets\\kernel.sys");
-                auto astralFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\Assets\\AstralX.sys");
+                auto siriusFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\Assets\\Sirius.sys");
                 auto wtmFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\WindowTopMost.dll");
                 auto iamKeyHackerFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\IAMKeyHacker.dll");
 
-                kernelPath = kernelFile.Path();
-                astralPath = astralFile.Path();
+                siriusPath = siriusFile.Path();
                 wtmPath = wtmFile.Path();
                 iamKeyHackerPath = iamKeyHackerFile.Path();
 
 				// 快速对于常见报错码进行判断，减少用户困惑
-
-                if (DriverUtils::LoadKernelDriver(kernelPath.c_str())) {
-                    LOG_INFO(L"Driver", L"kernel.sys initializated successfully.");
+                if (DriverUtils::LoadKernelDriver(siriusPath.c_str())) {
+                    LOG_INFO(L"Driver", L"Sirius.sys initializated successfully.");
                 }
                 else {
                     failedCount++;
-                    LOG_INFO(L"Driver", L"kernel.sys initialization failed, GetLastError() = %d", GetLastError());
+                    LOG_INFO(L"Driver", L"Sirius.sys initialization failed, GetLastError() = %d", GetLastError());
 
                     if (GetLastError() == 2 || GetLastError() == 98) {
                         co_await wil::resume_foreground(DispatcherQueue());
@@ -538,23 +535,6 @@ namespace winrt::StarlightGUI::implementation
                     }
                 }
 
-
-                if (DriverUtils::LoadDriver(astralPath.c_str(), L"AstralX")) {
-                    LOG_INFO(L"Driver", L"AstralX.sys initializated successfully.");
-                }
-                else {
-                    failedCount++;
-                    LOG_INFO(L"Driver", L"AstralX.sys initialization failed, GetLastError() = %d", GetLastError());
-
-                    if (GetLastError() == 2 || GetLastError() == 98) {
-                        co_await wil::resume_foreground(DispatcherQueue());
-                        slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.FailedHelp1"), InfoBarSeverity::Error, g_mainWindowInstance);
-                    }
-                    else if (GetLastError() == 193) {
-                        co_await wil::resume_foreground(DispatcherQueue());
-                        slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.FailedHelp2"), InfoBarSeverity::Error, g_mainWindowInstance);
-                    }
-                }
 
                 co_await wil::resume_foreground(DispatcherQueue());
 
@@ -563,7 +543,7 @@ namespace winrt::StarlightGUI::implementation
                     slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
                 }
                 else {
-                    LOG_INFO(L"Driver", L"Modules loaded successfully.", kernelPath.c_str());
+                    LOG_INFO(L"Driver", L"Modules loaded successfully.");
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"MainWindow.Driver.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 }
             }

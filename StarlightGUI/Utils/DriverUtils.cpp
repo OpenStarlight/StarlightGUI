@@ -11,7 +11,7 @@ namespace winrt::StarlightGUI::implementation {
 			return false;
 		}
 
-		hService = OpenServiceW(hSCM, L"StarlightGUI Kernel Driver", SERVICE_ALL_ACCESS);
+		hService = OpenServiceW(hSCM, L"Sirius for StarlightGUI", SERVICE_ALL_ACCESS);
 		if (hService) {
 			// Start the service if it"s not running
 			SERVICE_STATUS serviceStatus;
@@ -36,7 +36,7 @@ namespace winrt::StarlightGUI::implementation {
 		}
 		else {
 			// Create the service
-			hService = CreateServiceW(hSCM, L"StarlightGUI Kernel Driver", L"StarlightGUI Kernel Driver", SERVICE_ALL_ACCESS,
+			hService = CreateServiceW(hSCM, L"Sirius for StarlightGUI", L"Sirius for StarlightGUI", SERVICE_ALL_ACCESS,
 				SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START,
 				SERVICE_ERROR_IGNORE, kernelPath, NULL, NULL, NULL,
 				NULL, NULL);
@@ -125,6 +125,19 @@ namespace winrt::StarlightGUI::implementation {
 		hSCM = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 		if (!hSCM) {
 			return;
+		}
+
+		hService = OpenServiceW(hSCM, L"Sirius for StarlightGUI", SERVICE_ALL_ACCESS);
+		if (hService) {
+			SERVICE_STATUS serviceStatus;
+			if (QueryServiceStatus(hService, &serviceStatus)) {
+				if (serviceStatus.dwCurrentState != SERVICE_STOPPED) {
+					ControlService(hService, SERVICE_CONTROL_STOP, &serviceStatus);
+					DeleteService(hService);
+				}
+			}
+
+			CloseServiceHandle(hService);
 		}
 
 		hService = OpenServiceW(hSCM, L"StarlightGUI Kernel Driver", SERVICE_ALL_ACCESS);

@@ -39,6 +39,18 @@ namespace winrt::StarlightGUI::implementation
     static std::vector<winrt::StarlightGUI::KernelModuleInfo> fullRecordedKernelModules;
     static int safeAcceptedImage = -1;
 
+    static hstring GetDriverErrorMessage()
+    {
+        auto errorMsg = KernelInstance::GetLastErrorMessage();
+        if (errorMsg.empty()) {
+            auto errorCode = KernelInstance::GetLastErrorCode();
+            wchar_t hexCode[32];
+            swprintf_s(hexCode, L"0x%X", errorCode);
+            return t(L"Msg.DriverError.Code", hexCode);
+        }
+        return t(L"Msg.DriverError.Detail", errorMsg.c_str());
+    }
+
     KernelModulePage::KernelModulePage() {
         InitializeComponent();
         SetupLocalization();
@@ -86,21 +98,21 @@ namespace winrt::StarlightGUI::implementation
 
         // 选项1.1
         auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\uec91", t(L"KernelModule.Menu.Unload").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (KernelInstance::UnloadDriver(item.DriverObjectULong())) {
+            if (KernelInstance::SiUnloadDriver(item.DriverObjectULong())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
         // 选项1.2
         auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ued1a", t(L"KernelModule.Menu.Hide").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (KernelInstance::HideDriver(item.DriverObjectULong())) {
+            if (KernelInstance::SiHideDriver(item.DriverObjectULong())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
@@ -185,7 +197,7 @@ namespace winrt::StarlightGUI::implementation
         std::vector<winrt::StarlightGUI::KernelModuleInfo> kernelModules;
         kernelModules.reserve(200);
 
-        KernelInstance::EnumDrivers(kernelModules);
+        KernelInstance::SiEnumDrivers(kernelModules);
         LOG_INFO(__WFUNCTION__, L"Enumerated kernel modules, %d entry(s).", kernelModules.size());
 
         fullRecordedKernelModules = kernelModules;
@@ -451,12 +463,12 @@ namespace winrt::StarlightGUI::implementation
                 co_return;
             }
 
-            if (KernelInstance::UnloadDriver(item.DriverObjectULong())) {
+            if (KernelInstance::SiUnloadDriver(item.DriverObjectULong())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 
                 LoadKernelModuleList();
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
         }
         co_return;
     }

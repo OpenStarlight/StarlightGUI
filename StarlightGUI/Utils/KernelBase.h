@@ -2,8 +2,8 @@
 
 #include "pch.h"
 #include "NTBase.h"
-#include "IOBase.h"
-#include "AstralIO.h"
+#include "SiriusIO.h"
+#include "SiriusError.h"
 #include "unordered_set"
 
 // Avoid macro conflicts
@@ -13,50 +13,54 @@
 namespace winrt::StarlightGUI::implementation {
 	class KernelInstance {
 	public:
-		// Process
-		static BOOL _ZwTerminateProcess(ULONG pid) noexcept;
-		static BOOL MurderProcess(ULONG pid) noexcept;
+		// Error handling
+		static SISTATUS GetLastErrorCode() noexcept;
+		static std::wstring GetLastErrorMessage() noexcept;
+		static void QueryError() noexcept;
 
-		static BOOL _SuspendProcess(ULONG pid) noexcept;
-		static BOOL _ResumeProcess(ULONG pid) noexcept;
-		static BOOL HideProcess(ULONG pid) noexcept;
+		// Process
+		static BOOL SiTerminateProcess(ULONG pid) noexcept;
+		static BOOL SiTerminateProcessEx(ULONG pid) noexcept;
+
+		static BOOL SiSuspendProcess(ULONG pid) noexcept;
+		static BOOL SiResumeProcess(ULONG pid) noexcept;
+		static BOOL SiHideProcess(ULONG pid) noexcept;
 		static BOOL SetPPL(ULONG pid, int level) noexcept;
 		static BOOL SetCriticalProcess(ULONG pid) noexcept;
-		static BOOL InjectDLLToProcess(ULONG pid, PWCHAR dllPath) noexcept;
-		static BOOL ModifyProcessToken(ULONG pid, ULONG type) noexcept;
+		static BOOL InjectDLLToProcess(ULONG pid, PWCHAR dllPath, ULONG size) noexcept;
+		static BOOL ModifyProcessToken(ULONG sourcePID, ULONG targetPID) noexcept;
 
 		// Thread
-		static BOOL _ZwTerminateThread(ULONG tid) noexcept;
-		static BOOL MurderThread(ULONG tid) noexcept;
+		static BOOL SiTerminateThread(ULONG tid) noexcept;
+		static BOOL SiTerminateThreadEx(ULONG tid) noexcept;
 
-		static BOOL _SuspendThread(ULONG tid) noexcept;
-		static BOOL _ResumeThread(ULONG tid) noexcept;
+		static BOOL SiSuspendThread(ULONG tid) noexcept;
+		static BOOL SiResumeThread(ULONG tid) noexcept;
 
 		// Driver
-		static BOOL UnloadDriver(ULONG64 driverObj) noexcept;
-		static BOOL HideDriver(ULONG64 driverObj) noexcept;
+		static BOOL SiUnloadDriver(ULONG64 driverObj) noexcept;
+		static BOOL SiHideDriver(ULONG64 driverObj) noexcept;
 
 		// Enum
-		static BOOL EnumProcesses(std::vector<winrt::StarlightGUI::ProcessInfo>& targetList) noexcept;
-		static BOOL EnumProcesses2(std::vector<winrt::StarlightGUI::ProcessInfo>& targetList) noexcept;
-		static BOOL EnumProcessThreads(ULONG64 eprocess, std::vector<winrt::StarlightGUI::ThreadInfo>& threads) noexcept;
-		static BOOL EnumProcessHandles(ULONG pid, std::vector<winrt::StarlightGUI::HandleInfo>& handles) noexcept;
-		static BOOL EnumProcessModules(ULONG64 eprocess, std::vector<winrt::StarlightGUI::MokuaiInfo>& threads) noexcept;
-		static BOOL EnumProcessKernelCallbackTable(ULONG64 eprocess, std::vector<winrt::StarlightGUI::KCTInfo>& threads) noexcept;
-		static BOOL EnumDrivers(std::vector<winrt::StarlightGUI::KernelModuleInfo>& kernelModules) noexcept;
-		static BOOL EnumObjectsByDirectory(std::wstring objectPath, std::vector<winrt::StarlightGUI::ObjectEntry>& objectList) noexcept;
-		static BOOL EnumNotifies(std::vector<winrt::StarlightGUI::GeneralEntry>& callbacks) noexcept;
-		static BOOL EnumMiniFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& miniFilters) noexcept;
-		static BOOL EnumStandardFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& filters) noexcept;
-		static BOOL EnumSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& ssdts) noexcept;
-		static BOOL EnumSSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& sssdts) noexcept;
-		static BOOL EnumExCallback(std::vector<winrt::StarlightGUI::GeneralEntry>& callbacks) noexcept;
-		static BOOL EnumIoTimer(std::vector<winrt::StarlightGUI::GeneralEntry>& timers) noexcept;
-		static BOOL EnumIDT(std::vector<winrt::StarlightGUI::GeneralEntry>& idtEntries) noexcept;
-		static BOOL EnumGDT(std::vector<winrt::StarlightGUI::GeneralEntry>& gdtEntries) noexcept;
-		static BOOL EnumPiDDBCacheTable(std::vector<winrt::StarlightGUI::GeneralEntry>& piddbEntries) noexcept;
-		static BOOL EnumHalDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halEntries) noexcept;
-		static BOOL EnumHalPrivateDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halPrivateEntries) noexcept;
+		static BOOL SiEnumProcesses(std::vector<winrt::StarlightGUI::ProcessInfo>& targetList, bool strengthen) noexcept;
+		static BOOL SiEnumProcessThreads(ULONG pid, std::vector<winrt::StarlightGUI::ThreadInfo>& threads) noexcept;
+		static BOOL SiEnumProcessHandles(ULONG pid, std::vector<winrt::StarlightGUI::HandleInfo>& handles) noexcept;
+		static BOOL SiEnumProcessModules(ULONG pid, std::vector<winrt::StarlightGUI::MokuaiInfo>& modules) noexcept;
+		static BOOL SiEnumProcessKernelCallbackTable(ULONG pid, std::vector<winrt::StarlightGUI::KCTInfo>& kcts) noexcept;
+		static BOOL SiEnumDrivers(std::vector<winrt::StarlightGUI::KernelModuleInfo>& kernelModules) noexcept;
+		static BOOL SiEnumObjectsByDirectory(std::wstring objectPath, std::vector<winrt::StarlightGUI::ObjectEntry>& objectList) noexcept;
+		static BOOL SiEnumNotifies(std::vector<winrt::StarlightGUI::GeneralEntry>& callbacks) noexcept;
+		static BOOL SiEnumMiniFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& miniFilters) noexcept;
+		static BOOL SiEnumStandardFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& filters) noexcept;
+		static BOOL SiEnumSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& ssdts) noexcept;
+		static BOOL SiEnumSSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& sssdts) noexcept;
+		static BOOL SiEnumExCallback(std::vector<winrt::StarlightGUI::GeneralEntry>& callbacks) noexcept;
+		static BOOL SiEnumIoTimer(std::vector<winrt::StarlightGUI::GeneralEntry>& timers) noexcept;
+		static BOOL SiEnumIDT(std::vector<winrt::StarlightGUI::GeneralEntry>& idtEntries) noexcept;
+		static BOOL SiEnumGDT(std::vector<winrt::StarlightGUI::GeneralEntry>& gdtEntries) noexcept;
+		static BOOL SiEnumPiDDBCacheTable(std::vector<winrt::StarlightGUI::GeneralEntry>& piddbEntries) noexcept;
+		static BOOL SiEnumHalDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halEntries) noexcept;
+		static BOOL SiEnumHalPrivateDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halPrivateEntries) noexcept;
 
 		// Kernel Objects
 		static BOOL RemoveNotify(winrt::StarlightGUI::GeneralEntry& entry) noexcept;
@@ -70,11 +74,11 @@ namespace winrt::StarlightGUI::implementation {
 		// File
 		static BOOL QueryFile(std::wstring path, std::vector<winrt::StarlightGUI::FileInfo>& files) noexcept;
 		static BOOL DeleteFileAuto(std::wstring path) noexcept;
-		static BOOL _DeleteFileAuto(std::wstring path) noexcept;
-		static BOOL MurderFileAuto(std::wstring path) noexcept;
-		static BOOL LockFile(std::wstring path) noexcept;
-		static BOOL _CopyFile(std::wstring from, std::wstring to, std::wstring name) noexcept;
-		static BOOL _RenameFile(std::wstring from, std::wstring to) noexcept;
+		static BOOL SiDeleteFileAuto(std::wstring path) noexcept;
+		static BOOL SiDeleteFileEx(std::wstring path) noexcept;
+		static BOOL SiLockFile(std::wstring path) noexcept;
+		static BOOL SiCopyFile(std::wstring from, std::wstring to, std::wstring name) noexcept;
+		static BOOL SiRenameFile(std::wstring from, std::wstring to) noexcept;
 
 		// System
 		static BOOL EnableHVM() noexcept;
@@ -109,26 +113,23 @@ namespace winrt::StarlightGUI::implementation {
 		// Object
 		static BOOL GetObjectDetails(std::wstring fullPath, std::wstring type, winrt::StarlightGUI::ObjectEntry& object) noexcept;
 
-		// Deuterium
-		static BOOL DeuteriumInvoke(DEUTERIUM_PROXY_INVOKE& function) noexcept;
-		static BOOL DeuteriumAlloc(DEUTERIUM_PROXY_ALLOCATE& function, bool map) noexcept;
-		static BOOL DeuteriumFree(DEUTERIUM_PROXY_FREE& function, bool map) noexcept;
-
 		// Memory
 		static BOOL ReadMemory(std::vector<BYTE>& data, PVOID address, ULONG size) noexcept;
 		static BOOL WriteMemory(PVOID address, PVOID data, ULONG size) noexcept;
 
 	private:
 		static BOOL GetDriverDevice() noexcept;
-		static BOOL GetDriverDevice2() noexcept;
-		static BOOL _DeleteFile(std::wstring path) noexcept;
-		static BOOL MurderFile(std::wstring path) noexcept;
+		static BOOL SiSetProcessInformation(ProcessSetInformation processInformation, ULONG pid, PVOID buffer, ULONG argument) noexcept;
+		static BOOL SiQueryProcessInformation(ProcessGetInformation processInformation, ULONG pid, PVOID buffer, ULONG argument) noexcept;
+		static BOOL SiSetThreadInformation(ThreadSetInformation threadInformation, ULONG tid, PVOID buffer, ULONG argument) noexcept;
+		static BOOL SiQueryThreadInformation(ThreadGetInformation threadInformation, ULONG tid, PVOID buffer, ULONG argument) noexcept;
+		static BOOL SiSetFileInformation(FileSetInformation fileInformation, LPCWSTR filePath, PVOID buffer, ULONG argument) noexcept;
+		static BOOL SiQueryFileInformation(FileGetInformation fileInformation, LPCWSTR filePath, PVOID buffer, ULONG argument) noexcept;
+		static BOOL SiSetSystemInformation(SystemSetInformation systemInformation, PVOID buffer, ULONG argument) noexcept;
+		static BOOL SiQuerySystemInformation(SystemGetInformation systemInformation, PVOID buffer, ULONG argument) noexcept;
+		static BOOL SiDeleteFile(std::wstring path) noexcept;
+		static BOOL SiDeleteFileForce(std::wstring path) noexcept;
 		static std::string GetMiniFilterMajorFunction(ULONG64 Index) noexcept;
-	};
-
-	class KernelBase {
-	public:
-		static DWORD64 GetCIBaseAddress();
 	};
 
 	class DriverUtils {
