@@ -113,7 +113,7 @@
       <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Sync</ExceptionHandling>
       <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</SDLCheck>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Windows Kits\10\Include\10.0.26100.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">stdcpp20</LanguageStandard>
       <Optimization Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Disabled</Optimization>
     </ClCompile>
@@ -135,7 +135,7 @@
       <UACExecutionLevel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RequireAdministrator</UACExecutionLevel>
       <EnableUAC Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</EnableUAC>
       <AllowIsolation Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</AllowIsolation>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Windows Kits\10\Lib\10.0.26100.0\ucrt\x64\ucrtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Default</LinkTimeCodeGeneration>
       <OptimizeReferences Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</OptimizeReferences>
       <EnableCOMDATFolding Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</EnableCOMDATFolding>
@@ -146,7 +146,7 @@
     <ClCompile>
       <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</SDLCheck>
-      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Windows Kits\10\Include\10.0.26100.0\ucrt;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard Condition="'$(Configuration)|$(Platform)'=='Release|x64'">stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -161,7 +161,7 @@
       <AllowIsolation Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</AllowIsolation>
       <AllowIsolation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</AllowIsolation>
       <AllowIsolation Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</AllowIsolation>
-      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Windows Kits\10\Lib\10.0.26100.0\ucrt\x64\libucrt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Default</LinkTimeCodeGeneration>
       <DataExecutionPrevention Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">true</DataExecutionPrevention>
       <DataExecutionPrevention Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DataExecutionPrevention>
