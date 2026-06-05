@@ -447,8 +447,8 @@
   "Settings.Header.Card.Fix": "服务修复",
   "Settings.Header.Card.Language": "语言",
 
-  "Settings.Desc.Card.EnumFileMode": "文件管理器中进行遍历文件使用的 API，NTFSPARSER 可能不会工作",
-  "Settings.Desc.Card.EnumStrengthen": "强制使用 SKT64 作为任务管理器枚举进程的驱动，可能会导致效率变低",
+  "Settings.Desc.Card.EnumFileMode": "文件管理器中进行遍历文件使用的 API",
+  "Settings.Desc.Card.EnumStrengthen": "使用进程枚举的加强模式",
   "Settings.Desc.Card.TaskAutoRefresh": "任务管理器会周期性刷新进程列表，使信息始终保持最新",
   "Settings.Desc.Card.PDHFirst": "即使 NVML 可用，依旧使用系统 PDH 为 GPU 提供的数据",
   "Settings.Desc.Card.DisasmCount": "在内存反汇编页面每一行展示的数据数量",

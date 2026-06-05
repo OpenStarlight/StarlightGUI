@@ -22,7 +22,7 @@
                     x:Name="EnumFileModeCard"
                     Margin="0,0,0,10"
                     essential:RevealFocusPanel.AttachToPanel="{x:Bind RevealFocusPanel}"
-                    Description="文件管理器中进行遍历文件使用的 API，NTFSPARSER 可能不会工作"
+                    Description="文件管理器中进行遍历文件使用的 API"
                     Header="遍历文件模式"
                     IsActionIconVisible="False"
                     IsClickEnabled="True">
@@ -37,9 +37,9 @@
                         essential:ComboBoxHelper.AcrylicWorkaround="True"
                         ItemContainerStyle="{StaticResource ComboBoxItemStyle}"
                         SelectionChanged="EnumFileModeComboBox_SelectionChanged">
-                        <ComboBoxItem Content="ENUM_FILE_NTAPI" />
-                        <ComboBoxItem Content="ENUM_FILE_IRP" />
-                        <ComboBoxItem Content="ENUM_FILE_NTFSPARSER" />
+                        <ComboBoxItem Content="NTAPI" />
+                        <ComboBoxItem Content="NTFSIO" />
+                        <ComboBoxItem Content="NTFSPARSER" />
                     </ComboBox>
                 </essential:SettingsCard>
 
@@ -47,7 +47,7 @@
                     x:Name="EnumStrengthenCard"
                     Margin="0,0,0,10"
                     essential:RevealFocusPanel.AttachToPanel="{x:Bind RevealFocusPanel}"
-                    Description="强制使用 SKT64 作为任务管理器枚举进程的驱动，可能会导致效率变低"
+                    Description="使用进程枚举的加强模式"
                     Header="进程枚举强化"
                     IsActionIconVisible="False"
                     IsClickEnabled="True">
@@ -57,10 +57,7 @@
                             FontSize="16"
                             Glyph="&#xf272;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <ToggleSwitch
-                        x:Name="EnumStrengthenButton"
-                        Margin="0,0,-80,0"
-                        Toggled="EnumStrengthenButton_Toggled" />
+                    <ToggleSwitch x:Name="EnumStrengthenButton" Toggled="EnumStrengthenButton_Toggled" />
                 </essential:SettingsCard>
 
                 <essential:SettingsCard
@@ -77,10 +74,7 @@
                             FontSize="16"
                             Glyph="&#xe823;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <ToggleSwitch
-                        x:Name="TaskAutoRefreshButton"
-                        Margin="0,0,-80,0"
-                        Toggled="TaskAutoRefreshButton_Toggled" />
+                    <ToggleSwitch x:Name="TaskAutoRefreshButton" Toggled="TaskAutoRefreshButton_Toggled" />
                 </essential:SettingsCard>
 
                 <essential:SettingsCard
@@ -97,10 +91,7 @@
                             FontSize="16"
                             Glyph="&#xe7f1;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <ToggleSwitch
-                        x:Name="PDHFirstButton"
-                        Margin="0,0,-80,0"
-                        Toggled="PDHFirstButton_Toggled" />
+                    <ToggleSwitch x:Name="PDHFirstButton" Toggled="PDHFirstButton_Toggled" />
                 </essential:SettingsCard>
 
                 <essential:SettingsCard
@@ -149,10 +140,7 @@
                             FontSize="16"
                             Glyph="&#xe7f4;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <ToggleSwitch
-                        x:Name="TrayBackgroundRunButton"
-                        Margin="0,0,-80,0"
-                        Toggled="TrayBackgroundRunButton_Toggled" />
+                    <ToggleSwitch x:Name="TrayBackgroundRunButton" Toggled="TrayBackgroundRunButton_Toggled" />
                 </essential:SettingsCard>
 
                 <essential:SettingsCard
@@ -169,10 +157,7 @@
                             FontSize="16"
                             Glyph="&#xe7ef;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <ToggleSwitch
-                        x:Name="ElevatedRunButton"
-                        Margin="0,0,-80,0"
-                        Toggled="ElevatedRunButton_Toggled" />
+                    <ToggleSwitch x:Name="ElevatedRunButton" Toggled="ElevatedRunButton_Toggled" />
                 </essential:SettingsCard>
 
                 <essential:SettingsCard
@@ -189,10 +174,7 @@
                             FontSize="16"
                             Glyph="&#xe7e8;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <ToggleSwitch
-                        x:Name="AutoStartButton"
-                        Margin="0,0,-80,0"
-                        Toggled="AutoStartButton_Toggled" />
+                    <ToggleSwitch x:Name="AutoStartButton" Toggled="AutoStartButton_Toggled" />
                 </essential:SettingsCard>
 
                 <essential:SettingsCard
@@ -209,10 +191,7 @@
                             FontSize="16"
                             Glyph="&#xf120;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <ToggleSwitch
-                        x:Name="ReplaceTaskManagerButton"
-                        Margin="0,0,-80,0"
-                        Toggled="ReplaceTaskManagerButton_Toggled" />
+                    <ToggleSwitch x:Name="ReplaceTaskManagerButton" Toggled="ReplaceTaskManagerButton_Toggled" />
                 </essential:SettingsCard>
 
                 <TextBlock
@@ -222,6 +201,32 @@
                     FontSize="14"
                     FontWeight="Bold"
                     Text="外观" />
+
+                <!--  主题  -->
+                <essential:SettingsCard
+                    x:Name="ThemeCard"
+                    Margin="0,0,0,10"
+                    essential:RevealFocusPanel.AttachToPanel="{x:Bind RevealFocusPanel}"
+                    Description="应用程序的主题模式"
+                    Header="主题"
+                    IsActionIconVisible="False"
+                    IsClickEnabled="True">
+                    <essential:SettingsCard.HeaderIcon>
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="16"
+                            Glyph="&#xe790;" />
+                    </essential:SettingsCard.HeaderIcon>
+                    <ComboBox
+                        x:Name="ThemeComboBox"
+                        essential:ComboBoxHelper.AcrylicWorkaround="True"
+                        ItemContainerStyle="{StaticResource ComboBoxItemStyle}"
+                        SelectionChanged="ThemeComboBox_SelectionChanged">
+                        <ComboBoxItem x:Name="ThemeSystemItem" Content="Auto" />
+                        <ComboBoxItem x:Name="ThemeLightItem" Content="浅色" />
+                        <ComboBoxItem x:Name="ThemeDarkItem" Content="深色" />
+                    </ComboBox>
+                </essential:SettingsCard>
 
                 <!--  背景  -->
                 <essential:SettingsExpander
@@ -388,31 +393,6 @@
                 </essential:SettingsCard>
 
                 <essential:SettingsCard
-                    x:Name="ThemeCard"
-                    Margin="0,0,0,10"
-                    essential:RevealFocusPanel.AttachToPanel="{x:Bind RevealFocusPanel}"
-                    Description="应用程序的主题模式"
-                    Header="主题"
-                    IsActionIconVisible="False"
-                    IsClickEnabled="True">
-                    <essential:SettingsCard.HeaderIcon>
-                        <FontIcon
-                            FontFamily="Segoe Fluent Icons"
-                            FontSize="16"
-                            Glyph="&#xe790;" />
-                    </essential:SettingsCard.HeaderIcon>
-                    <ComboBox
-                        x:Name="ThemeComboBox"
-                        essential:ComboBoxHelper.AcrylicWorkaround="True"
-                        ItemContainerStyle="{StaticResource ComboBoxItemStyle}"
-                        SelectionChanged="ThemeComboBox_SelectionChanged">
-                        <ComboBoxItem x:Name="ThemeSystemItem" Content="Auto" />
-                        <ComboBoxItem x:Name="ThemeLightItem" Content="浅色" />
-                        <ComboBoxItem x:Name="ThemeDarkItem" Content="深色" />
-                    </ComboBox>
-                </essential:SettingsCard>
-
-                <essential:SettingsCard
                     x:Name="LanguageCard"
                     Margin="0,0,0,10"
                     essential:RevealFocusPanel.AttachToPanel="{x:Bind RevealFocusPanel}"
@@ -459,10 +439,7 @@
                             FontSize="16"
                             Glyph="&#xe7ba;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <ToggleSwitch
-                        x:Name="DangerousConfirmButton"
-                        Margin="0,0,-80,0"
-                        Toggled="DangerousConfirmButton_Toggled" />
+                    <ToggleSwitch x:Name="DangerousConfirmButton" Toggled="DangerousConfirmButton_Toggled" />
                 </essential:SettingsCard>
 
                 <essential:SettingsCard
@@ -479,10 +456,7 @@
                             FontSize="16"
                             Glyph="&#xecc5;" />
                     </essential:SettingsCard.HeaderIcon>
-                    <ToggleSwitch
-                        x:Name="CheckUpdateButton"
-                        Margin="0,0,-80,0"
-                        Toggled="CheckUpdateButton_Toggled" />
+                    <ToggleSwitch x:Name="CheckUpdateButton" Toggled="CheckUpdateButton_Toggled" />
                 </essential:SettingsCard>
 
 
