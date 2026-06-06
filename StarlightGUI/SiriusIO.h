@@ -309,6 +309,7 @@ typedef struct _SI_THREAD_DATA {
     PVOID Win32StartAddress;
     enum _KTHREAD_STATE State;
     CHAR PreviousMode;
+    ULONG Priority;
 } SI_THREAD_DATA, * PSI_THREAD_DATA;
 
 typedef struct _SI_IO_TIMER_DATA {

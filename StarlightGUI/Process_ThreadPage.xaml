@@ -56,6 +56,7 @@
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="*" />
@@ -92,8 +93,19 @@
                         CornerRadius="0"
                         Tag="Address" />
                     <Button
-                        x:Name="StatusHeaderButton"
+                        x:Name="Win32AddressHeaderButton"
                         Grid.Column="3"
+                        Height="32"
+                        HorizontalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        Click="ColumnHeader_Click"
+                        Content="Win32地址"
+                        CornerRadius="0"
+                        Tag="Win32Address" />
+                    <Button
+                        x:Name="StatusHeaderButton"
+                        Grid.Column="4"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
@@ -102,7 +114,7 @@
                         CornerRadius="0" />
                     <Button
                         x:Name="PriorityHeaderButton"
-                        Grid.Column="4"
+                        Grid.Column="5"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
@@ -112,13 +124,13 @@
                         CornerRadius="0"
                         Tag="Priority" />
                     <Button
-                        x:Name="ModuleHeaderButton"
-                        Grid.Column="5"
+                        x:Name="PreviousModeHeaderButton"
+                        Grid.Column="6"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="模块"
+                        Content="PreviousMode"
                         CornerRadius="0" />
                     <ct:GridSplitter
                         Grid.Column="0"
@@ -170,6 +182,16 @@
                         Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
+                    <ct:GridSplitter
+                        Grid.Column="5"
+                        Width="9"
+                        Margin="0,0,-5,0"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Stretch"
+                        Background="Transparent"
+                        Opacity="0"
+                        ResizeBehavior="BasedOnAlignment"
+                        ResizeDirection="Columns" />
                 </Grid>
             </Border>
 
@@ -184,6 +206,7 @@
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="*" />
@@ -191,14 +214,14 @@
 
                     <ProgressRing
                         x:Name="LoadingRing"
-                        Grid.ColumnSpan="6"
+                        Grid.ColumnSpan="7"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center"
                         IsActive="False" />
 
                     <ListView
                         x:Name="ThreadListView"
-                        Grid.ColumnSpan="6"
+                        Grid.ColumnSpan="7"
                         Background="Transparent"
                         ContainerContentChanging="ThreadListView_ContainerContentChanging"
                         ItemContainerStyle="{StaticResource ListViewItemStyle}"
@@ -209,6 +232,7 @@
                                 <Grid x:Name="ThreadRowGrid" Height="45">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="80" />
@@ -243,9 +267,18 @@
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding Address}" />
 
-                                    <!--  状态  -->
+                                    <!--  地址  -->
                                     <TextBlock
                                         Grid.Column="3"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding Win32Address}" />
+
+                                    <!--  状态  -->
+                                    <TextBlock
+                                        Grid.Column="4"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
@@ -254,23 +287,21 @@
 
                                     <!--  优先级  -->
                                     <TextBlock
-                                        Grid.Column="4"
+                                        Grid.Column="5"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding Priority}" />
 
-                                    <!--  模块  -->
-                                    <essential:MarqueeText
-                                        Grid.Column="5"
-                                        Margin="4,0,0,0"
-                                        HorizontalAlignment="Left"
+                                    <!--  PreviousMode  -->
+                                    <TextBlock
+                                        Grid.Column="6"
+                                        HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
-                                        Behavior="Looping"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Module}" />
+                                        Text="{Binding PreviousMode}" />
 
                                 </Grid>
                             </DataTemplate>
@@ -306,6 +337,13 @@
                         IsHitTestVisible="False" />
                     <Border
                         Grid.Column="5"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        IsHitTestVisible="False" />
+                    <Border
+                        Grid.Column="6"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"

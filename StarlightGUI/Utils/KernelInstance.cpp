@@ -149,19 +149,21 @@ namespace winrt::StarlightGUI::implementation {
 	{
 		if (!GetDriverDevice()) return FALSE;
 
-		WCHAR targetPath[MAX_PATH];
+		WCHAR targetPath[512];
 		wcscpy_s(targetPath, L"\\??\\");
 		wcscat_s(targetPath, path.c_str());
 
+		PWCHAR pathPtr = targetPath;
 		SI_ENUMERATION enumData = { 0 };
 		enumData.BufferSize = sizeof(SI_FILE_DATA) * 10000;
 		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		enumData.Arg = (PVOID)&pathPtr;
 
 		BOOL result = FALSE;
 
 		if (enum_file_mode == 2) {
 			// NTFSPARSER: enum NTFS MFT
-			result = SiQueryFileInformation(FileGetInformation::DirectoryFileByNTFS, targetPath, &enumData, 0);
+			result = SiQueryFileInformation(FileGetInformation::DirectoryFileByNTFS, targetPath, &enumData, (enum_file_mode == 3) ? 1 : 0);
 		}
 		else {
 			// NTAPI (0) or NTFSIO (1)
@@ -172,7 +174,7 @@ namespace winrt::StarlightGUI::implementation {
 
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			if (enum_file_mode == 2) {
-				// NTFSPARSER mode: remove duplicates
+				// NTFSPARSER mode
 				PSI_FILE_DATA_FULL fileData = (PSI_FILE_DATA_FULL)enumData.Buffer;
 				for (ULONG i = 0; i < enumData.Count; i++) {
 					auto fileInfo = winrt::make<winrt::StarlightGUI::implementation::FileInfo>();
@@ -194,7 +196,7 @@ namespace winrt::StarlightGUI::implementation {
 					fileInfo.Name(fileData[i].Name);
 					fileInfo.Path(path + L"\\" + std::wstring(fileData[i].Name));
 					fileInfo.Directory(fileData[i].Directory);
-					fileInfo.Flag(fileData[i].FileAttributes);
+					fileInfo.Flag(0);
 					fileInfo.Size(FormatMemorySize(fileData[i].DataSize));
 					fileInfo.SizeULong(fileData[i].DataSize);
 					files.push_back(fileInfo);
@@ -251,8 +253,10 @@ namespace winrt::StarlightGUI::implementation {
 				auto threadInfo = winrt::make<winrt::StarlightGUI::implementation::ThreadInfo>();
 				threadInfo.Id(threadData[i].Tid);
 				threadInfo.EThread(ULongToHexString((ULONG64)threadData[i].Ethread));
-				threadInfo.Address(ULongToHexString((ULONG64)threadData[i].Win32StartAddress));
-				threadInfo.ModuleInfo(L"");
+				threadInfo.Address(ULongToHexString((ULONG64)threadData[i].StartAddress));
+				threadInfo.Win32Address(ULongToHexString((ULONG64)threadData[i].Win32StartAddress));
+				threadInfo.PreviousMode(threadData[i].PreviousMode == 0 ? L"KernelMode" : L"UserMode");
+				threadInfo.Priority(threadData[i].Priority);
 	
 				switch (threadData[i].State) {
 				case Initialized:
@@ -682,7 +686,7 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 
-	BOOL KernelInstance::SiDeleteFileForce(std::wstring path) noexcept {
+	BOOL KernelInstance::SiDeleteFileEx(std::wstring path) noexcept {
 		WCHAR targetPath[512];
 		wcscpy_s(targetPath, L"\\??\\");
 		wcscat_s(targetPath, path.c_str());
@@ -714,80 +718,38 @@ namespace winrt::StarlightGUI::implementation {
 		}
 	}
 
-	BOOL KernelInstance::SiDeleteFileAuto(std::wstring path) noexcept {
-		if (!fs::exists(path)) {
-			return FALSE;
-		}
-
-		if (!fs::is_directory(path)) {
-			return SiDeleteFile(path);
-		}
-		else {
-			for (const auto& entry : fs::directory_iterator(path)) {
-				if (fs::is_directory(entry)) {
-					SiDeleteFileAuto(entry.path().wstring());
-				}
-				if (fs::is_regular_file(entry)) {
-					SiDeleteFile(entry.path().wstring());
-				}
-			}
-			LOG_INFO(L"KernelInstance", L"Post-deleted directory.");
-			return RemoveDirectoryW(path.c_str());
-		}
-	}
-
-	BOOL KernelInstance::SiDeleteFileEx(std::wstring path) noexcept {
-		if (!fs::exists(path)) {
-			return FALSE;
-		}
-
-		if (!fs::is_directory(path)) {
-			return SiDeleteFileForce(path);
-		}
-		else {
-			for (const auto& entry : fs::directory_iterator(path)) {
-				if (fs::is_directory(entry)) {
-					SiDeleteFileEx(entry.path().wstring());
-				}
-				if (fs::is_regular_file(entry)) {
-					SiDeleteFileForce(entry.path().wstring());
-				}
-			}
-			LOG_INFO(L"KernelInstance", L"Post-deleted directory.");
-			return RemoveDirectoryW(path.c_str());
-		}
-	}
-
 	BOOL KernelInstance::SiLockFile(std::wstring path) noexcept {
 		lastErrorCode = SI_NOT_IMPLEMENTED;
 		lastErrorMessage = L"Not implemented.";
 		return FALSE;
 	}
 
-	BOOL KernelInstance::SiCopyFile(std::wstring from, std::wstring to, std::wstring name) noexcept {
-		WCHAR sourcePath[MAX_PATH];
+	BOOL KernelInstance::SiCopyFile(std::wstring from, std::wstring to) noexcept {
+		WCHAR sourcePath[512];
 		wcscpy_s(sourcePath, L"\\??\\");
 		wcscat_s(sourcePath, from.c_str());
-		wcscat_s(sourcePath, L"\\");
-		wcscat_s(sourcePath, name.c_str());
 
-		WCHAR targetPath[MAX_PATH];
-		wcscpy_s(targetPath, to.c_str());
+		WCHAR targetPath[512];
+		wcscpy_s(targetPath, L"\\??\\");
+		wcscat_s(targetPath, to.c_str());
+		PWCHAR pathPtr = targetPath;
 
-		BOOL result = SiSetFileInformation(FileSetInformation::Copy, sourcePath, targetPath, 1);
+		BOOL result = SiSetFileInformation(FileSetInformation::Copy, sourcePath, pathPtr, 0);
 		QueryError();
 		return result;
 	}
 
 	BOOL KernelInstance::SiRenameFile(std::wstring from, std::wstring to) noexcept {
-		WCHAR sourcePath[MAX_PATH];
+		WCHAR sourcePath[512];
 		wcscpy_s(sourcePath, L"\\??\\");
 		wcscat_s(sourcePath, from.c_str());
 
-		WCHAR targetPath[MAX_PATH];
-		wcsncpy_s(targetPath, to.c_str(), _TRUNCATE);
+		WCHAR targetPath[512];
+		wcscpy_s(targetPath, L"\\??\\");
+		wcscat_s(targetPath, to.c_str());
+		PWCHAR pathPtr = targetPath;
 
-		BOOL result = SiSetFileInformation(FileSetInformation::Rename, sourcePath, targetPath, 0);
+		BOOL result = SiSetFileInformation(FileSetInformation::Rename, sourcePath, pathPtr, 0);
 		QueryError();
 		return result;
 	}

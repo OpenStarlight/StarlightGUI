@@ -205,7 +205,7 @@
   "File.Menu.CopyToCurrentDir": "复制到当前文件夹",
   "File.Menu.Delete": "删除",
   "File.Menu.DeleteKernel": "删除 (内核)",
-  "File.Menu.DeleteMurder": "删除 (内存抹杀)",
+  "File.Menu.DeleteNTFS": "删除 (NTFS)",
   "File.Menu.Rename": "重命名",
   "File.Menu.CopyPath": "复制路径",
   "File.Menu.Properties": "属性",
@@ -216,7 +216,7 @@
   "File.Msg.ImportantFileWarning": "该文件可能为重要文件，如果确认继续请再次点击!",
   "File.Msg.DragCopyException": "拖拽复制时出现异常!",
   "File.Msg.EnterDriveFirst": "请先进入某个驱动器后再进行复制",
-  "File.Msg.CopyPartialFail": "%d 个项目复制失败! 请尝试以高权限运行!",
+  "File.Msg.CopyPartialFail": "操作已完成，但有 %d 个项目复制失败!",
 
   "Window.Title": "窗口管理器",
   "Window.Loading": "正在加载...",
@@ -288,8 +288,8 @@
   "Monitor.Header.TypeModule": "类型/模块",
   "Monitor.Header.Entry": "入口",
   "Monitor.Header.IRPModule": "IRP/模块",
-  "Monitor.Header.PreFilter": "PreFilter",
-  "Monitor.Header.PostFilter": "PostFilter",
+  "Monitor.Header.PreFilter": "Pre-Filter",
+  "Monitor.Header.PostFilter": "Post-Filter",
   "Monitor.Header.DriverModule": "驱动/模块",
   "Monitor.Header.DeviceObject": "设备对象",
   "Monitor.Header.TargetDriverObject": "目标驱动对象",
@@ -543,7 +543,7 @@
   "ProcThread.Menu.Suspend": "暂停",
   "ProcThread.Menu.Terminate": "终止",
   "ProcThread.Menu.TerminateKernel": "终止 (内核)",
-  "ProcThread.Menu.TerminateMurder": "终止 (内存抹杀)",
+  "ProcThread.Menu.TerminateMurder": "终止 (陷阱帧抹杀)",
 
   "ProcThread.Msg.MurderWarning": "这是一个危险操作! 再次点击以确认!",
 

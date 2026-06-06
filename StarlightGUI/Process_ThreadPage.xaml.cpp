@@ -227,8 +227,6 @@ namespace winrt::StarlightGUI::implementation
         co_await wil::resume_foreground(DispatcherQueue());
 
         for (const auto& thread : threads) {
-            if (thread.ModuleInfo().empty()) thread.ModuleInfo(t(L"Common.Unknown"));
-
             m_threadList.Append(thread);
         }
 
@@ -256,10 +254,11 @@ namespace winrt::StarlightGUI::implementation
             bool* ascending;
         };
 
-        static const std::array<SortBinding, 4> bindings{ {
+        static const std::array<SortBinding, 5> bindings{ {
             { L"Id", "Id", &Process_ThreadPage::m_isIdAscending },
             { L"EThread", "EThread", &Process_ThreadPage::m_isEThreadAscending },
             { L"Address", "Address", &Process_ThreadPage::m_isAddressAscending },
+            { L"Win32Address", "Win32Address", &Process_ThreadPage::m_isWin32AddressAscending },
             { L"Priority", "Priority", &Process_ThreadPage::m_isPriorityAscending },
         } };
 
@@ -290,6 +289,7 @@ namespace winrt::StarlightGUI::implementation
             Id,
             EThread,
             Address,
+			Win32Address,
             Priority
         };
 
@@ -298,6 +298,7 @@ namespace winrt::StarlightGUI::implementation
             if (key == "EThread") return SortColumn::EThread;
             if (key == "Address") return SortColumn::Address;
             if (key == "Priority") return SortColumn::Priority;
+			if (key == "Win32Address") return SortColumn::Win32Address;
             return SortColumn::Unknown;
             };
 
@@ -308,11 +309,13 @@ namespace winrt::StarlightGUI::implementation
             IdHeaderButton().Content(box_value(L"TID"));
             EThreadHeaderButton().Content(box_value(L"ETHREAD"));
             AddressHeaderButton().Content(tbox(L"Common.Address"));
+            Win32AddressHeaderButton().Content(box_value(L"Win32" + t(L"Common.Address")));
             PriorityHeaderButton().Content(tbox(L"ProcThread.Header.Priority"));
 
             if (activeColumn == SortColumn::Id) IdHeaderButton().Content(box_value(isAscending ? L"TID ↓" : L"TID ↑"));
             if (activeColumn == SortColumn::EThread) EThreadHeaderButton().Content(box_value(isAscending ? L"ETHREAD ↓" : L"ETHREAD ↑"));
             if (activeColumn == SortColumn::Address) AddressHeaderButton().Content(box_value(isAscending ? t(L"Common.Address") + L" ↓" : t(L"Common.Address") + L" ↑"));
+			if (activeColumn == SortColumn::Win32Address) Win32AddressHeaderButton().Content(box_value(L"Win32" + isAscending ? t(L"Common.Address") + L" ↓" : t(L"Common.Address") + L" ↑"));
             if (activeColumn == SortColumn::Priority) PriorityHeaderButton().Content(box_value(isAscending ? t(L"ProcThread.Header.Priority") + L" ↓" : t(L"ProcThread.Header.Priority") + L" ↑"));
         }
 
@@ -346,6 +349,13 @@ namespace winrt::StarlightGUI::implementation
                 if (aValue != bValue) return aValue < bValue;
                 return a.Address() < b.Address();
             }
+			case SortColumn::Win32Address:
+            {
+                auto aValue = parseHex(a.Win32Address());
+                auto bValue = parseHex(b.Win32Address());
+                if (aValue != bValue) return aValue < bValue;
+				return a.Win32Address() < b.Win32Address();
+            }
             case SortColumn::Priority:
                 return a.Priority() < b.Priority();
             default:
@@ -373,9 +383,10 @@ namespace winrt::StarlightGUI::implementation
         ThreadTitleText().Text(t(L"ProcThread.Title"));
         ThreadCountText().Text(t(L"Msg.Loading"));
         AddressHeaderButton().Content(tbox(L"Common.Address"));
+        Win32AddressHeaderButton().Content(box_value(L"Win32" + t(L"Common.Address")));
         StatusHeaderButton().Content(tbox(L"Common.Status"));
         PriorityHeaderButton().Content(tbox(L"ProcThread.Header.Priority"));
-        ModuleHeaderButton().Content(tbox(L"Common.Module"));
+        PreviousModeHeaderButton().Content(box_value(L"PreviousMode"));
     }
 }
 

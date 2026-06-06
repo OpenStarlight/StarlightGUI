@@ -136,14 +136,17 @@
     <ClCompile Include="Utils\Config.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\I18n.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
     <ClCompile Include="Utils\FileInfo.cpp">
+      <Filter>Utils\Types</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\GeneralEntry.cpp">
       <Filter>Utils\Types</Filter>
     </ClCompile>
     <ClCompile Include="Utils\HandleInfo.cpp">
       <Filter>Utils\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\I18n.cpp">
-      <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="Utils\KCTInfo.cpp">
       <Filter>Utils\Types</Filter>
@@ -164,9 +167,6 @@
       <Filter>Utils\Types</Filter>
     </ClCompile>
     <ClCompile Include="Utils\WindowInfo.cpp">
-      <Filter>Utils\Types</Filter>
-    </ClCompile>
-    <ClCompile Include="Utils\GeneralEntry.cpp">
       <Filter>Utils\Types</Filter>
     </ClCompile>
   </ItemGroup>

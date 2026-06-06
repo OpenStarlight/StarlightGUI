@@ -9,8 +9,9 @@
 		Int32 Id{ get; set; };
 		String EThread{ get; set; };
 		String Address{ get; set; };
+		String Win32Address{ get; set; };
 		String Status{ get; set; };
 		Int32 Priority{ get; set; };
-		String ModuleInfo{ get; set; };
+		String PreviousMode{ get; set; };
 	}
 }

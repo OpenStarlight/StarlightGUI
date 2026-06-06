@@ -74,10 +74,10 @@ namespace winrt::StarlightGUI::implementation {
 		// File
 		static BOOL QueryFile(std::wstring path, std::vector<winrt::StarlightGUI::FileInfo>& files) noexcept;
 		static BOOL DeleteFileAuto(std::wstring path) noexcept;
-		static BOOL SiDeleteFileAuto(std::wstring path) noexcept;
+		static BOOL SiDeleteFile(std::wstring path) noexcept;
 		static BOOL SiDeleteFileEx(std::wstring path) noexcept;
 		static BOOL SiLockFile(std::wstring path) noexcept;
-		static BOOL SiCopyFile(std::wstring from, std::wstring to, std::wstring name) noexcept;
+		static BOOL SiCopyFile(std::wstring from, std::wstring to) noexcept;
 		static BOOL SiRenameFile(std::wstring from, std::wstring to) noexcept;
 
 		// System
@@ -127,8 +127,6 @@ namespace winrt::StarlightGUI::implementation {
 		static BOOL SiQueryFileInformation(FileGetInformation fileInformation, LPCWSTR filePath, PVOID buffer, ULONG argument) noexcept;
 		static BOOL SiSetSystemInformation(SystemSetInformation systemInformation, PVOID buffer, ULONG argument) noexcept;
 		static BOOL SiQuerySystemInformation(SystemGetInformation systemInformation, PVOID buffer, ULONG argument) noexcept;
-		static BOOL SiDeleteFile(std::wstring path) noexcept;
-		static BOOL SiDeleteFileForce(std::wstring path) noexcept;
 		static std::string GetMiniFilterMajorFunction(ULONG64 Index) noexcept;
 	};
 

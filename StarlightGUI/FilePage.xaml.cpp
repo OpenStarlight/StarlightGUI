@@ -25,6 +25,18 @@ namespace winrt::StarlightGUI::implementation
 
 	hstring currentDirectory = L"C:\\";
     static hstring safeAcceptedName = L"";
+    static hstring GetDriverErrorMessage()
+    {
+        auto errorMsg = KernelInstance::GetLastErrorMessage();
+        if (errorMsg.empty()) {
+            auto errorCode = KernelInstance::GetLastErrorCode();
+            wchar_t hexCode[32];
+            swprintf_s(hexCode, L"0x%X", errorCode);
+            return t(L"Msg.DriverError.Code", hexCode);
+        }
+        return t(L"Msg.DriverError.Detail", errorMsg.c_str());
+    }
+
     static std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource> iconCache;
     static std::unordered_set<std::wstring> iconLoadingKeys;
     static std::unordered_map<std::wstring, std::vector<winrt::StarlightGUI::FileInfo>> iconPendingFiles;
@@ -437,7 +449,7 @@ namespace winrt::StarlightGUI::implementation
             // 跳过"上个文件夹"选项
             if (item.Flag() == 999) continue;
             if ((item.Name() == L"Windows" || item.Name() == L"Boot" || item.Name() == L"System32" || item.Name() == L"SysWOW64" || item.Name() == L"Microsoft") &&
-                (safeAcceptedName != L"Windows" && safeAcceptedName != L"Boot" && safeAcceptedName != L"System32" && safeAcceptedName != L"SysWOW64" && safeAcceptedName != L"Microsoft")) {
+                (safeAcceptedName != L"Windows" && safeAcceptedName != L"Boot" && safeAcceptedName != L"System32" && safeAcceptedName != L"SysWOW64" && safeAcceptedName != L"Microsoft") && dangerous_confirm) {
                 safeAcceptedName = item.Name();
                 slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"File.Msg.ImportantFileWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
                 return;
@@ -481,22 +493,22 @@ namespace winrt::StarlightGUI::implementation
         // 选项2.2
         auto item2_2 = slg::CreateMenuItem(flyoutStyles, L"\ue733", t(L"File.Menu.DeleteKernel").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
             for (const auto& item : selectedFiles) {
-                if (KernelInstance::SiDeleteFileAuto(item.Path().c_str())) {
+                if (KernelInstance::SiDeleteFile(item.Path().c_str())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
-                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             }
             });
 
         // 选项2.3
-        auto item2_3 = slg::CreateMenuItem(flyoutStyles, L"\uf5ab", t(L"File.Menu.DeleteMurder").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
+        auto item2_3 = slg::CreateMenuItem(flyoutStyles, L"\uf5ab", t(L"File.Menu.DeleteNTFS").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
             for (const auto& item : selectedFiles) {
                 if (KernelInstance::SiDeleteFileEx(item.Path().c_str())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
-                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             }
             });
 
@@ -507,7 +519,7 @@ namespace winrt::StarlightGUI::implementation
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
-                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             }
             });
 
@@ -566,12 +578,12 @@ namespace winrt::StarlightGUI::implementation
 
         // 当选中多个内容并且其中一个是文件夹时禁用锁定部分只能操作文件的按钮
         // 当选中多个内容并且其中一个是文件夹时禁用打开按钮
-        for (const auto& item : selectedFiles) {
-            if (item.Directory()) {
-                item2_4.IsEnabled(false);
-                item2_5.IsEnabled(false);
-                if (selectedFiles.size() > 1) item1_1.IsEnabled(false);
-                break;
+        if (selectedFiles.size() > 1) {
+            for (const auto& item : selectedFiles) {
+                if (item.Directory()) {
+                    item1_1.IsEnabled(false);
+                    break;
+                }
             }
         }
 
@@ -805,6 +817,9 @@ namespace winrt::StarlightGUI::implementation
 
         m_allFiles.clear();
 
+        bool queryFileResult = true;
+        hstring queryFileError;
+
         // 首页展示驱动器，行为与系统文件管理器更一致
         if (path == kFileHomePage) {
             wchar_t driveBuffer[256]{};
@@ -822,13 +837,20 @@ namespace winrt::StarlightGUI::implementation
             }
         }
         else {
-            KernelInstance::QueryFile(path, m_allFiles);
+            queryFileResult = KernelInstance::QueryFile(path, m_allFiles);
+            if (!queryFileResult) queryFileError = GetDriverErrorMessage();
         }
         LOG_INFO(__WFUNCTION__, L"Enumerated files, %d entry(s).", m_allFiles.size());
 
         co_await wil::resume_foreground(DispatcherQueue());
         if (loadToken != m_currentLoadToken) {
             m_isLoadingFiles = false;
+            co_return;
+        }
+        if (!queryFileResult) {
+            LoadingRing().IsActive(false);
+            m_isLoadingFiles = false;
+            slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), queryFileError, InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
         }
 
@@ -1396,36 +1418,24 @@ namespace winrt::StarlightGUI::implementation
                 auto item = file.as<winrt::StarlightGUI::FileInfo>();
                 // 跳过上个文件夹选项
                 if (item.Flag() == 999) continue;
-				if (item.Directory()) continue;
                 selectedFiles.push_back(item);
             }
 
             int successCount = 0, failedCount = 0;
             for (const auto& item : selectedFiles) {
-                bool result = false;
-                try {
-                    if (fs::is_directory(item.Path().c_str())) {
-                        fs::copy(item.Path().c_str(), copyPath + item.Name().c_str(), fs::copy_options::recursive | fs::copy_options::overwrite_existing);
-                        result = true;
-                    }
-                    else if (fs::is_regular_file(item.Path().c_str())) {
-                        result = fs::copy_file(item.Path().c_str(), copyPath + item.Name().c_str(), fs::copy_options::overwrite_existing);
-                    }
+				co_await winrt::resume_background();
+                BOOL status = KernelInstance::SiCopyFile(item.Path().c_str(), copyPath + L"\\" + item.Name().c_str());
+				co_await wil::resume_foreground(DispatcherQueue());
+                if (status) {
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
+                    successCount++;
                 }
-                catch (...) {
-                    result = false;
+                else {
+                    slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+                    failedCount++;
                 }
-                
-                if (result) successCount++;
-				else failedCount++;
             }
-            if (successCount > 0) {
-                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                co_await LoadFileList();
-            }
-            if (failedCount > 0) {
-                slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
-            }
+            if (failedCount > 0) slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"File.Msg.CopyPartialFail", failedCount), InfoBarSeverity::Error, g_mainWindowInstance);
         }
     }
 
