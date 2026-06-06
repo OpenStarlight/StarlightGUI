@@ -194,7 +194,7 @@ namespace winrt::StarlightGUI::implementation
         slg::coroutine DbgViewGlobalCheckBox_Click(IInspectable const&, RoutedEventArgs const&);
 
         winrt::Windows::Foundation::IAsyncAction LoadItemList();
-        winrt::Windows::Foundation::IAsyncAction LoadPartitionList(std::wstring path);
+        winrt::Windows::Foundation::IAsyncAction LoadPartitionList(std::wstring path, bool reportError = true);
         winrt::Windows::Foundation::IAsyncAction LoadObjectList();
         winrt::Windows::Foundation::IAsyncAction LoadGeneralList(bool force);
         winrt::Windows::Foundation::IAsyncAction WaitAndReloadAsync(int interval);

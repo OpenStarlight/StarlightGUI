@@ -72,20 +72,20 @@ namespace winrt::StarlightGUI::implementation
 		LOG_INFO(L"MonitorPage", L"MonitorPage initialized.");
 	}
 
-	winrt::Windows::Foundation::IAsyncAction MonitorPage::LoadPartitionList(std::wstring path) {
+	winrt::Windows::Foundation::IAsyncAction MonitorPage::LoadPartitionList(std::wstring path, bool reportError) {
 		if (segmentedIndex != 0) co_return;
 
 		std::vector<winrt::StarlightGUI::ObjectEntry> partitionsInPath;
 
 		if (!KernelInstance::SiEnumObjectsByDirectory(path, partitionsInPath)) {
-			slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+			if (reportError) slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
 		}
 
 		for (const auto& object : partitionsInPath) {
 			if (object.Type() == L"Directory") {
 				partitions.push_back(object);
-				co_await LoadPartitionList(object.Path().c_str());
+				co_await LoadPartitionList(object.Path().c_str(), false);
 			}
 		}
 
