@@ -19,6 +19,8 @@
 // 微软我超牛魔的
 #undef min
 #undef max
+#undef CreateProcess
+#undef LoadImage
 
 // 控制台相关
 #include <Console.h>

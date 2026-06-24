@@ -2,7 +2,6 @@
 #include "KernelBase.h"
 #include "CppUtils.h"
 #include <string>
-#undef min,max,CreateProcess,LoadImage
 
 namespace winrt::StarlightGUI::implementation {
 	static HANDLE driverDevice = NULL;
@@ -1189,63 +1188,58 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::ReadMemory(std::vector<BYTE>& data, PVOID address, ULONG size) noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented.";
-		return FALSE;
-		/*if (!GetDriverDevice()) return FALSE;
-
-		struct CHECK_INPUT
-		{
-			ULONG Size;
-			PVOID Address;
-		};
-		CHECK_INPUT check_input = { 0 };
-		check_input.Address = address;
-		check_input.Size = size;
-
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_READ_MEMORY_CHECK, &check_input, sizeof(CHECK_INPUT), 0, 0, 0, NULL);
-
-		if (!status) return FALSE;
-		
-		struct READ_INPUT
-		{
-			ULONG64 Size;
-			PBYTE Data;
-		};
-		READ_INPUT read_input = { 0 };
-		read_input.Data = new BYTE[size]();
-		read_input.Size = size;
-
-		status = DeviceIoControl(driverDevice, IOCTL_READ_MEMORY, &read_input, sizeof(READ_INPUT), &read_input, sizeof(READ_INPUT), 0, NULL);
-
-		if (status) {
-			data.assign(read_input.Data, read_input.Data + read_input.Size);
+		data.clear();
+		if (!address || !size || size > (ULONG)-1 - FIELD_OFFSET(SI_MEMORY, Data)) {
+			lastErrorCode = SI_INVALID_PARAMETER;
+			lastErrorMessage = L"Invalid memory read parameter.";
+			return FALSE;
 		}
-		delete[] read_input.Data;
 
-		return status && !data.empty(); */
+		ULONG bufferSize = FIELD_OFFSET(SI_MEMORY, Data) + size;
+		PSI_MEMORY input = (PSI_MEMORY)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
+		if (!input) {
+			lastErrorCode = SI_ALLOCATION_FAILED;
+			lastErrorMessage = L"Failed to allocate memory read buffer.";
+			return FALSE;
+		}
+
+		input->Address = address;
+		input->Size = size;
+
+		BOOL result = SiQuerySystemInformation(SystemGetInformation::ReadMemory, input, 0);
+		QueryError();
+		if (result) {
+			data.assign(input->Data, input->Data + size);
+		}
+
+		HeapFree(GetProcessHeap(), 0, input);
+		return result;
 	}
 
 	BOOL KernelInstance::WriteMemory(PVOID address, PVOID data, ULONG size) noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented.";
-		return FALSE;
-		/*if (!GetDriverDevice()) return FALSE;
+		if (!address || !data || !size || size > (ULONG)-1 - FIELD_OFFSET(SI_MEMORY, Data)) {
+			lastErrorCode = SI_INVALID_PARAMETER;
+			lastErrorMessage = L"Invalid memory write parameter.";
+			return FALSE;
+		}
 
-		struct INPUT
-		{
-			PVOID Address;
-			PVOID Data;
-			SIZE_T Size;
-		};
-		INPUT input = { 0 };
-		input.Address = address;
-		input.Size = size;
-		input.Data = data;
+		ULONG bufferSize = FIELD_OFFSET(SI_MEMORY, Data) + size;
+		PSI_MEMORY input = (PSI_MEMORY)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
+		if (!input) {
+			lastErrorCode = SI_ALLOCATION_FAILED;
+			lastErrorMessage = L"Failed to allocate memory write buffer.";
+			return FALSE;
+		}
 
-		BOOL status = DeviceIoControl(driverDevice, IOCTL_WRITE_MEMORY, &input, sizeof(INPUT), 0, 0, 0, NULL);
+		input->Address = address;
+		input->Size = size;
+		RtlCopyMemory(input->Data, data, size);
 
-		return status; */
+		BOOL result = SiSetSystemInformation(SystemSetInformation::WriteMemory, input, 0);
+		QueryError();
+
+		HeapFree(GetProcessHeap(), 0, input);
+		return result;
 	}
 
 	// =================================

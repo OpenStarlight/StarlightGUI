@@ -16,6 +16,23 @@ namespace winrt::StarlightGUI::implementation
 {
     bool confirmed = false;
 
+    static hstring GetDriverErrorMessage()
+    {
+        auto errorMsg = KernelInstance::GetLastErrorMessage();
+        if (!errorMsg.empty()) {
+            return t(L"Msg.DriverError.Detail", errorMsg.c_str());
+        }
+
+        auto errorCode = KernelInstance::GetLastErrorCode();
+        if (errorCode == 0) {
+            return t(L"Msg.Failed", GetLastError());
+        }
+
+        wchar_t hexCode[32];
+        swprintf_s(hexCode, L"0x%X", errorCode);
+        return t(L"Msg.DriverError.Code", hexCode);
+    }
+
     DisasmPage::DisasmPage()
     {
         InitializeComponent();
@@ -38,6 +55,7 @@ namespace winrt::StarlightGUI::implementation
             std::vector<BYTE> buffer(size);
 
             BOOL result = KernelInstance::ReadMemory(buffer, (PVOID)address, (ULONG)size);
+            auto errorMessage = GetDriverErrorMessage();
 
             co_await wil::resume_foreground(DispatcherQueue());
 
@@ -128,7 +146,7 @@ namespace winrt::StarlightGUI::implementation
             {
                 HexText().Text(t(L"Common.None"));
                 CharText().Text(t(L"Common.None"));
-                slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Error"), errorMessage.c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             }
         }
         else {
@@ -141,16 +159,17 @@ namespace winrt::StarlightGUI::implementation
                 );
 				confirmed = true;
                 co_return;
-			}
+            }
             ULONG64 address = 0, size = 0, data = 0;
-            if (!HexStringToULong(AddressBox().Text().c_str(), address) || !StringToNumber(SizeBox().Text().c_str(), size) || !StringToNumber(ValueBox().Text().c_str(), data)) {
+            if (!HexStringToULong(AddressBox().Text().c_str(), address) || !StringToNumber(SizeBox().Text().c_str(), size) || !StringToNumber(ValueBox().Text().c_str(), data) || size > sizeof(data)) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Disasm.Msg.InvalidInput"), InfoBarSeverity::Error, g_mainWindowInstance);
                 co_return;
             }
 
             co_await winrt::resume_background();
 
-            BOOL result = KernelInstance::WriteMemory((PVOID)address, (PVOID)data, (ULONG)size);
+            BOOL result = KernelInstance::WriteMemory((PVOID)address, &data, (ULONG)size);
+            auto errorMessage = GetDriverErrorMessage();
 
             co_await wil::resume_foreground(DispatcherQueue());
 
@@ -160,7 +179,7 @@ namespace winrt::StarlightGUI::implementation
             }
             else
             {
-                slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Error"), errorMessage.c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
             }
         }
     }
@@ -178,6 +197,5 @@ namespace winrt::StarlightGUI::implementation
 		CharText().Text(t(L"Common.None"));
     }
 }
-
 
 
