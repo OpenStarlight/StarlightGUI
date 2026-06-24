@@ -48,6 +48,8 @@ namespace winrt::StarlightGUI::implementation
     static WTMUninit_t WTMUninit = nullptr;
     static WTMSetWindowBand_t WTMSetWindowBand = nullptr;
     static WTMGetWindowBand_t WTMGetWindowBand = nullptr;
+    static HMODULE WTMModule = nullptr;
+    static HMODULE IAMKeyHackerModule = nullptr;
 
     static hstring GetDriverErrorMessage()
     {
@@ -76,15 +78,6 @@ namespace winrt::StarlightGUI::implementation
 
         this->Loaded([this](auto&&, auto&&) -> IAsyncAction {
             slg::SyncListViewColumnWidths(HeaderColumnsGrid(), BodyColumnsGrid(), WindowListView(), 1);
-            // 初始化一次，后面不释放，程序退出时自动释放
-            HMODULE hModule = LoadLibraryW(wtmPath.c_str());
-
-            if (hModule) {
-                WTMInit = (WTMInit_t)GetProcAddress(hModule, "WTMInit");
-                WTMUninit = (WTMUninit_t)GetProcAddress(hModule, "WTMUninit");
-                WTMSetWindowBand = (WTMSetWindowBand_t)GetProcAddress(hModule, "WTMSetWindowBand");
-                WTMGetWindowBand = (WTMGetWindowBand_t)GetProcAddress(hModule, "WTMGetWindowBand");
-            }
             LoadWindowList();
             co_return;
             });
@@ -641,7 +634,9 @@ namespace winrt::StarlightGUI::implementation
             }
 
             DWORD band = 0;
-			WTMGetWindowBand(hwnd, &band);
+            if (WTMGetWindowBand) {
+			    WTMGetWindowBand(hwnd, &band);
+            }
 
             winrt::StarlightGUI::WindowInfo windowInfo = winrt::make<winrt::StarlightGUI::implementation::WindowInfo>();
             windowInfo.Name(windowTitle);
@@ -689,15 +684,52 @@ namespace winrt::StarlightGUI::implementation
         }
     }
 
-    bool WindowPage::SetWindowZBID(HWND hwnd, ZBID zbid) {
-        static bool inited = false;
-        inited = WTMInit();
-        if (!inited)
-        {
-            LOG_ERROR(L"WindowPage", L"WindowTopMost failed to initialize.");
+    bool WindowPage::EnsureZBIDModulesInitialized()
+    {
+        static bool initialized = false;
+        if (initialized) return true;
+
+        if (wtmPath.empty() || iamKeyHackerPath.empty()) {
+            auto installedPath = GetInstalledLocationPath();
+            wtmPath = installedPath + L"\\WindowTopMost.dll";
+            iamKeyHackerPath = installedPath + L"\\IAMKeyHacker.dll";
         }
-        if (!WTMSetWindowBand)
-        {
+
+        if (!IAMKeyHackerModule) {
+            IAMKeyHackerModule = LoadLibraryW(iamKeyHackerPath.c_str());
+            if (!IAMKeyHackerModule) {
+                LOG_ERROR(__WFUNCTION__, L"Failed to load IAMKeyHacker.dll, GetLastError() = %d", GetLastError());
+                return false;
+            }
+        }
+
+        if (!WTMModule) {
+            WTMModule = LoadLibraryW(wtmPath.c_str());
+            if (!WTMModule) {
+                LOG_ERROR(__WFUNCTION__, L"Failed to load WindowTopMost.dll, GetLastError() = %d", GetLastError());
+                return false;
+            }
+
+            WTMInit = (WTMInit_t)GetProcAddress(WTMModule, "WTMInit");
+            WTMUninit = (WTMUninit_t)GetProcAddress(WTMModule, "WTMUninit");
+            WTMSetWindowBand = (WTMSetWindowBand_t)GetProcAddress(WTMModule, "WTMSetWindowBand");
+            WTMGetWindowBand = (WTMGetWindowBand_t)GetProcAddress(WTMModule, "WTMGetWindowBand");
+        }
+
+        if (!WTMInit || !WTMSetWindowBand) {
+            LOG_ERROR(__WFUNCTION__, L"WindowTopMost.dll exports are incomplete.");
+            return false;
+        }
+
+        initialized = WTMInit();
+        if (!initialized) {
+            LOG_ERROR(__WFUNCTION__, L"WindowTopMost failed to initialize.");
+        }
+        return initialized;
+    }
+
+    bool WindowPage::SetWindowZBID(HWND hwnd, ZBID zbid) {
+        if (!EnsureZBIDModulesInitialized()) {
             LOG_ERROR(__WFUNCTION__, L"WindowTopMost failed to load! Is the module broken?");
             return false;
         }
@@ -910,8 +942,6 @@ namespace winrt::StarlightGUI::implementation
         WindowStyleHeaderButton().Content(tbox(L"Window.Header.Style"));
     }
 }
-
-
 
 
 

@@ -282,8 +282,7 @@ namespace winrt::StarlightGUI::implementation
             Name,
             ImageBase,
             DriverObject,
-            Size,
-            Index
+            Size
         };
 
         auto resolveSortColumn = [&](const std::string& key) -> SortColumn {
@@ -291,7 +290,6 @@ namespace winrt::StarlightGUI::implementation
             if (key == "ImageBase") return SortColumn::ImageBase;
             if (key == "DriverObject") return SortColumn::DriverObject;
             if (key == "Size") return SortColumn::Size;
-            if (key == "Index") return SortColumn::Index;
             return SortColumn::Unknown;
             };
 
@@ -303,13 +301,11 @@ namespace winrt::StarlightGUI::implementation
             ImageBaseHeaderButton().Content(tbox(L"Common.Base"));
             DriverObjectHeaderButton().Content(tbox(L"KernelModule.Header.DriverObj"));
             SizeHeaderButton().Content(tbox(L"Common.Size"));
-            IndexHeaderButton().Content(tbox(L"Common.Index"));
 
             if (activeColumn == SortColumn::Name) NameHeaderButton().Content(box_value(t(L"Common.Module") + (isAscending ? L" ↓" : L" ↑")));
             if (activeColumn == SortColumn::ImageBase) ImageBaseHeaderButton().Content(box_value(t(L"Common.Base") + (isAscending ? L" ↓" : L" ↑")));
             if (activeColumn == SortColumn::DriverObject) DriverObjectHeaderButton().Content(box_value(t(L"KernelModule.Header.DriverObj") + (isAscending ? L" ↓" : L" ↑")));
             if (activeColumn == SortColumn::Size) SizeHeaderButton().Content(box_value(t(L"Common.Size") + (isAscending ? L" ↓" : L" ↑")));
-            if (activeColumn == SortColumn::Index) IndexHeaderButton().Content(box_value(t(L"Common.Index") + (isAscending ? L" ↓" : L" ↑")));
         }
 
         std::vector<winrt::StarlightGUI::KernelModuleInfo> sortedKernelModules;
@@ -328,8 +324,6 @@ namespace winrt::StarlightGUI::implementation
                 return a.DriverObjectULong() < b.DriverObjectULong();
             case SortColumn::Size:
                 return a.SizeULong() < b.SizeULong();
-            case SortColumn::Index:
-                return a.Index() < b.Index();
             default:
                 return false;
             }
@@ -497,6 +491,5 @@ namespace winrt::StarlightGUI::implementation
         ImageBaseHeaderButton().Content(tbox(L"Common.Base"));
         DriverObjectHeaderButton().Content(tbox(L"KernelModule.Header.DriverObj"));
         SizeHeaderButton().Content(tbox(L"Common.Size"));
-        IndexHeaderButton().Content(tbox(L"Common.Index"));
     }
 }

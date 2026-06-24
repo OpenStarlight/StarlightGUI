@@ -14,6 +14,5 @@
 		UInt64 SizeULong{ get; set; };
 		String DriverObject{ get; set; };
 		UInt64 DriverObjectULong{ get; set; };
-		UInt64 Index{ get; set; };
 	}
 }

@@ -2,6 +2,7 @@
 #include "KernelBase.h"
 #include "CppUtils.h"
 #include <string>
+#undef min,max,CreateProcess,LoadImage
 
 namespace winrt::StarlightGUI::implementation {
 	static HANDLE driverDevice = NULL;
@@ -210,7 +211,7 @@ namespace winrt::StarlightGUI::implementation {
 
 	BOOL KernelInstance::SiEnumProcesses(std::vector<winrt::StarlightGUI::ProcessInfo>& targetList, bool strengthen) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_PROCESS_DATA) * 500;
+		enumData.BufferSize = sizeof(SI_PROCESS_DATA) * 1000;
 		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 		if (strengthen) {
 			ULONG strengthenFlag = 1;
@@ -390,7 +391,6 @@ namespace winrt::StarlightGUI::implementation {
 				di.ImageBaseULong((ULONG64)moduleData[i].Base);
 				di.Size(ULongToHexString(moduleData[i].Size, 0, false, true));
 				di.SizeULong(moduleData[i].Size);
-				di.Index(i);
 				di.DriverObject(ULongToHexString((ULONG64)moduleData[i].DriverObject));
 				di.DriverObjectULong((ULONG64)moduleData[i].DriverObject);
 				kernelModules.push_back(di);
@@ -429,12 +429,6 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 	
-	BOOL KernelInstance::SiEnumStandardFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& filterList) noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented.";
-		return FALSE;
-	}
-	
 	BOOL KernelInstance::SiEnumSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& ssdtList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
 		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 1000;
@@ -448,14 +442,9 @@ namespace winrt::StarlightGUI::implementation {
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
 				entry.String1(to_hstring(functionData[i].Name));
-				entry.String2(L"");
+				entry.String2(L"\\SystemRoot\\System32\\ntoskrnl.exe");
 				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
-				entry.String4(L"");
-				entry.String5(L"-");
 				entry.ULongLong1((ULONG64)functionData[i].Address);
-				entry.ULongLong2(0);
-				entry.ULong1(i);
-				entry.Bool1(false);
 				ssdtList.push_back(entry);
 			}
 		}
@@ -477,14 +466,9 @@ namespace winrt::StarlightGUI::implementation {
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
 				entry.String1(to_hstring(functionData[i].Name));
-				entry.String2(L"");
+				entry.String2(L"\\SystemRoot\\System32\\win32k.sys");
 				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
-				entry.String4(L"");
-				entry.String5(L"-");
 				entry.ULongLong1((ULONG64)functionData[i].Address);
-				entry.ULongLong2(0);
-				entry.ULong1(i);
-				entry.Bool1(false);
 				sssdtList.push_back(entry);
 			}
 		}
@@ -518,12 +502,6 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 	
-	BOOL KernelInstance::SiEnumExCallback(std::vector<winrt::StarlightGUI::GeneralEntry>& callbackList) noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented.";
-		return FALSE;
-	}
-	
 	BOOL KernelInstance::SiEnumIDT(std::vector<winrt::StarlightGUI::GeneralEntry>& idtList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
 		enumData.BufferSize = sizeof(SI_IDT_DATA) * 1000;
@@ -536,11 +514,12 @@ namespace winrt::StarlightGUI::implementation {
 			PSI_IDT_DATA idtData = (PSI_IDT_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(L"");
-				entry.String2(ULongToHexString((ULONG64)idtData[i].Offset));
+				entry.String1(ULongToHexString((ULONG64)idtData[i].Offset));
 				entry.ULongLong1((ULONG64)idtData[i].Offset);
 				entry.ULong1(i);
 				entry.ULong2(idtData[i].Selector);
+				entry.ULong3(idtData[i].Type);
+				entry.ULong4(idtData[i].Dpl);
 				idtList.push_back(entry);
 			}
 		}
@@ -561,7 +540,6 @@ namespace winrt::StarlightGUI::implementation {
 			PSI_GDT_DATA gdtData = (PSI_GDT_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(L"");
 				entry.String2(ULongToHexString((ULONG64)gdtData[i].Base));
 				entry.String3(ULongToHexString(gdtData[i].Limit));
 				entry.ULongLong1((ULONG64)gdtData[i].Base);
@@ -569,6 +547,7 @@ namespace winrt::StarlightGUI::implementation {
 				entry.ULong1(i);
 				entry.ULong2(gdtData[i].Type);
 				entry.ULong3(gdtData[i].Dpl);
+				entry.ULong4(gdtData[i].Granularity);
 				gdtList.push_back(entry);
 			}
 		}
@@ -600,22 +579,46 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 	
-	BOOL KernelInstance::SiEnumHalDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halList) noexcept {
+	BOOL KernelInstance::SiEnumHalDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halList, HalTableType type) noexcept {
 		SI_ENUMERATION enumData = { 0 };
 		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 1000;
 		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+
+		SystemGetInformation information = SystemGetInformation::HalDispatchTable;
+		switch (type) {
+		case HalTableType::HalPrivateDispatchTable:
+			information = SystemGetInformation::HalPrivateDispatchTable;
+			break;
+		case HalTableType::HalIommuDispatchTable:
+			information = SystemGetInformation::HalIommuDispatchTable;
+			break;
+		case HalTableType::HalAcpiDispatchTable:
+			information = SystemGetInformation::HalAcpiDispatchTable;
+			break;
+		case HalTableType::HalSubComponents:
+			information = SystemGetInformation::HalSubComponents;
+			break;
+		default:
+			break;
+		}
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::HalDispatchTable, &enumData, 0);
+		BOOL result = SiQuerySystemInformation(information, &enumData, 0);
 		QueryError();
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
+			wchar_t systemDirectory[MAX_PATH]{};
+			hstring ntoskrnlPath = GetSystemDirectoryW(systemDirectory, MAX_PATH) == 0 ? hstring(L"ntoskrnl.exe") : hstring(std::wstring(systemDirectory) + L"\\ntoskrnl.exe");
 			for (ULONG i = 0; i < enumData.Count; i++) {
+				std::wstring name = StringToWideString(functionData[i].Name);
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(functionData[i].Name));
-				entry.String2(L"");
+				entry.String1(name);
+				entry.String2(ntoskrnlPath);
 				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
+				entry.String4(name.rfind(L"Deprecated", 0) == 0 ? L"Strikethrough" : L"None");
+				entry.String5(name.rfind(L"Unknown", 0) == 0 ? L"Italic" : L"Normal");
 				entry.ULongLong1((ULONG64)functionData[i].Address);
+				entry.ULong1(static_cast<ULONG>(type));
 				halList.push_back(entry);
 			}
 		}
@@ -624,34 +627,49 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 	
-	BOOL KernelInstance::SiEnumHalPrivateDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halPrivateList) noexcept {
-		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
-	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::HalPrivateDispatchTable, &enumData, 0);
-		QueryError();
-	
-		if (result && enumData.Count > 0 && enumData.Buffer) {
-			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
-			for (ULONG i = 0; i < enumData.Count; i++) {
-				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(functionData[i].Name));
-				entry.String2(L"");
-				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
-				entry.ULongLong1((ULONG64)functionData[i].Address);
-				halPrivateList.push_back(entry);
-			}
+	static hstring CallbackTypeToString(CallbackType type) noexcept
+	{
+		switch (type) {
+		case CallbackType::CreateProcess: return L"CreateProcess";
+		case CallbackType::CreateThread: return L"CreateThread";
+		case CallbackType::LoadImage: return L"LoadImage";
+		case CallbackType::Object: return L"Object";
+		case CallbackType::Registry: return L"Registry";
+		case CallbackType::PowerSetting: return L"PowerSetting";
+		case CallbackType::PlugPlay: return L"PlugPlay";
+		case CallbackType::Shutdown: return L"Shutdown";
+		case CallbackType::LastChanceShutdown: return L"LastChanceShutdown";
+		case CallbackType::FileSystemChange: return L"FileSystemChange";
+		case CallbackType::BugCheck: return L"BugCheck";
+		case CallbackType::BugCheckReason: return L"BugCheckReason";
+		case CallbackType::ExCallback: return L"ExCallback";
+		case CallbackType::LogonSessionTerminated: return L"LogonSessionTerminated";
+		case CallbackType::LogonSessionTerminatedEx: return L"LogonSessionTerminatedEx";
+		case CallbackType::DbgPrint: return L"DbgPrint";
+		case CallbackType::IoPriority: return L"IoPriority";
+		case CallbackType::Coalescing: return L"Coalescing";
+		case CallbackType::ImageVerification: return L"ImageVerification";
+		case CallbackType::Nmi: return L"Nmi";
+		default: return L"Unknown";
 		}
-	
-		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
-		return result;
 	}
-	
-	BOOL KernelInstance::SiEnumNotifies(std::vector<winrt::StarlightGUI::GeneralEntry>& callbackList) noexcept {
+
+	static hstring ObCallbackTypeToString(ULONG flag) noexcept
+	{
+		switch ((ObCallbackType)flag) {
+		case ObCallbackType::Process: return L"Process";
+		case ObCallbackType::Thread: return L"Thread";
+		case ObCallbackType::Desktop: return L"Desktop";
+		default: return L"Unknown";
+		}
+	}
+
+	BOOL KernelInstance::SiEnumCallbacks(std::vector<winrt::StarlightGUI::GeneralEntry>& callbackList, CallbackType type) noexcept {
 		SI_ENUMERATION enumData = { 0 };
 		enumData.BufferSize = sizeof(SI_CALLBACK_DATA) * 1000;
 		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		ULONG callbackType = (ULONG)type;
+		enumData.Arg = &callbackType;
 	
 		BOOL result = SiQuerySystemInformation(SystemGetInformation::Callback, &enumData, 0);
 		QueryError();
@@ -660,13 +678,29 @@ namespace winrt::StarlightGUI::implementation {
 			PSI_CALLBACK_DATA callbackData = (PSI_CALLBACK_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto callback = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				callback.String1(to_hstring(callbackData[i].Path));
-				callback.String2(L"Callback");
+				callback.String1(CallbackTypeToString(type));
+				callback.String2(to_hstring(callbackData[i].Path));
 				callback.String3(ULongToHexString((ULONG64)callbackData[i].Address));
-				callback.ULongLong1((ULONG64)callbackData[i].Address);
 				callback.String4(ULongToHexString((ULONG64)callbackData[i].Address2));
+				callback.String5(ULongToHexString((ULONG64)callbackData[i].Address3));
+				callback.String6(ULongToHexString((ULONG64)callbackData[i].Address4));
+				if (type == CallbackType::Object) {
+					callback.String6(ObCallbackTypeToString(callbackData[i].Flag));
+				}
+				else if (type == CallbackType::CreateProcess || type == CallbackType::CreateThread || type == CallbackType::LoadImage ||
+					type == CallbackType::LogonSessionTerminated || type == CallbackType::DbgPrint) {
+					callback.String4(std::to_wstring(callbackData[i].Index));
+					callback.String5(ULongToHexString(callbackData[i].Flag, 0, false, true));
+					callback.String6(L"");
+				}
+
+				callback.ULong1((ULONG)type);
+				callback.ULong2(callbackData[i].Index);
+				callback.ULong3(callbackData[i].Flag);
+				callback.ULongLong1((ULONG64)callbackData[i].Address);
 				callback.ULongLong2((ULONG64)callbackData[i].Address2);
-				callback.ULong1(callbackData[i].Index);
+				callback.ULongLong3((ULONG64)callbackData[i].Address3);
+				callback.ULongLong4((ULONG64)callbackData[i].Address4);
 				callbackList.push_back(callback);
 			}
 		}
@@ -674,7 +708,6 @@ namespace winrt::StarlightGUI::implementation {
 		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
 		return result;
 	}
-	
 
 	BOOL KernelInstance::SiDeleteFile(std::wstring path) noexcept {
 		WCHAR targetPath[512];
@@ -754,7 +787,7 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 
-	BOOL KernelInstance::EnableHVM() noexcept {
+	BOOL KernelInstance::EnableHypervisor() noexcept {
 		if (!GetDriverDevice()) return FALSE;
 
 		BOOL supported = FALSE;
@@ -770,6 +803,14 @@ namespace winrt::StarlightGUI::implementation {
 		}
 
 		BOOL result = DeviceIoControl(driverDevice, IOCTL_METAVERSE_INITIALIZE, NULL, 0, NULL, 0, NULL, NULL);
+		QueryError();
+		return result;
+	}
+
+	BOOL KernelInstance::DisableHypervisor() noexcept {
+		if (!GetDriverDevice()) return FALSE;
+
+		BOOL result = DeviceIoControl(driverDevice, IOCTL_METAVERSE_EXIT, NULL, 0, NULL, 0, NULL, NULL);
 		QueryError();
 		return result;
 	}
@@ -802,30 +843,6 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 
-	BOOL KernelInstance::EnableLoadDriver() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::DisableLoadDriver() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::EnableUnloadDriver() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::DisableUnloadDriver() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
 	BOOL KernelInstance::EnableModifyRegistry() noexcept {
 		lastErrorCode = SI_NOT_IMPLEMENTED;
 		lastErrorMessage = L"Not implemented";
@@ -838,54 +855,18 @@ namespace winrt::StarlightGUI::implementation {
 		return FALSE;
 	}
 
-	BOOL KernelInstance::ProtectDisk() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::UnprotectDisk() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::EnableObCallback() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::DisableObCallback() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::EnableDSE() noexcept {
+	BOOL KernelInstance::EnableDSE(bool hypervisor) noexcept {
 		BOOLEAN state = TRUE;
-		BOOL result = SiSetSystemInformation(SystemSetInformation::DSEState, &state, 0);
+		BOOL result = SiSetSystemInformation(SystemSetInformation::DSEState, &state, hypervisor ? 1 : 0);
 		QueryError();
 		return result;
 	}
 
-	BOOL KernelInstance::DisableDSE() noexcept {
+	BOOL KernelInstance::DisableDSE(bool hypervisor) noexcept {
 		BOOLEAN state = FALSE;
-		BOOL result = SiSetSystemInformation(SystemSetInformation::DSEState, &state, 0);
+		BOOL result = SiSetSystemInformation(SystemSetInformation::DSEState, &state, hypervisor ? 1 : 0);
 		QueryError();
 		return result;
-	}
-
-	BOOL KernelInstance::EnableCmpCallback() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::DisableCmpCallback() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
 	}
 
 	BOOL KernelInstance::EnableLKD() noexcept {
@@ -894,46 +875,10 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 
-	BOOL KernelInstance::DisableLKD() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::EnableEPTScan() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::DisableEPTScan() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
 	BOOL KernelInstance::DisablePatchGuard(int type) noexcept {
 		BOOL result = SiSetSystemInformation(SystemSetInformation::DisablePatchGuard, NULL, type);
 		QueryError();
 		return result;
-	}
-
-	BOOL KernelInstance::Shutdown() {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::Reboot() {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
-	}
-
-	BOOL KernelInstance::RebootForce() {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented";
-		return FALSE;
 	}
 
 	BOOL KernelInstance::BlueScreen(int color) {
@@ -1212,7 +1157,7 @@ namespace winrt::StarlightGUI::implementation {
 		return NT_SUCCESS(status);
 	}
 
-		BOOL KernelInstance::RemoveNotify(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+		BOOL KernelInstance::RemoveCallback(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
 		SI_REMOVE_CALLBACK input = { 0 };
 		input.Type = entry.ULong1();
 		input.Address = (PVOID)entry.ULongLong1();
@@ -1232,32 +1177,6 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 
-		BOOL KernelInstance::RemoveStandardFilter(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented.";
-		return FALSE;
-	}
-
-		BOOL KernelInstance::UnhookSSDT(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented.";
-		return FALSE;
-	}
-
-		BOOL KernelInstance::UnhookSSSDT(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
-		lastErrorMessage = L"Not implemented.";
-		return FALSE;
-	}
-
-		BOOL KernelInstance::RemoveExCallback(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		SI_REMOVE_CALLBACK input = { 0 };
-		input.Address = (PVOID)entry.ULongLong3();
-
-		BOOL result = SiSetSystemInformation(SystemSetInformation::RemoveCallback, &input, 2);
-		QueryError();
-		return result;
-	}
 
 		BOOL KernelInstance::RemovePiDDBCache(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
 		SI_REMOVE_PIDDB_CACHE input = { 0 };
@@ -1587,4 +1506,3 @@ namespace winrt::StarlightGUI::implementation {
 		}
 	}
 }
-

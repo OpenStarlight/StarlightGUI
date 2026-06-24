@@ -10,6 +10,14 @@
 #undef EnumProcesses
 #undef EnumProcessModules
 
+enum class HalTableType : ULONG {
+	HalDispatchTable = 0,
+	HalPrivateDispatchTable,
+	HalIommuDispatchTable,
+	HalAcpiDispatchTable,
+	HalSubComponents
+};
+
 namespace winrt::StarlightGUI::implementation {
 	class KernelInstance {
 	public:
@@ -49,26 +57,19 @@ namespace winrt::StarlightGUI::implementation {
 		static BOOL SiEnumProcessKernelCallbackTable(ULONG pid, std::vector<winrt::StarlightGUI::KCTInfo>& kcts) noexcept;
 		static BOOL SiEnumDrivers(std::vector<winrt::StarlightGUI::KernelModuleInfo>& kernelModules) noexcept;
 		static BOOL SiEnumObjectsByDirectory(std::wstring objectPath, std::vector<winrt::StarlightGUI::ObjectEntry>& objectList) noexcept;
-		static BOOL SiEnumNotifies(std::vector<winrt::StarlightGUI::GeneralEntry>& callbacks) noexcept;
+		static BOOL SiEnumCallbacks(std::vector<winrt::StarlightGUI::GeneralEntry>& callbacks, CallbackType type = CallbackType::CreateProcess) noexcept;
 		static BOOL SiEnumMiniFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& miniFilters) noexcept;
-		static BOOL SiEnumStandardFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& filters) noexcept;
 		static BOOL SiEnumSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& ssdts) noexcept;
 		static BOOL SiEnumSSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& sssdts) noexcept;
-		static BOOL SiEnumExCallback(std::vector<winrt::StarlightGUI::GeneralEntry>& callbacks) noexcept;
 		static BOOL SiEnumIoTimer(std::vector<winrt::StarlightGUI::GeneralEntry>& timers) noexcept;
 		static BOOL SiEnumIDT(std::vector<winrt::StarlightGUI::GeneralEntry>& idtEntries) noexcept;
 		static BOOL SiEnumGDT(std::vector<winrt::StarlightGUI::GeneralEntry>& gdtEntries) noexcept;
 		static BOOL SiEnumPiDDBCacheTable(std::vector<winrt::StarlightGUI::GeneralEntry>& piddbEntries) noexcept;
-		static BOOL SiEnumHalDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halEntries) noexcept;
-		static BOOL SiEnumHalPrivateDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halPrivateEntries) noexcept;
+		static BOOL SiEnumHalDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halEntries, HalTableType type = HalTableType::HalDispatchTable) noexcept;
 
 		// Kernel Objects
-		static BOOL RemoveNotify(winrt::StarlightGUI::GeneralEntry& entry) noexcept;
+		static BOOL RemoveCallback(winrt::StarlightGUI::GeneralEntry& entry) noexcept;
 		static BOOL RemoveMiniFilter(winrt::StarlightGUI::GeneralEntry& entry) noexcept;
-		static BOOL RemoveStandardFilter(winrt::StarlightGUI::GeneralEntry& entry) noexcept;
-		static BOOL UnhookSSDT(winrt::StarlightGUI::GeneralEntry& entry) noexcept;
-		static BOOL UnhookSSSDT(winrt::StarlightGUI::GeneralEntry& entry) noexcept;
-		static BOOL RemoveExCallback(winrt::StarlightGUI::GeneralEntry& entry) noexcept;
 		static BOOL RemovePiDDBCache(winrt::StarlightGUI::GeneralEntry& entry) noexcept;
 
 		// File
@@ -81,33 +82,18 @@ namespace winrt::StarlightGUI::implementation {
 		static BOOL SiRenameFile(std::wstring from, std::wstring to) noexcept;
 
 		// System
-		static BOOL EnableHVM() noexcept;
+		static BOOL EnableHypervisor() noexcept;
+		static BOOL DisableHypervisor() noexcept;
 		static BOOL EnableCreateProcess() noexcept;
 		static BOOL DisableCreateProcess() noexcept;
 		static BOOL EnableCreateFile() noexcept;
 		static BOOL DisableCreateFile() noexcept;
-		static BOOL EnableLoadDriver() noexcept;
-		static BOOL DisableLoadDriver() noexcept;
-		static BOOL EnableUnloadDriver() noexcept;
-		static BOOL DisableUnloadDriver() noexcept;
 		static BOOL EnableModifyRegistry() noexcept;
 		static BOOL DisableModifyRegistry() noexcept;
-		static BOOL ProtectDisk() noexcept;
-		static BOOL UnprotectDisk() noexcept;
-		static BOOL EnableDSE() noexcept;
-		static BOOL DisableDSE() noexcept;
-		static BOOL EnableObCallback() noexcept;
-		static BOOL DisableObCallback() noexcept;
-		static BOOL EnableCmpCallback() noexcept;
-		static BOOL DisableCmpCallback() noexcept;
+		static BOOL EnableDSE(bool hypervisor = false) noexcept;
+		static BOOL DisableDSE(bool hypervisor = false) noexcept;
 		static BOOL EnableLKD() noexcept;
-		static BOOL DisableLKD() noexcept;
-		static BOOL EnableEPTScan() noexcept;
-		static BOOL DisableEPTScan() noexcept;
 		static BOOL DisablePatchGuard(int type) noexcept;
-		static BOOL Shutdown();
-		static BOOL Reboot();
-		static BOOL RebootForce();
 		static BOOL BlueScreen(int color);
 
 		// Object

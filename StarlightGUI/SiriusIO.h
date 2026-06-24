@@ -1,5 +1,5 @@
 ﻿#pragma once
-#define SIRIUS_DRIVER_VERSION L"5.0.0"
+#define SIRIUS_DRIVER_VERSION L"5.0.1"
 #if defined(_M_IX86)
 #define PVOID PVOID64
 #define ULONG_PTR unsigned long long
@@ -178,7 +178,7 @@ enum class SystemGetInformation : ULONG {
     /* Firmware */
     BGRT,                                       // [SI_BGRT_DATA], get Boot Graphics Resource Table.
     FPDT,                                       // [SI_FPDT_DATA], get Firmware Performance Data Table.
-    UEFI,                                       // [SI_UEFI_DATA], query Unified Extensible Firmware Interface info.
+    UEFI,                                       // [SI_UEFI_DATA], get Unified Extensible Firmware Interface info.
     RSDT,                                       // [SI_RSDT_DATA], get RSDT/XSDT root table info.
     FADT,                                       // [SI_FADT_DATA], get Fixed ACPI Description Table.
     MADT,                                       // [SI_MADT_DATA], get Multiple APIC Description Table.
@@ -445,7 +445,8 @@ typedef struct _SI_ENUMERATION {
 
 typedef struct _SI_MEMORY {
     PVOID Address;
-    ULONG64 Value;
+    ULONG Size;
+    UCHAR Data[1];
 } SI_MEMORY, * PSI_MEMORY;
 
 typedef struct _SI_LOG_ENTRY {

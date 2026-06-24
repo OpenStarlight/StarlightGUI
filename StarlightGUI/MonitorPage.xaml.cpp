@@ -3,6 +3,8 @@
 #if __has_include("MonitorPage.g.cpp")
 #include "MonitorPage.g.cpp"
 #endif
+#include <array>
+#include <string_view>
 #include <winrt/XamlToolkit.WinUI.Controls.h>
 #include <unordered_set>
 
@@ -30,9 +32,24 @@ namespace winrt::StarlightGUI::implementation
 		return t(L"Msg.DriverError.Detail", errorMsg.c_str());
 	}
 
+	static constexpr std::array<std::wstring_view, 20> CallbackTypeNames = {
+		L"CreateProcess", L"CreateThread", L"LoadImage", L"Object",
+		L"Registry", L"PowerSetting", L"PlugPlay", L"Shutdown",
+		L"LastChanceShutdown", L"FileSystemChange", L"BugCheck",
+		L"BugCheckReason", L"ExCallback", L"LogonSessionTerminated",
+		L"LogonSessionTerminatedEx", L"DbgPrint", L"IoPriority",
+		L"Coalescing", L"ImageVerification", L"Nmi"
+	};
+
+	static constexpr std::array<std::wstring_view, 5> HALTableNames = {
+		L"HalDispatchTable", L"HalPrivateDispatchTable", L"HalIommuDispatchTable",
+		L"HalAcpiDispatchTable", L"HalSubComponents"
+	};
+
 	MonitorPage::MonitorPage() {
 		InitializeComponent();
 		SetupLocalization();
+		InitializeFlyout();
 
 		// 初始化所有列表
 		{
@@ -40,33 +57,19 @@ namespace winrt::StarlightGUI::implementation
 			ObjectListView().ItemsSource(m_objectList);
 			CallbackListView().ItemsSource(m_generalList);
 			MiniFilterListView().ItemsSource(m_generalList);
-			StdFilterListView().ItemsSource(m_generalList);
 			SSDTListView().ItemsSource(m_generalList);
 			SSSDTListView().ItemsSource(m_generalList);
 			IoTimerListView().ItemsSource(m_generalList);
-			ExCallbackListView().ItemsSource(m_generalList);
 			IDTListView().ItemsSource(m_generalList);
 			GDTListView().ItemsSource(m_generalList);
 			PiDDBListView().ItemsSource(m_generalList);
-			HALDPTListView().ItemsSource(m_generalList);
-			HALPDPTListView().ItemsSource(m_generalList);
+			HALTableListView().ItemsSource(m_generalList);
 		}
+		UpdateCallbackColumns();
         InitializeColumnSyncBindings();
-
-		winrt::Microsoft::UI::Xaml::Application::Current().Resources().MergedDictionaries();
 
 		Unloaded([this](auto&&, auto&&) {
 			++m_reloadRequestVersion;
-			windbgTimer.Stop();
-			});
-
-		windbgTimer.Interval(std::chrono::seconds(1));
-		windbgTimer.Tick([this](auto&&, auto&&) {
-			std::lock_guard<std::mutex> guard(dbgViewMutex);
-			uint32_t currentLength = static_cast<uint32_t>(dbgViewData.size());
-			if (currentLength == m_lastDbgViewLength) return;
-			DbgViewBox().Text(dbgViewData);
-			m_lastDbgViewLength = currentLength;
 			});
 
 		LOG_INFO(L"MonitorPage", L"MonitorPage initialized.");
@@ -147,6 +150,8 @@ namespace winrt::StarlightGUI::implementation
 		LOG_INFO(__WFUNCTION__, L"Loading general list...");
 
 		auto requestedIndex = segmentedIndex;
+		auto requestedCallbackType = m_callbackType;
+		auto requestedHALTableType = m_halTableType;
 		auto lifetime = get_strong();
 		hstring query = SearchBox().Text();
 		std::wstring lowerQuery;
@@ -157,23 +162,28 @@ namespace winrt::StarlightGUI::implementation
 		std::vector<winrt::StarlightGUI::GeneralEntry> entries;
 		std::vector<winrt::StarlightGUI::GeneralEntry> const* entriesSource = &entries;
 
-		static std::vector<winrt::StarlightGUI::GeneralEntry> callbackCache, minifilterCache, standardfilterCache, ssdtCache, sssdtCache, ioTimerCache, exCallbackCache, idtCache, gdtCache, piddbCache, halDptCache, halPdptCache;
+		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, CallbackTypeNames.size()> callbackCache;
+		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, HALTableNames.size()> halCache;
+		static std::vector<winrt::StarlightGUI::GeneralEntry> minifilterCache, ssdtCache, sssdtCache, ioTimerCache, idtCache, gdtCache, piddbCache;
 
 		switch (requestedIndex) {
-		case 2:
-			if (force || callbackCache.empty()) {
-				if (!KernelInstance::SiEnumNotifies(entries)) {
+		case 1:
+			if (requestedCallbackType < 0 || requestedCallbackType >= static_cast<int>(callbackCache.size())) {
+				requestedCallbackType = 0;
+			}
+			if (force || callbackCache[requestedCallbackType].empty()) {
+				if (!KernelInstance::SiEnumCallbacks(entries, (CallbackType)requestedCallbackType)) {
 					co_await wil::resume_foreground(DispatcherQueue());
 					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
 					m_isLoading = false;
 					co_return;
 				}
-				callbackCache = entries;
+				callbackCache[requestedCallbackType] = entries;
 				entriesSource = &entries;
 			}
-			else entriesSource = &callbackCache;
+			else entriesSource = &callbackCache[requestedCallbackType];
 			break;
-		case 3:
+		case 2:
 			if (force || minifilterCache.empty()) {
 				if (!KernelInstance::SiEnumMiniFilter(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
@@ -186,20 +196,7 @@ namespace winrt::StarlightGUI::implementation
 			}
 			else entriesSource = &minifilterCache;
 			break;
-		case 4:
-			if (force || standardfilterCache.empty()) {
-				if (!KernelInstance::SiEnumStandardFilter(entries)) {
-					co_await wil::resume_foreground(DispatcherQueue());
-					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
-					m_isLoading = false;
-					co_return;
-				}
-				standardfilterCache = entries;
-				entriesSource = &entries;
-			}
-			else entriesSource = &standardfilterCache;
-			break;
-		case 5:
+		case 3:
 			if (force || ssdtCache.empty()) {
 				if (!KernelInstance::SiEnumSSDT(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
@@ -212,7 +209,7 @@ namespace winrt::StarlightGUI::implementation
 			}
 			else entriesSource = &ssdtCache;
 			break;
-		case 6:
+		case 4:
 			if (force || sssdtCache.empty()) {
 				if (!KernelInstance::SiEnumSSSDT(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
@@ -225,7 +222,7 @@ namespace winrt::StarlightGUI::implementation
 			}
 			else entriesSource = &sssdtCache;
 			break;
-		case 7:
+		case 5:
 			if (force || ioTimerCache.empty()) {
 				if (!KernelInstance::SiEnumIoTimer(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
@@ -238,20 +235,7 @@ namespace winrt::StarlightGUI::implementation
 			}
 			else entriesSource = &ioTimerCache;
 			break;
-		case 8:
-			if (force || exCallbackCache.empty()) {
-				if (!KernelInstance::SiEnumExCallback(entries)) {
-					co_await wil::resume_foreground(DispatcherQueue());
-					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
-					m_isLoading = false;
-					co_return;
-				}
-				exCallbackCache = entries;
-				entriesSource = &entries;
-			}
-			else entriesSource = &exCallbackCache;
-			break;
-		case 9:
+		case 6:
 			if (force || idtCache.empty()) {
 				if (!KernelInstance::SiEnumIDT(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
@@ -264,7 +248,7 @@ namespace winrt::StarlightGUI::implementation
 			}
 			else entriesSource = &idtCache;
 			break;
-		case 10:
+		case 7:
 			if (force || gdtCache.empty()) {
 				if (!KernelInstance::SiEnumGDT(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
@@ -277,7 +261,7 @@ namespace winrt::StarlightGUI::implementation
 			}
 			else entriesSource = &gdtCache;
 			break;
-		case 11:
+		case 8:
 			if (force || piddbCache.empty()) {
 				if (!KernelInstance::SiEnumPiDDBCacheTable(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
@@ -290,38 +274,30 @@ namespace winrt::StarlightGUI::implementation
 			}
 			else entriesSource = &piddbCache;
 			break;
-		case 12:
-			if (force || halDptCache.empty()) {
-				if (!KernelInstance::SiEnumHalDispatchTable(entries)) {
+		case 9:
+			if (requestedHALTableType < 0 || requestedHALTableType >= static_cast<int>(halCache.size())) {
+				requestedHALTableType = 0;
+			}
+			if (force || halCache[requestedHALTableType].empty()) {
+				if (!KernelInstance::SiEnumHalDispatchTable(entries, (HalTableType)requestedHALTableType)) {
 					co_await wil::resume_foreground(DispatcherQueue());
 					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
 					m_isLoading = false;
 					co_return;
 				}
-				halDptCache = entries;
+				halCache[requestedHALTableType] = entries;
 				entriesSource = &entries;
 			}
-			else entriesSource = &halDptCache;
-			break;
-		case 13:
-			if (force || halPdptCache.empty()) {
-				if (!KernelInstance::SiEnumHalPrivateDispatchTable(entries)) {
-					co_await wil::resume_foreground(DispatcherQueue());
-					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
-					m_isLoading = false;
-					co_return;
-				}
-				halPdptCache = entries;
-				entriesSource = &entries;
-			}
-			else entriesSource = &halPdptCache;
+			else entriesSource = &halCache[requestedHALTableType];
 			break;
 		}
 
 		co_await wil::resume_foreground(DispatcherQueue());
 
 		// 防止意外
-		if (requestedIndex != segmentedIndex) {
+		if (requestedIndex != segmentedIndex ||
+			(requestedIndex == 1 && requestedCallbackType != m_callbackType) ||
+			(requestedIndex == 9 && requestedHALTableType != m_halTableType)) {
 			m_isLoading = false;
 			co_return;
 		}
@@ -330,26 +306,12 @@ namespace winrt::StarlightGUI::implementation
 		for (const auto& entry : *entriesSource) {
 			bool shouldRemove = false;
 			if (!lowerQuery.empty()) {
-				switch (requestedIndex) {
-				case 2:
-				case 3:
-				case 5:
-				case 6:
-				case 8:
-				case 12:
-				case 13:
-					shouldRemove = !ContainsIgnoreCaseLowerQuery(entry.String1().c_str(), lowerQuery) && !ContainsIgnoreCaseLowerQuery(entry.String2().c_str(), lowerQuery);
-					break;
-				case 4:
-					shouldRemove = !ContainsIgnoreCaseLowerQuery(entry.String2().c_str(), lowerQuery) && !ContainsIgnoreCaseLowerQuery(entry.String3().c_str(), lowerQuery);
-					break;
-				case 7:
-				case 9:
-				case 10:
-				case 11:
-					shouldRemove = !ContainsIgnoreCaseLowerQuery(entry.String1().c_str(), lowerQuery);
-					break;
-				}
+				shouldRemove = !ContainsIgnoreCaseLowerQuery(entry.String1().c_str(), lowerQuery) &&
+					!ContainsIgnoreCaseLowerQuery(entry.String2().c_str(), lowerQuery) &&
+					!ContainsIgnoreCaseLowerQuery(entry.String3().c_str(), lowerQuery) &&
+					!ContainsIgnoreCaseLowerQuery(entry.String4().c_str(), lowerQuery) &&
+					!ContainsIgnoreCaseLowerQuery(entry.String5().c_str(), lowerQuery) &&
+					!ContainsIgnoreCaseLowerQuery(entry.String6().c_str(), lowerQuery);
 			}
 			if (shouldRemove) continue;
 
@@ -529,7 +491,7 @@ namespace winrt::StarlightGUI::implementation
 
 		// 选项1.1
 		auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"Monitor.Menu.Remove").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) mutable -> winrt::Windows::Foundation::IAsyncAction {
-			if (KernelInstance::RemoveNotify(item)) {
+			if (KernelInstance::RemoveCallback(item)) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 				WaitAndReloadAsync(1000);
 			}
@@ -659,87 +621,9 @@ namespace winrt::StarlightGUI::implementation
 		slg::ShowAt(menuFlyout, listView, e);
 	}
 
-	void MonitorPage::StdFilterListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
-	{
-		auto listView = StdFilterListView();
-
-		slg::SelectItemOnRightTapped(listView, e);
-
-		if (!listView.SelectedItem()) return;
-
-		auto item = listView.SelectedItem().as<winrt::StarlightGUI::GeneralEntry>();
-
-		auto flyoutStyles = slg::GetStyles();
-
-		MenuFlyout menuFlyout;
-
-		// 选项1.1
-		auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"Monitor.Menu.Unload").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) mutable -> winrt::Windows::Foundation::IAsyncAction {
-			if (KernelInstance::RemoveStandardFilter(item)) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-				WaitAndReloadAsync(1000);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-
-		// 分割线1
-		MenuFlyoutSeparator separator1;
-
-		// 选项2.1
-		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
-		auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Monitor.Menu.Driver").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String2().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub1);
-		auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", t(L"Common.Module").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String3().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub2);
-		auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ue97c", t(L"Common.Type").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String1().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub3);
-		auto item2_1_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"Monitor.Menu.DeviceObj").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String4().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub4);
-		auto item2_1_sub5 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Monitor.Menu.TargetDriverObj").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String5().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub5);
-
-		menuFlyout.Items().Append(item1_1);
-		menuFlyout.Items().Append(separator1);
-		menuFlyout.Items().Append(item2_1);
-
-		slg::ShowAt(menuFlyout, listView, e);
-	}
-
 	void MonitorPage::SSDTListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
 	{
 		auto listView = sender.as<ListView>();
-		bool isSSDT = listView != SSSDTListView();
 
 		slg::SelectItemOnRightTapped(listView, e);
 
@@ -750,28 +634,6 @@ namespace winrt::StarlightGUI::implementation
 		auto flyoutStyles = slg::GetStyles();
 
 		MenuFlyout menuFlyout;
-
-		// 选项1.1
-		auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue75c", t(L"Monitor.Menu.Unhook").c_str(), [this, item, isSSDT](IInspectable const& sender, RoutedEventArgs const& e) mutable -> winrt::Windows::Foundation::IAsyncAction {
-			if ((isSSDT && KernelInstance::UnhookSSDT(item)) || (!isSSDT && KernelInstance::UnhookSSSDT(item))) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-				WaitAndReloadAsync(1000);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		if (!item.ULongLong2() || (!item.Bool1() && item.ULongLong1() == item.ULongLong2())) item1_1.IsEnabled(false);
-
-		// 选项1.2
-		auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ue72c", t(L"Monitor.Menu.ScanEPTHook").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) mutable -> winrt::Windows::Foundation::IAsyncAction {
-			KernelInstance::EnableEPTScan();
-			WaitAndReloadAsync(100);
-			KernelInstance::DisableEPTScan();
-			co_return;
-			});
-
-		// 分割线1
-		MenuFlyoutSeparator separator1;
 
 		// 选项2.1
 		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
@@ -791,85 +653,7 @@ namespace winrt::StarlightGUI::implementation
 			co_return;
 			});
 		item2_1.Items().Append(item2_1_sub2);
-		auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ue97c", t(L"Monitor.Menu.Hook").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String5().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub3);
-		auto item2_1_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"Common.Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String3().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub4);
-		auto item2_1_sub5 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Monitor.Menu.SrcAddress").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String4().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub5);
-
-		menuFlyout.Items().Append(item1_1);
-		if (isSSDT) menuFlyout.Items().Append(item1_2);
-		menuFlyout.Items().Append(separator1);
-		menuFlyout.Items().Append(item2_1);
-
-		slg::ShowAt(menuFlyout, listView, e);
-	}
-
-	void MonitorPage::ExCallbackListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
-	{
-		auto listView = ExCallbackListView();
-
-		slg::SelectItemOnRightTapped(listView, e);
-
-		if (!listView.SelectedItem()) return;
-
-		auto item = listView.SelectedItem().as<winrt::StarlightGUI::GeneralEntry>();
-
-		auto flyoutStyles = slg::GetStyles();
-
-		MenuFlyout menuFlyout;
-
-		// 选项1.1
-		auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"Monitor.Menu.Remove").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) mutable -> winrt::Windows::Foundation::IAsyncAction {
-			if (KernelInstance::RemoveExCallback(item)) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-				WaitAndReloadAsync(1000);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-
-		// 分割线1
-		MenuFlyoutSeparator separator1;
-
-		// 选项2.1
-		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
-		auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String1().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub1);
-		auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", t(L"Common.Module").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String2().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub2);
-		auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"Monitor.Menu.Entry").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+		auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"Common.Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
 			if (TaskUtils::CopyToClipboard(item.String3().c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 			}
@@ -877,25 +661,7 @@ namespace winrt::StarlightGUI::implementation
 			co_return;
 			});
 		item2_1.Items().Append(item2_1_sub3);
-		auto item2_1_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Monitor.Menu.Object").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String4().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub4);
-		auto item2_1_sub5 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Common.Handle").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String5().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub5);
 
-		menuFlyout.Items().Append(item1_1);
-		menuFlyout.Items().Append(separator1);
 		menuFlyout.Items().Append(item2_1);
 
 		slg::ShowAt(menuFlyout, listView, e);
@@ -962,9 +728,9 @@ namespace winrt::StarlightGUI::implementation
 		slg::ShowAt(menuFlyout, listView, e);
 	}
 
-	void MonitorPage::HALDPTListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
+	void MonitorPage::HALTableListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
 	{
-		auto listView = HALDPTListView();
+		auto listView = HALTableListView();
 
 		slg::SelectItemOnRightTapped(listView, e);
 
@@ -1033,6 +799,190 @@ namespace winrt::StarlightGUI::implementation
 		co_return;
 	}
 
+	void MonitorPage::InitializeFlyout()
+	{
+		MenuFlyout flyout;
+
+		for (uint32_t i = 0; i < CallbackTypeNames.size(); ++i) {
+			ToggleMenuFlyoutItem item;
+			item.Text(hstring(CallbackTypeNames[i]));
+			item.Tag(box_value(static_cast<int32_t>(i)));
+			item.IsChecked(static_cast<int>(i) == m_callbackType);
+			item.Click({ this, &MonitorPage::CallbackTypeMenuItem_Click });
+			flyout.Items().Append(item);
+		}
+
+		CallbackTypeButton().Flyout(flyout);
+
+		flyout = MenuFlyout();
+		for (uint32_t i = 0; i < HALTableNames.size(); ++i) {
+			ToggleMenuFlyoutItem item;
+			item.Text(hstring(HALTableNames[i]));
+			item.Tag(box_value(static_cast<int32_t>(i)));
+			item.IsChecked(static_cast<int>(i) == m_halTableType);
+			item.Click({ this, &MonitorPage::HALTableMenuItem_Click });
+			flyout.Items().Append(item);
+		}
+		HALTableButton().Flyout(flyout);
+	}
+
+	void MonitorPage::UpdateCallbackColumns()
+	{
+		std::array<hstring, 4> labels = { L"Address", L"Address2", L"Address3", L"Address4" };
+		uint32_t visibleColumns = 4;
+
+		switch ((CallbackType)m_callbackType) {
+		case CallbackType::CreateProcess:
+		case CallbackType::CreateThread:
+		case CallbackType::LoadImage:
+		case CallbackType::LogonSessionTerminated:
+		case CallbackType::DbgPrint:
+			labels = { L"Routine", L"Index", L"Flag", L"" };
+			visibleColumns = 3;
+			break;
+		case CallbackType::Object:
+			labels = { L"Handle", L"PreCall", L"PostCall", L"Object" };
+			break;
+		case CallbackType::Registry:
+			labels = { L"Cookie", L"Context", L"Function", L"" };
+			visibleColumns = 3;
+			break;
+		case CallbackType::PowerSetting:
+			labels = { L"Routine", L"Context", L"Configuration", L"DeviceObject" };
+			break;
+		case CallbackType::PlugPlay:
+			labels = { L"Routine", L"Context", L"DeviceObject", L"DriverObject" };
+			break;
+		case CallbackType::Shutdown:
+		case CallbackType::LastChanceShutdown:
+			labels = { L"DeviceObject", L"DriverObject", L"", L"" };
+			visibleColumns = 2;
+			break;
+		case CallbackType::FileSystemChange:
+			labels = { L"Callback", L"DeviceObject", L"DriverObject", L"" };
+			visibleColumns = 3;
+			break;
+		case CallbackType::BugCheck:
+			labels = { L"Routine", L"Buffer", L"Component", L"Length" };
+			break;
+		case CallbackType::BugCheckReason:
+			labels = { L"Routine", L"Reason", L"Component", L"State" };
+			break;
+		case CallbackType::ExCallback:
+			labels = { L"Routine", L"Context", L"Object", L"Entry" };
+			break;
+		case CallbackType::LogonSessionTerminatedEx:
+			labels = { L"Routine", L"Context", L"", L"" };
+			visibleColumns = 2;
+			break;
+		case CallbackType::IoPriority:
+			labels = { L"UserCallback", L"SelfReference", L"DeviceObject", L"DriverObject" };
+			break;
+		case CallbackType::Coalescing:
+			labels = { L"CallbackContext", L"SelfReference", L"DeviceObject", L"DriverObject" };
+			break;
+		case CallbackType::ImageVerification:
+			labels = { L"Callback", L"Address2", L"Address3", L"Address4" };
+			break;
+		case CallbackType::Nmi:
+			labels = { L"Routine", L"Context", L"SelfReference", L"" };
+			visibleColumns = 3;
+			break;
+		default:
+			break;
+		}
+
+		CallbackTypeModuleHeaderButton().Content(tbox(L"Monitor.Header.TypeModule"));
+		CallbackEntryHeaderButton().Content(box_value(labels[0]));
+		CallbackHandleHeaderButton().Content(box_value(labels[1]));
+		CallbackAddress3HeaderButton().Content(box_value(labels[2]));
+		CallbackAddress4HeaderButton().Content(box_value(labels[3]));
+
+		std::array<ColumnDefinition, 4> headerColumns = { CallbackHeaderColumn1(), CallbackHeaderColumn2(), CallbackHeaderColumn3(), CallbackHeaderColumn4() };
+		std::array<ColumnDefinition, 4> bodyColumns = { CallbackBodyColumn1(), CallbackBodyColumn2(), CallbackBodyColumn3(), CallbackBodyColumn4() };
+		std::array<Button, 4> headerButtons = { CallbackEntryHeaderButton(), CallbackHandleHeaderButton(), CallbackAddress3HeaderButton(), CallbackAddress4HeaderButton() };
+
+		for (uint32_t i = 0; i < headerColumns.size(); ++i) {
+			bool visible = i < visibleColumns;
+			GridLength width = visible ? GridLengthHelper::FromValueAndType(150, GridUnitType::Pixel) : GridLengthHelper::FromPixels(0);
+			headerColumns[i].Width(width);
+			bodyColumns[i].Width(width);
+			headerButtons[i].Visibility(visible ? Visibility::Visible : Visibility::Collapsed);
+		}
+
+		CallbackTypeButton().Label(t(L"Monitor.CallbackTypeLabel", std::wstring(CallbackTypeNames[m_callbackType]).c_str()));
+
+		auto flyout = CallbackTypeButton().Flyout().try_as<MenuFlyout>();
+		if (!flyout) return;
+
+		for (auto const& itemBase : flyout.Items()) {
+			auto item = itemBase.try_as<ToggleMenuFlyoutItem>();
+			if (!item) continue;
+
+			int32_t index = unbox_value<int32_t>(item.Tag());
+			item.IsChecked(index == m_callbackType);
+		}
+	}
+
+	void MonitorPage::CallbackTypeMenuItem_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+	{
+		(void)e;
+		if (!IsLoaded()) return;
+
+		auto item = sender.try_as<ToggleMenuFlyoutItem>();
+		if (!item) return;
+
+		int selectedIndex = unbox_value<int32_t>(item.Tag());
+		if (selectedIndex < 0 || selectedIndex >= static_cast<int>(CallbackTypeNames.size())) return;
+		if (m_isLoading) {
+			UpdateCallbackColumns();
+			return;
+		}
+		if (selectedIndex == m_callbackType) {
+			UpdateCallbackColumns();
+			return;
+		}
+
+		m_callbackType = selectedIndex;
+		UpdateCallbackColumns();
+		if (segmentedIndex == 1) {
+			HandleSegmentedChange(segmentedIndex, true);
+		}
+	}
+
+	void MonitorPage::HALTableMenuItem_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+	{
+		(void)e;
+		if (!IsLoaded()) return;
+
+		auto item = sender.try_as<ToggleMenuFlyoutItem>();
+		if (!item) return;
+
+		int selectedIndex = unbox_value<int32_t>(item.Tag());
+		if (selectedIndex < 0 || selectedIndex >= static_cast<int>(HALTableNames.size())) return;
+
+		bool reload = false;
+		if (!m_isLoading && selectedIndex != m_halTableType) {
+			m_halTableType = selectedIndex;
+			reload = segmentedIndex == 9;
+		}
+
+		HALTableButton().Label(t(L"Monitor.HALTableLabel", std::wstring(HALTableNames[m_halTableType]).c_str()));
+		if (auto flyout = HALTableButton().Flyout().try_as<MenuFlyout>()) {
+			for (auto const& itemBase : flyout.Items()) {
+				auto flyoutItem = itemBase.try_as<ToggleMenuFlyoutItem>();
+				if (!flyoutItem) continue;
+
+				int32_t index = unbox_value<int32_t>(flyoutItem.Tag());
+				flyoutItem.IsChecked(index == m_halTableType);
+			}
+		}
+
+		if (reload) {
+			HandleSegmentedChange(segmentedIndex, true);
+		}
+	}
+
 	void MonitorPage::SearchBox_TextChanged(
         winrt::Windows::Foundation::IInspectable const& sender,
         winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxTextChangedEventArgs const& e)
@@ -1060,23 +1010,19 @@ namespace winrt::StarlightGUI::implementation
                     if (suggestions.Size() >= 20) break;
                 }
             }
-            else if (segmentedIndex >= 2 && segmentedIndex <= 13) {
+            else if (segmentedIndex >= 1 && segmentedIndex <= 9) {
                 for (auto const& entry : m_generalList) {
+					std::array<hstring, 6> fields = {
+						entry.String1(), entry.String2(), entry.String3(), entry.String4(), entry.String5(), entry.String6()
+					};
 					hstring key;
-					switch (segmentedIndex) {
-					case 4:
-						if (!entry.String2().empty()) key = entry.String2();
-						if (!entry.String3().empty()) key = entry.String3();
-						key = entry.String1();
-					case 7:
-					case 9:
-					case 10:
-					case 11:
-						key = entry.String1();
-					default:
-						if (!entry.String1().empty()) key = entry.String1();
-						if (!entry.String2().empty()) key = entry.String2();
-						key = entry.String3();
+					for (auto const& field : fields) {
+						if (field.empty()) continue;
+						std::wstring lowerField = ToLowerCase(field.c_str());
+						if (lowerQuery.empty() || lowerField.find(lowerQuery) != std::wstring::npos) {
+							key = field;
+							break;
+						}
 					}
                     std::wstring text = key.c_str();
                     if (text.empty()) continue;
@@ -1126,94 +1072,6 @@ namespace winrt::StarlightGUI::implementation
 		co_return;
 	}
 
-	slg::coroutine MonitorPage::DbgViewButton_Click(IInspectable const&, RoutedEventArgs const&)
-	{
-		isDbgViewEnabled = !isDbgViewEnabled;
-		DbgViewButton().Content(isDbgViewEnabled ? tbox(L"Monitor.Close") : tbox(L"Monitor.Open"));
-		InitializeDbgView();
-		co_return;
-	}
-
-	slg::coroutine MonitorPage::DbgViewGlobalCheckBox_Click(IInspectable const&, RoutedEventArgs const&)
-	{
-		isDbgViewGlobalEnabled = DbgViewGlobalCheckBox().IsChecked().GetBoolean();
-		InitializeDbgView();
-		co_return;
-	}
-
-	static DWORD DbgViewThread(bool global, DbgViewMonitor* m)
-	{
-		constexpr uint32_t DbgViewMaxLength = 200000;
-
-		HANDLE& BufferReadyEvent = global ? m->GlobalBufferReadyEvent : m->LocalBufferReadyEvent;
-		HANDLE& DataReadyEvent = global ? m->GlobalDataReadyEvent : m->LocalDataReadyEvent;
-		PDBWIN_PAGE_BUFFER debugMessageBuffer = global ? m->GlobalDebugBuffer : m->LocalDebugBuffer;
-
-		while (global ? m->GlobalCaptureEnabled : m->LocalCaptureEnabled)
-		{
-			SetEvent(BufferReadyEvent);
-
-			DWORD status = WaitForSingleObject(DataReadyEvent, 1000);
-			if (status != WAIT_OBJECT_0) {
-				continue;
-			}
-
-			SYSTEMTIME st;
-			GetLocalTime(&st);
-			{
-				std::lock_guard<std::mutex> guard(*m->Lock);
-				wchar_t buffer[4096];
-				swprintf_s(buffer, _countof(buffer), L"[%02d:%02d:%02d.%03d] [PID=%d] %hs\n", st.wHour, st.wMinute, st.wSecond, st.wMilliseconds, debugMessageBuffer->ProcessId, debugMessageBuffer->Buffer);
-				*(m->Data) = *(m->Data) + to_hstring(buffer);
-				uint32_t currentLength = static_cast<uint32_t>(m->Data->size());
-				if (currentLength > DbgViewMaxLength) {
-					std::wstring text = m->Data->c_str();
-					text.erase(0, currentLength - DbgViewMaxLength);
-					*(m->Data) = text.c_str();
-				}
-			}
-		}
-
-		LOG_INFO(__WFUNCTION__, L"Debug view thread exited!");
-
-		return 0;
-	}
-
-	static DWORD WINAPI DbgViewLocalThread(PVOID param)
-	{
-		LOG_INFO(__WFUNCTION__, L"Thread created for local debug view!");
-		return DbgViewThread(false, (DbgViewMonitor*)param);
-	}
-
-	static DWORD WINAPI DbgViewGlobalThread(PVOID param)
-	{
-		LOG_INFO(__WFUNCTION__, L"Thread created for global debug view!");
-		return DbgViewThread(true, (DbgViewMonitor*)param);
-	}
-
-	winrt::Windows::Foundation::IAsyncAction MonitorPage::InitializeDbgView() {
-		if (isDbgViewEnabled) {
-			dbgViewMonitor.Init(false);
-			HANDLE hThread = CreateThread(nullptr, 0, DbgViewLocalThread, &dbgViewMonitor, 0, nullptr);
-			if (hThread) {
-				CloseHandle(hThread);
-			}
-			if (isDbgViewGlobalEnabled) {
-				dbgViewMonitor.Init(true);
-				HANDLE hThread = CreateThread(nullptr, 0, DbgViewGlobalThread, &dbgViewMonitor, 0, nullptr);
-				if (hThread) {
-					CloseHandle(hThread);
-				}
-			}
-		}
-		else {
-			dbgViewMonitor.UnInit(false);
-			dbgViewMonitor.UnInit(true);
-		}
-
-		co_return;
-	}
-
 	winrt::Windows::Foundation::IAsyncAction MonitorPage::WaitAndReloadAsync(int interval) {
 		auto lifetime = get_strong();
 		auto requestVersion = ++m_reloadRequestVersion;
@@ -1253,23 +1111,20 @@ namespace winrt::StarlightGUI::implementation
 		m_itemList.Clear();
 		m_objectList.Clear();
 		m_generalList.Clear();
-		windbgTimer.Stop();
 
 		DefaultText().Visibility(Visibility::Collapsed);
+		CallbackTypeButton().Visibility(Visibility::Collapsed);
+		HALTableButton().Visibility(Visibility::Collapsed);
 		ObjectGrid().Visibility(Visibility::Collapsed);
-		DbgViewGrid().Visibility(Visibility::Collapsed);
 		CallbackGrid().Visibility(Visibility::Collapsed);
 		MiniFilterGrid().Visibility(Visibility::Collapsed);
-		StdFilterGrid().Visibility(Visibility::Collapsed);
 		SSDTGrid().Visibility(Visibility::Collapsed);
 		SSSDTGrid().Visibility(Visibility::Collapsed);
 		IoTimerGrid().Visibility(Visibility::Collapsed);
-		ExCallbackGrid().Visibility(Visibility::Collapsed);
 		IDTGrid().Visibility(Visibility::Collapsed);
 		GDTGrid().Visibility(Visibility::Collapsed);
 		PiDDBGrid().Visibility(Visibility::Collapsed);
-		HALDPTGrid().Visibility(Visibility::Collapsed);
-		HALPDPTGrid().Visibility(Visibility::Collapsed);
+		HALTableGrid().Visibility(Visibility::Collapsed);
 		switch (index) {
 		case 0: {
 			ObjectGrid().Visibility(Visibility::Visible);
@@ -1291,74 +1146,60 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		}
 		case 1: {
-			DbgViewGrid().Visibility(Visibility::Visible);
-			DbgViewButton().Content(isDbgViewEnabled ? tbox(L"Monitor.Close") : tbox(L"Monitor.Open"));
-			DbgViewGlobalCheckBox().IsChecked(isDbgViewGlobalEnabled);
-			{
-				std::lock_guard<std::mutex> guard(dbgViewMutex);
-				DbgViewBox().Text(dbgViewData);
-				m_lastDbgViewLength = static_cast<uint32_t>(dbgViewData.size());
-			}
-			windbgTimer.Start();
-			break;
-		}
-		case 2: {
+			CallbackTypeButton().Visibility(Visibility::Visible);
+			UpdateCallbackColumns();
 			CallbackGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
-		case 3: {
+		case 2: {
 			MiniFilterGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
-		case 4: {
-			StdFilterGrid().Visibility(Visibility::Visible);
-			co_await LoadGeneralList(force);
-			break;
-		}
-		case 5: {
+		case 3: {
 			SSDTGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
-		case 6: {
+		case 4: {
 			SSSDTGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
-		case 7: {
+		case 5: {
 			IoTimerGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
-		case 8: {
-			ExCallbackGrid().Visibility(Visibility::Visible);
-			co_await LoadGeneralList(force);
-			break;
-		}
-		case 9: {
+		case 6: {
 			IDTGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
-		case 10: {
+		case 7: {
 			GDTGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
-		case 11: {
+		case 8: {
 			PiDDBGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
-		case 12: {
-			HALDPTGrid().Visibility(Visibility::Visible);
-			co_await LoadGeneralList(force);
-			break;
-		}
-		case 13: {
-			HALPDPTGrid().Visibility(Visibility::Visible);
+		case 9: {
+			HALTableButton().Visibility(Visibility::Visible);
+			HALTableButton().Label(t(L"Monitor.HALTableLabel", std::wstring(HALTableNames[m_halTableType]).c_str()));
+			if (auto flyout = HALTableButton().Flyout().try_as<MenuFlyout>()) {
+				for (auto const& itemBase : flyout.Items()) {
+					auto item = itemBase.try_as<ToggleMenuFlyoutItem>();
+					if (!item) continue;
+
+					int32_t itemIndex = unbox_value<int32_t>(item.Tag());
+					item.IsChecked(itemIndex == m_halTableType);
+				}
+			}
+			HALTableGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
@@ -1372,24 +1213,18 @@ namespace winrt::StarlightGUI::implementation
 
 	void MonitorPage::SetupLocalization() {
 		MonitorSegObjectUid().Text(t(L"Monitor.Seg.Object"));
-		MonitorSegDebugUid().Text(t(L"Monitor.Seg.Debug"));
 		MonitorSegCallbackUid().Text(t(L"Monitor.Seg.Callback"));
 		MonitorSegMiniFilterUid().Text(t(L"Monitor.Seg.MiniFilter"));
-		MonitorSegStdFilterUid().Text(t(L"Monitor.Seg.StdFilter"));
 		MonitorSegSSDTUid().Text(t(L"Monitor.Seg.SSDT"));
 		MonitorSegSSSDTUid().Text(t(L"Monitor.Seg.SSSDT"));
 		MonitorSegIOTimerUid().Text(t(L"Monitor.Seg.IOTimer"));
-		MonitorSegExCallbackUid().Text(t(L"Monitor.Seg.ExCallback"));
 		MonitorSegIDTUid().Text(t(L"Monitor.Seg.IDT"));
 		MonitorSegGDTUid().Text(t(L"Monitor.Seg.GDT"));
 		MonitorSegPiDDBUid().Text(t(L"Monitor.Seg.PiDDB"));
-		MonitorSegHALDPTUid().Text(t(L"Monitor.Seg.HALDPT"));
-		MonitorSegHALPDPTUid().Text(t(L"Monitor.Seg.HALPDPT"));
+		MonitorSegHALTableUid().Text(t(L"Monitor.Seg.HALTable"));
 		SearchBox().PlaceholderText(t(L"Monitor.Placeholder"));
 		DefaultText().Text(t(L"Monitor.DefaultText"));
 		RefreshButton().Label(t(L"Common.Refresh"));
-		DbgViewButton().Content(tbox(L"Monitor.Open"));
-		DbgViewGlobalCheckBox().Content(tbox(L"Monitor.CaptureGlobal"));
 		ObjectNameHeaderButton().Content(tbox(L"Common.Name"));
 		ObjectTypeHeaderButton().Content(tbox(L"Common.Type"));
 		CallbackTypeModuleHeaderButton().Content(tbox(L"Monitor.Header.TypeModule"));
@@ -1399,39 +1234,30 @@ namespace winrt::StarlightGUI::implementation
 		MiniFilterBaseHeaderButton().Content(tbox(L"Common.Base"));
 		MiniFilterPreFilterHeaderButton().Content(tbox(L"Monitor.Header.PreFilter"));
 		MiniFilterPostFilterHeaderButton().Content(tbox(L"Monitor.Header.PostFilter"));
-		StdFilterDriverModuleHeaderButton().Content(tbox(L"Monitor.Header.DriverModule"));
-		StdFilterTypeHeaderButton().Content(tbox(L"Common.Type"));
-		StdFilterDeviceObjectHeaderButton().Content(tbox(L"Monitor.Header.DeviceObject"));
-		StdFilterTargetDriverObjectHeaderButton().Content(tbox(L"Monitor.Header.TargetDriverObject"));
 		SSDTNameModuleHeaderButton().Content(tbox(L"Monitor.Header.NameModule"));
-		SSDTHookHeaderButton().Content(tbox(L"Monitor.Header.Hook"));
 		SSDTAddressHeaderButton().Content(tbox(L"Common.Address"));
-		SSDTSourceAddressHeaderButton().Content(tbox(L"Monitor.Header.SourceAddress"));
-		SSDTIndexHeaderButton().Content(tbox(L"Common.Index"));
 		SSSDTNameModuleHeaderButton().Content(tbox(L"Monitor.Header.NameModule"));
-		SSSDTHookHeaderButton().Content(tbox(L"Monitor.Header.Hook"));
 		SSSDTAddressHeaderButton().Content(tbox(L"Common.Address"));
-		SSSDTSourceAddressHeaderButton().Content(tbox(L"Monitor.Header.SourceAddress"));
-		SSSDTIndexHeaderButton().Content(tbox(L"Common.Index"));
 		IoTimerModuleHeaderButton().Content(tbox(L"Common.Module"));
 		IoTimerAddressHeaderButton().Content(tbox(L"Common.Address"));
-		IoTimerIndexHeaderButton().Content(tbox(L"Common.Index"));
-		ExCallbackNameModuleHeaderButton().Content(tbox(L"Monitor.Header.NameModule"));
-		ExCallbackEntryHeaderButton().Content(tbox(L"Monitor.Header.Entry"));
-		ExCallbackObjectHeaderButton().Content(tbox(L"Monitor.Header.Object"));
-		ExCallbackHandleHeaderButton().Content(tbox(L"Common.Handle"));
-		IDTNameHeaderButton().Content(tbox(L"Common.Name"));
-		IDTBaseHeaderButton().Content(tbox(L"Common.Base"));
-		IDTLimitHeaderButton().Content(tbox(L"Monitor.Header.Limit"));
-		IDTPrivilegeHeaderButton().Content(tbox(L"Monitor.Header.Privilege"));
-		IDTAccessHeaderButton().Content(tbox(L"Monitor.Header.Access"));
+		IoTimerDeviceObjHeaderButton().Content(tbox(L"Monitor.Header.DeviceObject"));
+		IDTOffsetHeaderButton().Content(tbox(L"Offset"));
+		IDTSelectorHeaderButton().Content(tbox(L"Selector"));
+		IDTTypeHeaderButton().Content(tbox(L"Common.Type"));
+		IDTDplHeaderButton().Content(tbox(L"DPL"));
+		IDTIndexHeaderButton().Content(tbox(L"Common.Index"));
+		GDTIndexHeaderButton().Content(tbox(L"Common.Index"));
+		GDTBaseHeaderButton().Content(tbox(L"Common.Base"));
+		GDTLimitHeaderButton().Content(tbox(L"Monitor.Header.Limit"));
+		GDTTypeHeaderButton().Content(tbox(L"Common.Type"));
+		GDTDplHeaderButton().Content(tbox(L"DPL"));
+		GDTGranularityHeaderButton().Content(tbox(L"Granularity"));
 		PiDDBModuleHeaderButton().Content(tbox(L"Common.Module"));
 		PiDDBStatusHeaderButton().Content(tbox(L"Common.Status"));
 		PiDDBTimestampHeaderButton().Content(tbox(L"Monitor.Header.Timestamp"));
-		HALDPTNameModuleHeaderButton().Content(tbox(L"Monitor.Header.NameModule"));
-		HALDPTAddressHeaderButton().Content(tbox(L"Common.Address"));
-		HALPDPTNameModuleHeaderButton().Content(tbox(L"Monitor.Header.NameModule"));
-		HALPDPTAddressHeaderButton().Content(tbox(L"Common.Address"));
+		HALTableNameModuleHeaderButton().Content(tbox(L"Monitor.Header.NameModule"));
+		HALTableAddressHeaderButton().Content(tbox(L"Common.Address"));
+		HALTableButton().Label(t(L"Monitor.HALTableLabel", std::wstring(HALTableNames[m_halTableType]).c_str()));
 	}
 
 	void MonitorPage::EnsureHeaderSplitters(winrt::Microsoft::UI::Xaml::Controls::Grid const& headerGrid)
@@ -1478,8 +1304,7 @@ namespace winrt::StarlightGUI::implementation
 		auto tryResolveHeaderBody = [&](Grid const& container) -> bool {
 			if (!container) return false;
 
-			Grid header{ nullptr };
-			Grid body{ nullptr };
+			std::vector<std::pair<int, Grid>> grids;
 			for (auto const& child : container.Children()) {
 				auto border = child.try_as<Border>();
 				if (!border) continue;
@@ -1487,14 +1312,15 @@ namespace winrt::StarlightGUI::implementation
 				auto grid = border.Child().try_as<Grid>();
 				if (!grid) continue;
 
-				int row = Grid::GetRow(border);
-				if (row == 0) header = grid;
-				else if (row == 1) body = grid;
+				grids.push_back({ Grid::GetRow(border), grid });
 			}
 
-			if (header && body) {
-				headerGrid = header;
-				bodyGrid = body;
+			if (grids.size() >= 2) {
+				std::sort(grids.begin(), grids.end(), [](auto const& a, auto const& b) {
+					return a.first < b.first;
+					});
+				headerGrid = grids[0].second;
+				bodyGrid = grids[1].second;
 				return true;
 			}
 			return false;
@@ -1541,21 +1367,16 @@ namespace winrt::StarlightGUI::implementation
 		AttachColumnSyncToSection(ObjectGrid(), 0);
 		AttachColumnSyncToSection(CallbackGrid(), 0);
 		AttachColumnSyncToSection(MiniFilterGrid(), 0);
-		AttachColumnSyncToSection(StdFilterGrid(), 0);
 		AttachColumnSyncToSection(SSDTGrid(), 0);
 		AttachColumnSyncToSection(SSSDTGrid(), 0);
 		AttachColumnSyncToSection(IoTimerGrid(), 0);
-		AttachColumnSyncToSection(ExCallbackGrid(), 0);
 		AttachColumnSyncToSection(IDTGrid(), 0);
 		AttachColumnSyncToSection(GDTGrid(), 0);
 		AttachColumnSyncToSection(PiDDBGrid(), 0);
-		AttachColumnSyncToSection(HALDPTGrid(), 0);
-		AttachColumnSyncToSection(HALPDPTGrid(), 0);
+		AttachColumnSyncToSection(HALTableGrid(), 0);
 
 		for (auto const& binding : m_columnSyncBindings) {
 			slg::SyncListViewColumnWidths(binding.HeaderGrid, binding.BodyGrid, binding.ListView, binding.RowOffset);
 		}
 	}
 }
-
-

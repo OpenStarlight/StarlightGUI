@@ -121,15 +121,21 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!--  函数  -->
-                                    <essential:MarqueeText
+                                    <TextBlock
                                         Grid.Column="0"
                                         Margin="16,0,0,0"
-                                        HorizontalAlignment="Left"
                                         VerticalAlignment="Center"
-                                        Behavior="Looping"
                                         FontSize="14"
                                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                        Text="{Binding Name}" />
+                                        Text="{Binding Name}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="NoWrap">
+                                        <ToolTipService.ToolTip>
+                                            <ToolTip
+                                                essential:ToolTipHelper.AcrylicWorkaround="True"
+                                                Content="{Binding Name}" />
+                                        </ToolTipService.ToolTip>
+                                    </TextBlock>
 
                                     <!--  地址  -->
                                     <TextBlock

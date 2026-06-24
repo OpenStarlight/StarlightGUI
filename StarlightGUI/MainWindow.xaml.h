@@ -27,7 +27,6 @@ namespace winrt::StarlightGUI::implementation
         slg::coroutine LoadNavigation();
 
         // 驱动和模块
-        winrt::Windows::Foundation::IAsyncAction LoadModules();
         winrt::Windows::Foundation::IAsyncAction CheckUpdate();
         void SetTrayBackgroundRun(bool enabled);
         void NavigateToTaskPage();

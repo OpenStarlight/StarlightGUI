@@ -28,6 +28,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <ScrollView
+                Grid.Column="0"
                 ContentOrientation="Horizontal"
                 HorizontalScrollBarVisibility="Auto"
                 HorizontalScrollMode="Enabled"
@@ -46,15 +47,6 @@
                             <TextBlock x:Name="MonitorSegObjectUid" Text="对象" />
                         </StackPanel>
                     </essential:SegmentedItem>
-                    <essential:SegmentedItem>
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon
-                                FontFamily="Segoe Fluent Icons"
-                                FontSize="14"
-                                Glyph="&#xebe8;" />
-                            <TextBlock x:Name="MonitorSegDebugUid" Text="调试信息" />
-                        </StackPanel>
-                    </essential:SegmentedItem>
                     <essential:SegmentedItem x:Name="CallbackSegmentedItem">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon
@@ -71,15 +63,6 @@
                                 FontSize="14"
                                 Glyph="&#xe7e3;" />
                             <TextBlock x:Name="MonitorSegMiniFilterUid" Text="微过滤驱动" />
-                        </StackPanel>
-                    </essential:SegmentedItem>
-                    <essential:SegmentedItem x:Name="StdFilterSegmentedItem">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon
-                                FontFamily="Segoe Fluent Icons"
-                                FontSize="14"
-                                Glyph="&#xe7ec;" />
-                            <TextBlock x:Name="MonitorSegStdFilterUid" Text="标准过滤驱动" />
                         </StackPanel>
                     </essential:SegmentedItem>
                     <essential:SegmentedItem x:Name="SSDTSegmentedItem">
@@ -109,15 +92,6 @@
                             <TextBlock x:Name="MonitorSegIOTimerUid" Text="I/O 定时器" />
                         </StackPanel>
                     </essential:SegmentedItem>
-                    <essential:SegmentedItem x:Name="ExCallbackSegmentedItem">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon
-                                FontFamily="Segoe Fluent Icons"
-                                FontSize="14"
-                                Glyph="&#xe7f2;" />
-                            <TextBlock x:Name="MonitorSegExCallbackUid" Text="ExCallback" />
-                        </StackPanel>
-                    </essential:SegmentedItem>
                     <essential:SegmentedItem x:Name="IDTSegmentedItem">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon
@@ -145,22 +119,13 @@
                             <TextBlock x:Name="MonitorSegPiDDBUid" Text="PiDDB 缓存表" />
                         </StackPanel>
                     </essential:SegmentedItem>
-                    <essential:SegmentedItem x:Name="HALDPTSegmentedItem">
+                    <essential:SegmentedItem x:Name="HALTableSegmentedItem">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon
                                 FontFamily="Segoe Fluent Icons"
                                 FontSize="14"
                                 Glyph="&#xf590;" />
-                            <TextBlock x:Name="MonitorSegHALDPTUid" Text="HAL 分发表" />
-                        </StackPanel>
-                    </essential:SegmentedItem>
-                    <essential:SegmentedItem x:Name="HALPDPTSegmentedItem">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <FontIcon
-                                FontFamily="Segoe Fluent Icons"
-                                FontSize="14"
-                                Glyph="&#xf58f;" />
-                            <TextBlock x:Name="MonitorSegHALPDPTUid" Text="HAL 私有分发表" />
+                            <TextBlock x:Name="MonitorSegHALTableUid" Text="HAL 分发表" />
                         </StackPanel>
                     </essential:SegmentedItem>
                 </essential:Segmented>
@@ -175,6 +140,22 @@
                     Label="刷新">
                     <AppBarButton.Icon>
                         <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe72c;" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton
+                    x:Name="CallbackTypeButton"
+                    Label="类型"
+                    Visibility="Collapsed">
+                    <AppBarButton.Icon>
+                        <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe71c;" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+                <AppBarButton
+                    x:Name="HALTableButton"
+                    Label="HAL"
+                    Visibility="Collapsed">
+                    <AppBarButton.Icon>
+                        <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe71c;" />
                     </AppBarButton.Icon>
                 </AppBarButton>
             </CommandBar>
@@ -311,16 +292,26 @@
                                             Grid.Column="0"
                                             Margin="16,0,0,0"
                                             VerticalAlignment="Center">
-                                            <essential:MarqueeText
-                                                Behavior="Looping"
+                                            <TextBlock
                                                 FontSize="14"
                                                 Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                                Text="{Binding Name}" />
-                                            <essential:MarqueeText
-                                                Behavior="Looping"
+                                                Text="{Binding Name}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="NoWrap">
+                                                <ToolTipService.ToolTip>
+                                                    <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding Name}" />
+                                                </ToolTipService.ToolTip>
+                                            </TextBlock>
+                                            <TextBlock
                                                 FontSize="12"
                                                 Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                                Text="{Binding Path}" />
+                                                Text="{Binding Path}"
+                                                TextTrimming="CharacterEllipsis"
+                                                TextWrapping="NoWrap">
+                                                <ToolTipService.ToolTip>
+                                                    <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding Path}" />
+                                                </ToolTipService.ToolTip>
+                                            </TextBlock>
                                         </StackPanel>
 
                                         <!--  类型  -->
@@ -348,48 +339,6 @@
         </Grid>
 
         <Grid
-            x:Name="DbgViewGrid"
-            Grid.Row="1"
-            Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <Grid Grid.Row="0" Margin="0,0,0,5">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <Button
-                    x:Name="DbgViewButton"
-                    Grid.Column="0"
-                    Click="DbgViewButton_Click"
-                    Content="开启" />
-                <CheckBox
-                    x:Name="DbgViewGlobalCheckBox"
-                    Grid.Column="2"
-                    Margin="0,0,-30,0"
-                    Click="DbgViewGlobalCheckBox_Click"
-                    Content="捕捉全局" />
-            </Grid>
-            <ScrollView
-                Grid.Row="1"
-                Background="{ThemeResource ControlFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                BorderThickness="1"
-                CornerRadius="5">
-                <TextBlock
-                    x:Name="DbgViewBox"
-                    Grid.Row="1"
-                    Margin="5,5,5,5"
-                    HorizontalAlignment="Stretch"
-                    VerticalAlignment="Stretch"
-                    TextWrapping="Wrap" />
-            </ScrollView>
-        </Grid>
-
-        <Grid
             x:Name="CallbackGrid"
             Grid.Row="1"
             Visibility="Collapsed">
@@ -404,9 +353,11 @@
                 CornerRadius="5,5,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition x:Name="CallbackHeaderColumn0" Width="*" />
+                        <ColumnDefinition x:Name="CallbackHeaderColumn1" Width="150" />
+                        <ColumnDefinition x:Name="CallbackHeaderColumn2" Width="150" />
+                        <ColumnDefinition x:Name="CallbackHeaderColumn3" Width="150" />
+                        <ColumnDefinition x:Name="CallbackHeaderColumn4" Width="150" />
                     </Grid.ColumnDefinitions>
 
                     <Button
@@ -434,6 +385,24 @@
                         BorderThickness="1,0,0,0"
                         Content="句柄"
                         CornerRadius="0" />
+                    <Button
+                        x:Name="CallbackAddress3HeaderButton"
+                        Grid.Column="3"
+                        Height="32"
+                        HorizontalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        Content="Address3"
+                        CornerRadius="0" />
+                    <Button
+                        x:Name="CallbackAddress4HeaderButton"
+                        Grid.Column="4"
+                        Height="32"
+                        HorizontalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        Content="Address4"
+                        CornerRadius="0" />
                 </Grid>
             </Border>
             <Border
@@ -444,14 +413,16 @@
                 CornerRadius="0,0,5,5">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition x:Name="CallbackBodyColumn0" Width="*" />
+                        <ColumnDefinition x:Name="CallbackBodyColumn1" Width="150" />
+                        <ColumnDefinition x:Name="CallbackBodyColumn2" Width="150" />
+                        <ColumnDefinition x:Name="CallbackBodyColumn3" Width="150" />
+                        <ColumnDefinition x:Name="CallbackBodyColumn4" Width="150" />
                     </Grid.ColumnDefinitions>
 
                     <ListView
                         x:Name="CallbackListView"
-                        Grid.ColumnSpan="3"
+                        Grid.ColumnSpan="5"
                         Background="Transparent"
                         ItemContainerStyle="{StaticResource ListViewItemStyle}"
                         RightTapped="CallbackListView_RightTapped">
@@ -462,6 +433,8 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="150" />
                                     </Grid.ColumnDefinitions>
 
                                     <!--  类型/模块  -->
@@ -469,16 +442,26 @@
                                         Grid.Column="0"
                                         Margin="16,0,0,0"
                                         VerticalAlignment="Center">
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                        <TextBlock
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            Text="{Binding String2}" />
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                            Text="{Binding String1}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String1}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
+                                        <TextBlock
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding String1}" />
+                                            Text="{Binding String2}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String2}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
                                     </StackPanel>
 
                                     <!--  入口  -->
@@ -498,6 +481,24 @@
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding String4}" />
+
+                                    <!--  Address3  -->
+                                    <TextBlock
+                                        Grid.Column="3"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding String5}" />
+
+                                    <!--  Address4  -->
+                                    <TextBlock
+                                        Grid.Column="4"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding String6}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -511,6 +512,20 @@
                         IsHitTestVisible="False" />
                     <Border
                         Grid.Column="2"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        IsHitTestVisible="False" />
+                    <Border
+                        Grid.Column="3"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        IsHitTestVisible="False" />
+                    <Border
+                        Grid.Column="4"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
@@ -612,16 +627,26 @@
                                         Grid.Column="0"
                                         Margin="16,0,0,0"
                                         VerticalAlignment="Center">
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                        <TextBlock
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            Text="{Binding String2}" />
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                            Text="{Binding String1}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String1}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
+                                        <TextBlock
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding String1}" />
+                                            Text="{Binding String2}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String2}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
                                     </StackPanel>
 
                                     <!--  基址  -->
@@ -680,165 +705,6 @@
         </Grid>
 
         <Grid
-            x:Name="StdFilterGrid"
-            Grid.Row="1"
-            Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <Border
-                Grid.Row="0"
-                BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                BorderThickness="1"
-                CornerRadius="5,5,0,0">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                    </Grid.ColumnDefinitions>
-
-                    <Button
-                        x:Name="StdFilterDriverModuleHeaderButton"
-                        Grid.Column="0"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        Content="驱动/模块"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="StdFilterTypeHeaderButton"
-                        Grid.Column="1"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="类型"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="StdFilterDeviceObjectHeaderButton"
-                        Grid.Column="2"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="设备对象"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="StdFilterTargetDriverObjectHeaderButton"
-                        Grid.Column="3"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="目标驱动对象"
-                        CornerRadius="0" />
-                </Grid>
-            </Border>
-            <Border
-                Grid.Row="1"
-                Background="{ThemeResource ControlFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                BorderThickness="1,0,1,1"
-                CornerRadius="0,0,5,5">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                    </Grid.ColumnDefinitions>
-
-                    <ListView
-                        x:Name="StdFilterListView"
-                        Grid.ColumnSpan="4"
-                        Background="Transparent"
-                        ItemContainerStyle="{StaticResource ListViewItemStyle}"
-                        RightTapped="StdFilterListView_RightTapped">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Height="50">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="150" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <!--  驱动/模块  -->
-                                    <StackPanel
-                                        Grid.Column="0"
-                                        Margin="16,0,0,0"
-                                        VerticalAlignment="Center">
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
-                                            FontSize="14"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            Text="{Binding String2}" />
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding String3}" />
-                                    </StackPanel>
-
-                                    <!--  类型  -->
-                                    <TextBlock
-                                        Grid.Column="1"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String1}" />
-
-                                    <!--  设备对象  -->
-                                    <TextBlock
-                                        Grid.Column="2"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String4}" />
-
-                                    <!--  目标驱动对象  -->
-                                    <TextBlock
-                                        Grid.Column="3"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String5}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                    <Border
-                        Grid.Column="1"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="2"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="3"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                </Grid>
-            </Border>
-        </Grid>
-
-        <Grid
             x:Name="SSDTGrid"
             Grid.Row="1"
             Visibility="Collapsed">
@@ -854,10 +720,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="100" />
                         <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
 
                     <Button
@@ -868,40 +731,13 @@
                         Content="名称/模块"
                         CornerRadius="0" />
                     <Button
-                        x:Name="SSDTHookHeaderButton"
+                        x:Name="SSDTAddressHeaderButton"
                         Grid.Column="1"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="钩子"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="SSDTAddressHeaderButton"
-                        Grid.Column="2"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
                         Content="地址"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="SSDTSourceAddressHeaderButton"
-                        Grid.Column="3"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="源地址"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="SSDTIndexHeaderButton"
-                        Grid.Column="4"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="序号"
                         CornerRadius="0" />
                 </Grid>
             </Border>
@@ -914,10 +750,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="100" />
                         <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
 
                     <ListView
@@ -931,10 +764,7 @@
                                 <Grid Height="50">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="80" />
                                     </Grid.ColumnDefinitions>
 
                                     <!--  名称/模块  -->
@@ -942,80 +772,42 @@
                                         Grid.Column="0"
                                         Margin="16,0,0,0"
                                         VerticalAlignment="Center">
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                        <TextBlock
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            Text="{Binding String2}" />
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                            Text="{Binding String1}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String1}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
+                                        <TextBlock
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding String1}" />
+                                            Text="{Binding String2}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String2}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
                                     </StackPanel>
 
-                                    <!--  钩子  -->
+                                    <!--  地址  -->
                                     <TextBlock
                                         Grid.Column="1"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String5}" />
-
-                                    <!--  地址  -->
-                                    <TextBlock
-                                        Grid.Column="2"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding String3}" />
-
-                                    <!--  源地址  -->
-                                    <TextBlock
-                                        Grid.Column="3"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String4}" />
-
-                                    <!--  序号  -->
-                                    <TextBlock
-                                        Grid.Column="4"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding ULong1}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
                     <Border
                         Grid.Column="1"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="2"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="3"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="4"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
@@ -1041,10 +833,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="100" />
                         <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
 
                     <Button
@@ -1055,40 +844,13 @@
                         Content="名称/模块"
                         CornerRadius="0" />
                     <Button
-                        x:Name="SSSDTHookHeaderButton"
+                        x:Name="SSSDTAddressHeaderButton"
                         Grid.Column="1"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="钩子"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="SSSDTAddressHeaderButton"
-                        Grid.Column="2"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
                         Content="地址"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="SSSDTSourceAddressHeaderButton"
-                        Grid.Column="3"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="源地址"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="SSSDTIndexHeaderButton"
-                        Grid.Column="4"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="序号"
                         CornerRadius="0" />
                 </Grid>
             </Border>
@@ -1101,10 +863,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="100" />
                         <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
 
                     <ListView
@@ -1118,10 +877,7 @@
                                 <Grid Height="50">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="80" />
                                     </Grid.ColumnDefinitions>
 
                                     <!--  名称/模块  -->
@@ -1129,80 +885,42 @@
                                         Grid.Column="0"
                                         Margin="16,0,0,0"
                                         VerticalAlignment="Center">
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                        <TextBlock
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            Text="{Binding String2}" />
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                            Text="{Binding String1}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String1}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
+                                        <TextBlock
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding String1}" />
+                                            Text="{Binding String2}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String2}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
                                     </StackPanel>
 
-                                    <!--  钩子  -->
+                                    <!--  地址  -->
                                     <TextBlock
                                         Grid.Column="1"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String5}" />
-
-                                    <!--  地址  -->
-                                    <TextBlock
-                                        Grid.Column="2"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding String3}" />
-
-                                    <!--  源地址  -->
-                                    <TextBlock
-                                        Grid.Column="3"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String4}" />
-
-                                    <!--  序号  -->
-                                    <TextBlock
-                                        Grid.Column="4"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding ULong1}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
                     <Border
                         Grid.Column="1"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="2"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="3"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="4"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
@@ -1249,13 +967,13 @@
                         Content="地址"
                         CornerRadius="0" />
                     <Button
-                        x:Name="IoTimerCPUHeaderButton"
+                        x:Name="IoTimerDeviceObjHeaderButton"
                         Grid.Column="2"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="对象"
+                        Content="设备对象"
                         CornerRadius="0" />
                 </Grid>
             </Border>
@@ -1287,14 +1005,19 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!--  模块  -->
-                                    <essential:MarqueeText
+                                    <TextBlock
                                         Grid.Column="0"
                                         Margin="16,-2,0,0"
                                         VerticalAlignment="Center"
-                                        Behavior="Looping"
                                         FontSize="14"
                                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                        Text="{Binding String1}" />
+                                        Text="{Binding String1}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="NoWrap">
+                                        <ToolTipService.ToolTip>
+                                            <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String1}" />
+                                        </ToolTipService.ToolTip>
+                                    </TextBlock>
 
                                     <!--  地址  -->
                                     <TextBlock
@@ -1326,162 +1049,6 @@
                         IsHitTestVisible="False" />
                     <Border
                         Grid.Column="2"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                </Grid>
-            </Border>
-        </Grid>
-
-        <Grid
-            x:Name="ExCallbackGrid"
-            Grid.Row="1"
-            Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <Border
-                Grid.Row="0"
-                BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                BorderThickness="1"
-                CornerRadius="5,5,0,0">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                    </Grid.ColumnDefinitions>
-
-                    <Button
-                        Grid.Column="0"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        Content="名称/模块"
-                        CornerRadius="0" />
-                    <Button
-                        Grid.Column="1"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="入口"
-                        CornerRadius="0" />
-                    <Button
-                        Grid.Column="2"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="对象"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="IoTimerIndexHeaderButton"
-                        Grid.Column="3"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="句柄"
-                        CornerRadius="0" />
-                </Grid>
-            </Border>
-            <Border
-                Grid.Row="1"
-                Background="{ThemeResource ControlFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                BorderThickness="1,0,1,1"
-                CornerRadius="0,0,5,5">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                    </Grid.ColumnDefinitions>
-
-                    <ListView
-                        x:Name="ExCallbackListView"
-                        Grid.ColumnSpan="4"
-                        Background="Transparent"
-                        ItemContainerStyle="{StaticResource ListViewItemStyle}"
-                        RightTapped="ExCallbackListView_RightTapped">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Height="50">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="150" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <!--  名称/模块  -->
-                                    <StackPanel
-                                        Grid.Column="0"
-                                        Margin="16,0,0,0"
-                                        VerticalAlignment="Center">
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
-                                            FontSize="14"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            Text="{Binding String1}" />
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding String2}" />
-                                    </StackPanel>
-
-                                    <!--  入口  -->
-                                    <TextBlock
-                                        Grid.Column="1"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
-
-                                    <!--  对象  -->
-                                    <TextBlock
-                                        Grid.Column="2"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String4}" />
-
-                                    <!--  句柄  -->
-                                    <TextBlock
-                                        Grid.Column="3"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String5}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                    <Border
-                        Grid.Column="1"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="2"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="3"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
@@ -1506,46 +1073,65 @@
                 CornerRadius="5,5,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="100" />
                         <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <Button
-                        x:Name="ExCallbackNameModuleHeaderButton"
+                        x:Name="IDTOffsetHeaderButton"
                         Grid.Column="0"
                         Height="32"
                         HorizontalAlignment="Stretch"
-                        Content="模块"
+                        Content="Offset"
                         CornerRadius="0" />
                     <Button
-                        x:Name="ExCallbackEntryHeaderButton"
+                        x:Name="IDTSelectorHeaderButton"
                         Grid.Column="1"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="地址"
+                        Content="Selector"
                         CornerRadius="0" />
                     <Button
-                        x:Name="ExCallbackObjectHeaderButton"
+                        x:Name="IDTTypeHeaderButton"
                         Grid.Column="2"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="CPU"
+                        Content="Type"
                         CornerRadius="0" />
                     <Button
-                        x:Name="ExCallbackHandleHeaderButton"
+                        x:Name="IDTDplHeaderButton"
                         Grid.Column="3"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="序号"
+                        Content="DPL"
                         CornerRadius="0" />
+                    <Button
+                        x:Name="IDTIndexHeaderButton"
+                        Grid.Column="4"
+                        Height="32"
+                        HorizontalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        Content="Index"
+                        CornerRadius="0" />
+                    <Button
+                        Grid.Column="5"
+                        Height="32"
+                        HorizontalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        CornerRadius="0"
+                        IsHitTestVisible="False" />
                 </Grid>
             </Border>
             <Border
@@ -1556,63 +1142,75 @@
                 CornerRadius="0,0,5,5">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="100" />
                         <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <ListView
                         x:Name="IDTListView"
-                        Grid.ColumnSpan="4"
+                        Grid.ColumnSpan="6"
                         Background="Transparent"
                         ItemContainerStyle="{StaticResource ListViewItemStyle}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Grid Height="45">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
-                                    <!--  模块  -->
-                                    <essential:MarqueeText
+                                    <!--  Offset  -->
+                                    <TextBlock
                                         Grid.Column="0"
-                                        Margin="16,-2,0,0"
+                                        HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
-                                        Behavior="Looping"
-                                        FontSize="14"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding String1}" />
 
-                                    <!--  地址  -->
+                                    <!--  Selector  -->
                                     <TextBlock
                                         Grid.Column="1"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String2}" />
+                                        Text="{Binding ULong2}" />
 
-                                    <!--  CPU  -->
+                                    <!--  Type  -->
                                     <TextBlock
                                         Grid.Column="2"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding ULong1}" />
+                                        Text="{Binding ULong3}" />
 
-                                    <!--  序号  -->
+                                    <!--  DPL  -->
                                     <TextBlock
                                         Grid.Column="3"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding ULong2}" />
+                                        Text="{Binding ULong4}" />
+
+                                    <!--  Index  -->
+                                    <TextBlock
+                                        Grid.Column="4"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding ULong1}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -1633,6 +1231,20 @@
                         IsHitTestVisible="False" />
                     <Border
                         Grid.Column="3"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        IsHitTestVisible="False" />
+                    <Border
+                        Grid.Column="4"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        IsHitTestVisible="False" />
+                    <Border
+                        Grid.Column="5"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
@@ -1657,23 +1269,24 @@
                 CornerRadius="5,5,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="100" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="100" />
                     </Grid.ColumnDefinitions>
 
                     <Button
-                        x:Name="IDTNameHeaderButton"
+                        x:Name="GDTIndexHeaderButton"
                         Grid.Column="0"
                         Height="32"
                         HorizontalAlignment="Stretch"
-                        Content="名称"
+                        Content="Index"
                         CornerRadius="0" />
                     <Button
-                        x:Name="IDTBaseHeaderButton"
+                        x:Name="GDTBaseHeaderButton"
                         Grid.Column="1"
                         Height="32"
                         HorizontalAlignment="Stretch"
@@ -1682,7 +1295,7 @@
                         Content="基址"
                         CornerRadius="0" />
                     <Button
-                        x:Name="IDTLimitHeaderButton"
+                        x:Name="GDTLimitHeaderButton"
                         Grid.Column="2"
                         Height="32"
                         HorizontalAlignment="Stretch"
@@ -1691,32 +1304,40 @@
                         Content="段界限"
                         CornerRadius="0" />
                     <Button
-                        x:Name="IDTPrivilegeHeaderButton"
+                        x:Name="GDTTypeHeaderButton"
                         Grid.Column="3"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="特权级"
+                        Content="Type"
                         CornerRadius="0" />
                     <Button
-                        x:Name="IDTAccessHeaderButton"
+                        x:Name="GDTDplHeaderButton"
                         Grid.Column="4"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="访问权限"
+                        Content="DPL"
                         CornerRadius="0" />
                     <Button
-                        x:Name="IDTIdHeaderButton"
+                        x:Name="GDTGranularityHeaderButton"
                         Grid.Column="5"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="ID"
+                        Content="Granularity"
                         CornerRadius="0" />
+                    <Button
+                        Grid.Column="6"
+                        Height="32"
+                        HorizontalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        CornerRadius="0"
+                        IsHitTestVisible="False" />
                 </Grid>
             </Border>
             <Border
@@ -1727,40 +1348,41 @@
                 CornerRadius="0,0,5,5">
                 <Grid>
                     <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="100" />
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="100" />
                     </Grid.ColumnDefinitions>
 
                     <ListView
                         x:Name="GDTListView"
-                        Grid.ColumnSpan="6"
+                        Grid.ColumnSpan="7"
                         Background="Transparent"
                         ItemContainerStyle="{StaticResource ListViewItemStyle}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Grid Height="45">
                                     <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="100" />
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="100" />
                                     </Grid.ColumnDefinitions>
 
-                                    <!--  名称  -->
-                                    <essential:MarqueeText
+                                    <!--  Index  -->
+                                    <TextBlock
                                         Grid.Column="0"
-                                        Margin="15,-2,0,0"
+                                        HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
-                                        Behavior="Looping"
-                                        FontSize="16"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                        Text="{Binding String1}" />
+                                        FontSize="12"
+                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
+                                        Text="{Binding ULong1}" />
 
                                     <!--  基址  -->
                                     <TextBlock
@@ -1780,7 +1402,7 @@
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding String3}" />
 
-                                    <!--  特权级  -->
+                                    <!--  Type  -->
                                     <TextBlock
                                         Grid.Column="3"
                                         HorizontalAlignment="Center"
@@ -1789,7 +1411,7 @@
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding ULong2}" />
 
-                                    <!--  访问权限  -->
+                                    <!--  DPL  -->
                                     <TextBlock
                                         Grid.Column="4"
                                         HorizontalAlignment="Center"
@@ -1798,14 +1420,14 @@
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding ULong3}" />
 
-                                    <!--  ID  -->
+                                    <!--  Granularity  -->
                                     <TextBlock
                                         Grid.Column="5"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding ULong1}" />
+                                        Text="{Binding ULong4}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -1840,6 +1462,13 @@
                         IsHitTestVisible="False" />
                     <Border
                         Grid.Column="5"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        IsHitTestVisible="False" />
+                    <Border
+                        Grid.Column="6"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
@@ -1925,14 +1554,19 @@
                                     </Grid.ColumnDefinitions>
 
                                     <!--  模块  -->
-                                    <essential:MarqueeText
+                                    <TextBlock
                                         Grid.Column="0"
                                         Margin="16,-2,0,0"
                                         VerticalAlignment="Center"
-                                        Behavior="Looping"
                                         FontSize="14"
                                         Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                        Text="{Binding String1}" />
+                                        Text="{Binding String1}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="NoWrap">
+                                        <ToolTipService.ToolTip>
+                                            <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String1}" />
+                                        </ToolTipService.ToolTip>
+                                    </TextBlock>
 
                                     <!--  状态  -->
                                     <TextBlock
@@ -1974,7 +1608,7 @@
         </Grid>
 
         <Grid
-            x:Name="HALDPTGrid"
+            x:Name="HALTableGrid"
             Grid.Row="1"
             Visibility="Collapsed">
             <Grid.RowDefinitions>
@@ -1993,14 +1627,14 @@
                     </Grid.ColumnDefinitions>
 
                     <Button
-                        x:Name="HALDPTNameModuleHeaderButton"
+                        x:Name="HALTableNameModuleHeaderButton"
                         Grid.Column="0"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         Content="名称/模块"
                         CornerRadius="0" />
                     <Button
-                        x:Name="HALDPTAddressHeaderButton"
+                        x:Name="HALTableAddressHeaderButton"
                         Grid.Column="1"
                         Height="32"
                         HorizontalAlignment="Stretch"
@@ -2023,11 +1657,11 @@
                     </Grid.ColumnDefinitions>
 
                     <ListView
-                        x:Name="HALDPTListView"
+                        x:Name="HALTableListView"
                         Grid.ColumnSpan="2"
                         Background="Transparent"
                         ItemContainerStyle="{StaticResource ListViewItemStyle}"
-                        RightTapped="HALDPTListView_RightTapped">
+                        RightTapped="HALTableListView_RightTapped">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Grid Height="50">
@@ -2041,16 +1675,30 @@
                                         Grid.Column="0"
                                         Margin="16,0,0,0"
                                         VerticalAlignment="Center">
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                        <TextBlock
                                             FontSize="14"
+                                            FontStyle="{Binding String5}"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            Text="{Binding String1}" />
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                            Text="{Binding String1}"
+                                            TextDecorations="{Binding String4}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String1}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
+                                        <TextBlock
                                             FontSize="12"
+                                            FontStyle="{Binding String5}"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding String2}" />
+                                            Text="{Binding String2}"
+                                            TextDecorations="{Binding String4}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding String2}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
                                     </StackPanel>
 
                                     <!--  地址  -->
@@ -2059,8 +1707,10 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
+                                        FontStyle="{Binding String5}"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
+                                        Text="{Binding String3}"
+                                        TextDecorations="{Binding String4}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -2076,108 +1726,6 @@
             </Border>
         </Grid>
 
-        <Grid
-            x:Name="HALPDPTGrid"
-            Grid.Row="1"
-            Visibility="Collapsed">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
-            <Border
-                Grid.Row="0"
-                BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                BorderThickness="1"
-                CornerRadius="5,5,0,0">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="150" />
-                    </Grid.ColumnDefinitions>
-
-                    <Button
-                        x:Name="HALPDPTNameModuleHeaderButton"
-                        Grid.Column="0"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        Content="名称/模块"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="HALPDPTAddressHeaderButton"
-                        Grid.Column="1"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="地址"
-                        CornerRadius="0" />
-                </Grid>
-            </Border>
-            <Border
-                Grid.Row="1"
-                Background="{ThemeResource ControlFillColorDefaultBrush}"
-                BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                BorderThickness="1,0,1,1"
-                CornerRadius="0,0,5,5">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="150" />
-                    </Grid.ColumnDefinitions>
-
-                    <ListView
-                        x:Name="HALPDPTListView"
-                        Grid.ColumnSpan="2"
-                        Background="Transparent"
-                        ItemContainerStyle="{StaticResource ListViewItemStyle}"
-                        RightTapped="HALDPTListView_RightTapped">
-                        <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Height="50">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="150" />
-                                    </Grid.ColumnDefinitions>
-
-                                    <!--  名称/模块  -->
-                                    <StackPanel
-                                        Grid.Column="0"
-                                        Margin="16,0,0,0"
-                                        VerticalAlignment="Center">
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
-                                            FontSize="14"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            Text="{Binding String1}" />
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
-                                            FontSize="12"
-                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding String2}" />
-                                    </StackPanel>
-
-                                    <!--  地址  -->
-                                    <TextBlock
-                                        Grid.Column="1"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                    <Border
-                        Grid.Column="1"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                </Grid>
-            </Border>
-        </Grid>
     </Grid>
 </Page>
 

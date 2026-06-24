@@ -116,6 +116,9 @@ namespace winrt::StarlightGUI::implementation
                 }
             }
         }
+
+        InitializeDriverBeforeWindow();
+
         window = make<MainWindow>();
         window.Activate();
     }
@@ -123,5 +126,43 @@ namespace winrt::StarlightGUI::implementation
     void App::InitializeLogger() {
         LOGGER_INIT();
         LOG_INFO(L"", L"Launching Starlight GUI...");
+    }
+
+    bool App::InitializeDriverBeforeWindow()
+    {
+        try {
+            LOG_INFO(L"Driver", L"Loading driver before window creation...");
+
+            auto installedPath = GetInstalledLocationPath();
+            siriusPath = installedPath + L"\\Assets\\Sirius.sys";
+            wtmPath = installedPath + L"\\WindowTopMost.dll";
+            iamKeyHackerPath = installedPath + L"\\IAMKeyHacker.dll";
+
+            if (DriverUtils::LoadKernelDriver(siriusPath.c_str())) {
+                LOG_INFO(L"Driver", L"Sirius.sys initialized successfully.");
+                return true;
+            }
+
+            DWORD error = GetLastError();
+            hstring message;
+            if (error == 2 || error == 98) {
+                message = t(L"MainWindow.Driver.FailedHelp1");
+            }
+            else if (error == 193) {
+                message = t(L"MainWindow.Driver.FailedHelp2");
+            }
+            else {
+                message = t(L"MainWindow.Driver.Failed");
+            }
+
+            LOG_ERROR(L"Driver", L"Sirius.sys initialization failed, GetLastError() = %d", error);
+            MessageBoxW(nullptr, message.c_str(), t(L"Common.Error").c_str(), MB_OK | MB_ICONERROR);
+            return false;
+        }
+        catch (const hresult_error& e) {
+            LOG_ERROR(L"Driver", L"Failed to load driver! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
+            MessageBoxW(nullptr, t(L"MainWindow.Driver.Failed").c_str(), t(L"Common.Error").c_str(), MB_OK | MB_ICONERROR);
+            return false;
+        }
     }
 }

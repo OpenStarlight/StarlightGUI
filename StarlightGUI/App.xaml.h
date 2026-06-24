@@ -11,6 +11,7 @@ namespace winrt::StarlightGUI::implementation
         void OnLaunched(Microsoft::UI::Xaml::LaunchActivatedEventArgs const&);
 
         void InitializeLogger();
+        bool InitializeDriverBeforeWindow();
 
     private:
         winrt::Microsoft::UI::Xaml::Window window{ nullptr };

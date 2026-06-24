@@ -84,13 +84,9 @@ namespace winrt::StarlightGUI::implementation
             InitializeTrayIcon();
         }
 
-        Activated([this](auto&&, auto&&) -> IAsyncAction {
+        Activated([this](auto&&, auto&&) {
             if (!loaded) {
-                RootNavigation().IsEnabled(false);
                 loaded = true;
-                // 加载模块
-                slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Driver.Loading"), InfoBarSeverity::Informational, g_mainWindowInstance);
-                co_await LoadModules();
 
                 // 进入主页
                 if (navigate_task_request) {
@@ -102,8 +98,6 @@ namespace winrt::StarlightGUI::implementation
                     MainFrame().Navigate(xaml_typename<StarlightGUI::HomePage>());
                     RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(0));
                 }
-
-                RootNavigation().IsEnabled(true);
 
                 // 检查更新
                 CheckUpdate();
@@ -334,7 +328,6 @@ namespace winrt::StarlightGUI::implementation
                 acrylicBackdrop.Kind(DesktopAcrylicKind::Default);
             }
 
-            LOG_WARNING(L"MainWindow", L"注意：如果你看到了这里，该实例目前存在严重问题，使用时可能导致颜色异常或者崩溃，请不要向开发者反馈，我们正在尝试修复此问题！");
         }
         else
         {
@@ -499,61 +492,6 @@ namespace winrt::StarlightGUI::implementation
         co_return;
     }
 
-    IAsyncAction MainWindow::LoadModules() {
-        if (siriusPath.empty() || wtmPath.empty() || iamKeyHackerPath.empty()) {
-            try {
-                co_await winrt::resume_background();
-
-                LOG_INFO(L"Driver", L"Loading necessary modules...");
-
-                int failedCount = 0;
-                auto siriusFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\Assets\\Sirius.sys");
-                auto wtmFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\WindowTopMost.dll");
-                auto iamKeyHackerFile = co_await StorageFile::GetFileFromPathAsync(GetInstalledLocationPath() + L"\\IAMKeyHacker.dll");
-
-                siriusPath = siriusFile.Path();
-                wtmPath = wtmFile.Path();
-                iamKeyHackerPath = iamKeyHackerFile.Path();
-
-				// 快速对于常见报错码进行判断，减少用户困惑
-                if (DriverUtils::LoadKernelDriver(siriusPath.c_str())) {
-                    LOG_INFO(L"Driver", L"Sirius.sys initializated successfully.");
-                }
-                else {
-                    failedCount++;
-                    LOG_INFO(L"Driver", L"Sirius.sys initialization failed, GetLastError() = %d", GetLastError());
-
-                    if (GetLastError() == 2 || GetLastError() == 98) {
-                        co_await wil::resume_foreground(DispatcherQueue());
-                        slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.FailedHelp1"), InfoBarSeverity::Error, g_mainWindowInstance);
-                        co_await winrt::resume_background();
-                    }
-                    else if (GetLastError() == 193) {
-                        co_await wil::resume_foreground(DispatcherQueue());
-                        slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.FailedHelp2"), InfoBarSeverity::Error, g_mainWindowInstance);
-                        co_await winrt::resume_background();
-                    }
-                }
-
-
-                co_await wil::resume_foreground(DispatcherQueue());
-
-                if (failedCount > 0) {
-                    LOG_ERROR(L"Driver", L"%d module(s) failed to load.", failedCount);
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-                }
-                else {
-                    LOG_INFO(L"Driver", L"Modules loaded successfully.");
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"MainWindow.Driver.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                }
-            }
-            catch (const hresult_error& e) {
-                LOG_ERROR(L"Driver", L"Failed to load modules! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
-                slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"MainWindow.Driver.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-            }
-        }
-    }
-
     HWND MainWindow::GetWindowHandle()
     {
         return globalHWND;
@@ -671,4 +609,3 @@ namespace winrt::StarlightGUI::implementation
         NavHelpUid().Content(tbox(L"Nav.Help"));
     }
 }
-

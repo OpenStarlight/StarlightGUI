@@ -147,16 +147,30 @@
                                         Grid.Column="0"
                                         Margin="16,0,0,0"
                                         VerticalAlignment="Center">
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                        <TextBlock
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            Text="{Binding Name}" />
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                            Text="{Binding Name}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip
+                                                    essential:ToolTipHelper.AcrylicWorkaround="True"
+                                                    Content="{Binding Name}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
+                                        <TextBlock
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Path}" />
+                                            Text="{Binding Path}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip
+                                                    essential:ToolTipHelper.AcrylicWorkaround="True"
+                                                    Content="{Binding Path}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
                                     </StackPanel>
 
                                     <!--  地址  -->

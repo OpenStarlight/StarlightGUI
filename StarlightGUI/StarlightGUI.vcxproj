@@ -174,9 +174,6 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
-    <Manifest Include="app.manifest" />
-  </ItemGroup>
-  <ItemGroup>
     <ClInclude Include="Console.h" />
     <ClInclude Include="CopyFileDialog.xaml.h">
       <DependentUpon>CopyFileDialog.xaml</DependentUpon>
@@ -424,7 +421,7 @@
     <ClCompile Include="MainWindow.xaml.cpp">
       <DependentUpon>MainWindow.xaml</DependentUpon>
     </ClCompile>
-    <ClCompile Include="$(GeneratedFilesDir)module.g.cpp" />
+    <ClCompile Include="Generated Files\module.g.cpp" />
     <ClCompile Include="Process_HandlePage.xaml.cpp">
       <DependentUpon>Process_HandlePage.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -624,8 +621,6 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
     </None>
-    <None Include="packages.config" />
-    <None Include="StarlightGUI_TemporaryKey.pfx" />
     <Text Include="Strings\en-US\Resources.json">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>

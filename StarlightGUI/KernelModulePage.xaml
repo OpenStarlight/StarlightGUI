@@ -103,7 +103,6 @@
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="80" />
-                        <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
                     <Button
                         x:Name="NameHeaderButton"
@@ -147,17 +146,6 @@
                         Content="大小"
                         CornerRadius="0"
                         Tag="Size" />
-                    <Button
-                        x:Name="IndexHeaderButton"
-                        Grid.Column="4"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Click="ColumnHeader_Click"
-                        Content="加载顺序"
-                        CornerRadius="0"
-                        Tag="Index" />
                     <ct:GridSplitter
                         Grid.Column="0"
                         Width="9"
@@ -188,16 +176,6 @@
                         Opacity="0"
                         ResizeBehavior="BasedOnAlignment"
                         ResizeDirection="Columns" />
-                    <ct:GridSplitter
-                        Grid.Column="3"
-                        Width="9"
-                        Margin="0,0,-5,0"
-                        HorizontalAlignment="Right"
-                        VerticalAlignment="Stretch"
-                        Background="Transparent"
-                        Opacity="0"
-                        ResizeBehavior="BasedOnAlignment"
-                        ResizeDirection="Columns" />
                 </Grid>
             </Border>
 
@@ -212,7 +190,6 @@
                         <ColumnDefinition Width="*" />
                         <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
 
@@ -240,7 +217,6 @@
                                         <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="80" />
                                     </Grid.ColumnDefinitions>
 
                                     <!--  模块  -->
@@ -248,16 +224,26 @@
                                         Grid.Column="0"
                                         Margin="16,0,0,0"
                                         VerticalAlignment="Center">
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                        <TextBlock
                                             FontSize="14"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
-                                            Text="{Binding Name}" />
-                                        <essential:MarqueeText
-                                            Behavior="Looping"
+                                            Text="{Binding Name}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding Name}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
+                                        <TextBlock
                                             FontSize="12"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                            Text="{Binding Path}" />
+                                            Text="{Binding Path}"
+                                            TextTrimming="CharacterEllipsis"
+                                            TextWrapping="NoWrap">
+                                            <ToolTipService.ToolTip>
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding Path}" />
+                                            </ToolTipService.ToolTip>
+                                        </TextBlock>
                                     </StackPanel>
 
                                     <!--  基址  -->
@@ -286,15 +272,6 @@
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                         Text="{Binding Size}" />
-
-                                    <!--  加载顺序  -->
-                                    <TextBlock
-                                        Grid.Column="4"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Index}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -315,13 +292,6 @@
                         IsHitTestVisible="False" />
                     <Border
                         Grid.Column="3"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="4"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"

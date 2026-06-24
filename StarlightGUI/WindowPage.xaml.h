@@ -32,6 +32,7 @@ namespace winrt::StarlightGUI::implementation
         winrt::Windows::Foundation::IAsyncAction WaitAndReloadAsync(int interval);
 
         bool SetWindowZBID(HWND hwnd, ZBID zbid);
+        bool EnsureZBIDModulesInitialized();
 
         winrt::Windows::Foundation::Collections::IObservableVector<winrt::StarlightGUI::WindowInfo> m_windowList{
             winrt::multi_threaded_observable_vector<winrt::StarlightGUI::WindowInfo>()
