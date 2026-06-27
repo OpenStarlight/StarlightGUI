@@ -877,7 +877,8 @@ namespace winrt::StarlightGUI::implementation
 
 	void MonitorPage::UpdateCallbackColumns()
 	{
-		std::array<hstring, 4> labels = { L"Address", L"Address2", L"Address3", L"Address4" };
+		std::array<hstring, 4> labels = { t(L"Common.Address"), t(L"Monitor.Header.Address2"), t(L"Monitor.Header.Address3"), t(L"Monitor.Header.Address4") };
+		std::array<double, 4> widths = { 150, 150, 150, 150 };
 		uint32_t visibleColumns = 4;
 
 		switch ((CallbackType)m_callbackType) {
@@ -886,52 +887,56 @@ namespace winrt::StarlightGUI::implementation
 		case CallbackType::LoadImage:
 		case CallbackType::LogonSessionTerminated:
 		case CallbackType::DbgPrint:
-			labels = { L"Routine", L"Index", L"Flag", L"" };
+			labels = { t(L"Monitor.Header.Routine"), t(L"Common.Index"), t(L"Monitor.Header.Flag"), L"" };
+			widths = { 150, 80, 80, 0 };
 			visibleColumns = 3;
 			break;
 		case CallbackType::Object:
-			labels = { L"Handle", L"PreCall", L"PostCall", L"Object" };
+			labels = { t(L"Common.Handle"), L"PreCall", L"PostCall", t(L"Monitor.Header.Object") };
+			widths = { 150, 150, 150, 80 };
 			break;
 		case CallbackType::Registry:
-			labels = { L"Cookie", L"Context", L"Function", L"" };
+			labels = { L"Cookie", t(L"Monitor.Header.Context"), t(L"Monitor.Header.Function"), L"" };
 			visibleColumns = 3;
 			break;
 		case CallbackType::PowerSetting:
-			labels = { L"Routine", L"Context", L"Configuration", L"DeviceObject" };
+			labels = { t(L"Monitor.Header.Routine"), t(L"Monitor.Header.Context"), t(L"Monitor.Header.Configuration"), t(L"Monitor.Header.DeviceObject") };
 			break;
 		case CallbackType::PlugPlay:
-			labels = { L"Routine", L"Context", L"DeviceObject", L"DriverObject" };
+			labels = { t(L"Monitor.Header.Routine"), t(L"Monitor.Header.Context"), t(L"Monitor.Header.DeviceObject"), t(L"Monitor.Header.DriverObject") };
 			break;
 		case CallbackType::Shutdown:
 		case CallbackType::LastChanceShutdown:
-			labels = { L"DeviceObject", L"DriverObject", L"", L"" };
+			labels = { t(L"Monitor.Header.DeviceObject"), t(L"Monitor.Header.DriverObject"), L"", L"" };
 			visibleColumns = 2;
 			break;
 		case CallbackType::FileSystemChange:
-			labels = { L"Callback", L"DeviceObject", L"DriverObject", L"" };
+			labels = { t(L"Monitor.Header.Callback"), t(L"Monitor.Header.DeviceObject"), t(L"Monitor.Header.DriverObject"), L"" };
 			visibleColumns = 3;
 			break;
 		case CallbackType::BugCheck:
-			labels = { L"Routine", L"Buffer", L"Component", L"Length" };
+			labels = { t(L"Monitor.Header.Routine"), t(L"Monitor.Header.Buffer"), t(L"Monitor.Header.Component"), t(L"Monitor.Header.Length") };
+			widths = { 150, 150, 150, 80 };
 			break;
 		case CallbackType::BugCheckReason:
-			labels = { L"Routine", L"Reason", L"Component", L"State" };
+			labels = { t(L"Monitor.Header.Routine"), t(L"Monitor.Header.Component"), t(L"Monitor.Header.State"), t(L"Monitor.Header.Reason") };
+			widths = { 150, 150, 80, 80 };
 			break;
 		case CallbackType::ExCallback:
-			labels = { L"Routine", L"Context", L"Object", L"Entry" };
+			labels = { t(L"Monitor.Header.Routine"), t(L"Monitor.Header.Context"), t(L"Monitor.Header.Object"), t(L"Monitor.Header.Entry") };
 			break;
 		case CallbackType::LogonSessionTerminatedEx:
-			labels = { L"Routine", L"Context", L"", L"" };
+			labels = { t(L"Monitor.Header.Routine"), t(L"Monitor.Header.Context"), L"", L"" };
 			visibleColumns = 2;
 			break;
 		case CallbackType::IoPriority:
-			labels = { L"UserCallback", L"SelfReference", L"DeviceObject", L"DriverObject" };
+			labels = { L"UserCallback", L"SelfReference", t(L"Monitor.Header.DeviceObject"), t(L"Monitor.Header.DriverObject") };
 			break;
 		case CallbackType::Coalescing:
-			labels = { L"CallbackContext", L"SelfReference", L"DeviceObject", L"DriverObject" };
+			labels = { L"CallbackContext", L"SelfReference", t(L"Monitor.Header.DeviceObject"), t(L"Monitor.Header.DriverObject") };
 			break;
 		case CallbackType::Nmi:
-			labels = { L"Routine", L"Context", L"SelfReference", L"" };
+			labels = { t(L"Monitor.Header.Routine"), t(L"Monitor.Header.Context"), L"SelfReference", L"" };
 			visibleColumns = 3;
 			break;
 		default:
@@ -950,7 +955,7 @@ namespace winrt::StarlightGUI::implementation
 
 		for (uint32_t i = 0; i < headerColumns.size(); ++i) {
 			bool visible = i < visibleColumns;
-			GridLength width = visible ? GridLengthHelper::FromValueAndType(150, GridUnitType::Pixel) : GridLengthHelper::FromPixels(0);
+			GridLength width = visible ? GridLengthHelper::FromValueAndType(widths[i], GridUnitType::Pixel) : GridLengthHelper::FromPixels(0);
 			headerColumns[i].Width(width);
 			bodyColumns[i].Width(width);
 			headerButtons[i].Visibility(visible ? Visibility::Visible : Visibility::Collapsed);

@@ -758,6 +758,14 @@ namespace winrt::StarlightGUI::implementation {
 					callback.String5(ULongToHexString(callbackData[i].Flag, 0, false, true));
 					callback.String6(L"");
 				}
+				else if (type == CallbackType::BugCheck) {
+					callback.String6(ULongToHexString((ULONG64)callbackData[i].Address4, 0, false, true));
+				}
+				else if (type == CallbackType::BugCheckReason) {
+					callback.String4(ULongToHexString((ULONG64)callbackData[i].Address3));
+					callback.String5(ULongToHexString((ULONG64)callbackData[i].Address4, 0, false, true));
+					callback.String6(ULongToHexString((ULONG64)callbackData[i].Address2, 0, false, true));
+				}
 
 				callback.ULong1((ULONG)type);
 				callback.ULong2(callbackData[i].Index);
