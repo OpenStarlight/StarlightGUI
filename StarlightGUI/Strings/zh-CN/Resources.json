@@ -26,6 +26,8 @@
   "Common.DiskN": "磁盘 %d",
   "Common.Refresh": "刷新",
   "Common.CopyInfo": "复制信息",
+  "Common.Continue": "继续",
+  "Common.Cancel": "取消",
 
   "Msg.EditSelfWarning": "你想干什么?",
   "Msg.OpenInBrowser.Success": "已在浏览器中打开链接!",
@@ -160,8 +162,6 @@
   "Task.Desc.Application": "应用程序",
   "Task.Desc.System": "系统进程",
 
-  "Task.Msg.MurderWarning": "该操作将强制抹杀进程内存，可能导致系统不稳定!再次点击以确认!",
-  "Task.Msg.SetCriticalWarning": "这将使进程变为关键进程，终止它将导致蓝屏!再次点击以确认!",
   "Task.Msg.StillLoading": "正在加载中，请稍候...",
   "Task.Msg.NotDLLFile": "文件不是DLL类型!",
 
@@ -196,7 +196,6 @@
   "File.Menu.OpenInExplorer": "在文件管理器内打开",
 
   "File.Msg.StillLoading": "当前正在加载，请稍后再试!",
-  "File.Msg.ImportantFileWarning": "该文件可能为重要文件，如果确认继续请再次点击!",
   "File.Msg.EnterDriveFirst": "请先进入某个驱动器后再进行复制",
   "File.Msg.CopyPartialFail": "操作已完成，但有 %d 个项目复制失败!",
 
@@ -260,7 +259,7 @@
   "Monitor.Seg.IDT": "中断描述符表",
   "Monitor.Seg.GDT": "全局描述符表",
   "Monitor.Seg.PiDDB": "PiDDB 缓存表",
-  "Monitor.Seg.HALDPT": "HAL 分发表",
+  "Monitor.Seg.HALTable": "HAL 分发表",
 
   "Monitor.Header.TypeModule": "类型/模块",
   "Monitor.Header.Entry": "入口",
@@ -308,8 +307,6 @@
   "Disasm.Msg.CapstoneInitFailed": "无法初始化 Capstone! 请检查系统配置! 错误码: ",
   "Disasm.Msg.InvalidInput": "输入的一个或多个值不合法!",
   "Disasm.Msg.NoInstructions": "未能反汇编出任何指令，可能发生了错误!",
-  "Disasm.Msg.WriteWarning": "写入内存可能会导致系统不稳定甚至崩溃! 请确保你知道自己在做什么!!! 再次点击以继续!!!",
-
   "Utility.Header.Hypervisor": "Hypervisor",
   "Utility.Header.SysBehavior": "系统行为控制",
   "Utility.Header.Card.Hypervisor": "Hypervisor 模式",
@@ -323,7 +320,7 @@
   "Utility.Header.Card.LoadDrvHypervisor": "加载驱动 (Hypervisor)",
   "Utility.Header.Card.DSEHypervisor": "驱动签名强制 (Hypervisor)",
   "Utility.Header.Card.PGHypervisor": "禁用内核保护 (Hypervisor)",
-  "Utility.Desc.Card.Hypervisor": "开启虚拟化模式（Intel VT-x)",
+  "Utility.Desc.Card.Hypervisor": "开启虚拟化模式 (Intel VT-x)",
   "Utility.Desc.Card.CreateProcess": "禁止或允许全局创建进程",
   "Utility.Desc.Card.CreateFile": "禁止或允许全局创建文件",
   "Utility.Desc.Card.ModifyReg": "禁止或允许修改注册表",
@@ -341,7 +338,7 @@
   "Utility.Menu.Enable": "启用",
   "Utility.Menu.Disable": "禁用",
 
-  "Utility.Msg.ConfirmAction": "你确定要这么做吗？再次点击以确认。",
+  "Utility.Msg.ConfirmAction": "此操作具有危险性，是否继续?",
   "Utility.Common.UnknownAction": "未知操作!",
 
   "Settings.Header.Feature": "功能",
@@ -351,6 +348,7 @@
 
   "Settings.Header.Card.EnumFileMode": "遍历文件模式",
   "Settings.Header.Card.EnumStrengthen": "进程枚举强化",
+  "Settings.Header.Card.FunctionDisplay": "函数展示设置",
   "Settings.Header.Card.TaskAutoRefresh": "任务自动刷新",
   "Settings.Header.Card.PDHFirst": "PDH 数据优先",
   "Settings.Header.Card.DisasmCount": "内存每行展示数量",
@@ -376,6 +374,7 @@
 
   "Settings.Desc.Card.EnumFileMode": "文件管理器中进行遍历文件使用的 API",
   "Settings.Desc.Card.EnumStrengthen": "使用进程枚举的加强模式",
+  "Settings.Desc.Card.FunctionDisplay": "控制函数列表中弃用、未知和文档名的显示方式",
   "Settings.Desc.Card.TaskAutoRefresh": "任务管理器会周期性刷新进程列表，使信息始终保持最新",
   "Settings.Desc.Card.PDHFirst": "即使 NVML 可用，依旧使用系统 PDH 为 GPU 提供的数据",
   "Settings.Desc.Card.DisasmCount": "在内存反汇编页面每一行展示的数据数量",
@@ -402,6 +401,9 @@
   "Settings.Button.ImportImage": "导入",
   "Settings.Button.ClearImage": "清除",
   "Settings.Button.ImageRefresh": "刷新",
+  "Settings.Toggle.ShowDeprecated": "显示弃用",
+  "Settings.Toggle.ShowUnknown": "显示未知",
+  "Settings.Toggle.UseDocumentName": "使用文档名",
   "Settings.Option.ThemeSystem": "跟随系统",
   "Settings.Option.ThemeLight": "浅色",
   "Settings.Option.ThemeDark": "深色",
@@ -422,11 +424,11 @@
   "Help.Button.GithubRepo": "查看仓库",
   "Help.Button.WinUI": "查看链接",
 
-  "Help.Text.Stars.Desc": "Starlight GUI 的开发者，一个热爱编程的男孩子~",
+  "Help.Text.Stars.Desc": "Starlight GUI 的开发者，一个热爱编程的男孩。",
   "Help.Text.Github.Desc": "官方源代码仓库: https://github.com/OpenStarlight/StarlightGUI",
   "Help.Text.WinUI.Desc": "WinUI 是一个用户界面层，包含现代控件和样式，用于构建 Windows 应用。",
   "Help.Text.WinUIEssentials.Desc": "一个专门用于简化 WinUI 3 开发的 C++ 仓库。",
-  "Help.Text.KALI.Desc": "擅长内核开发，提供了 SKT64 驱动和 AstralX 代码指导。",
+  "Help.Text.KALI.Desc": "擅长内核开发，提供了 Sirius 开发指导。",
   "Help.Text.MuLin.Desc": "一个QA和半个PD？为本项目提了一些小Bug和一些小需求。",
   "Help.Text.Wormwaker.Desc": "本项目的技术支持、宣传、思路指导，Windows 用户层大师级开发者。",
   "Help.Text.SponsorIntro": "自 Starlight GUI 问世以来，所有为本软件开发提供过赞助的人员名单，排名不分先后。由衷感谢你们对作者和本软件开发的支持!",
@@ -438,19 +440,13 @@
   "ProcHandle.Header.Attributes": "属性",
   "ProcHandle.Header.Object": "对象",
 
-  "ProcHandle.Msg.TooManyHandles": "句柄数量过多，该结果可能不准确!",
-
   "ProcKCT.Title": "内核回调表",
   "ProcKCT.Detail": "共 %d 条记录 (%d ms)",
 
   "ProcKCT.Header.Function": "函数",
 
-  "ProcKCT.Msg.TooManyRecords": "记录数量过多，该结果可能不准确!",
-
   "ProcModule.Title": "模块",
   "ProcModule.Detail": "共 %d 个模块 (%d ms)",
-
-  "ProcModule.Msg.TooManyModules": "模块数量过多，该结果可能不准确!",
 
   "ProcThread.Title": "线程",
   "ProcThread.Detail": "共 %d 个线程 (%d ms)",
@@ -463,8 +459,6 @@
   "ProcThread.Menu.Terminate": "终止",
   "ProcThread.Menu.TerminateKernel": "终止 (内核)",
   "ProcThread.Menu.TerminateMurder": "终止 (陷阱帧抹杀)",
-
-  "ProcThread.Msg.MurderWarning": "这是一个危险操作! 再次点击以确认!",
 
   "RunProcess.Title": "运行新进程",
   "RunProcess.ButtonPrimary": "运行",
