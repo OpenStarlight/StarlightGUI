@@ -215,6 +215,23 @@
                     <ToggleSwitch x:Name="ReplaceTaskManagerButton" Toggled="ReplaceTaskManagerButton_Toggled" />
                 </essential:SettingsCard>
 
+                <essential:SettingsCard
+                    x:Name="AutoStopDriverCard"
+                    Margin="0,0,0,10"
+                    essential:RevealFocusPanel.AttachToPanel="{x:Bind RevealFocusPanel}"
+                    Description="当 Starlight GUI 退出时，自动停止驱动服务"
+                    Header="自动停止服务"
+                    IsActionIconVisible="False"
+                    IsClickEnabled="True">
+                    <essential:SettingsCard.HeaderIcon>
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="16"
+                            Glyph="&#xe945;" />
+                    </essential:SettingsCard.HeaderIcon>
+                    <ToggleSwitch x:Name="AutoStopDriverButton" Toggled="AutoStopDriverButton_Toggled" />
+                </essential:SettingsCard>
+
                 <TextBlock
                     x:Name="SettingsAppearanceUid"
                     Padding="10"

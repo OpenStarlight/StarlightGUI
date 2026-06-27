@@ -172,6 +172,7 @@
   <ItemGroup>
     <ClCompile Include="Generated Files\module.g.cpp" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="BuildConfig.h" />
     <ClInclude Include="Utils\Config.h">
       <Filter>Utils</Filter>
     </ClInclude>

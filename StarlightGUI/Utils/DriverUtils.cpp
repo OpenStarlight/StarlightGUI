@@ -119,6 +119,34 @@ namespace winrt::StarlightGUI::implementation {
 		return false;
 	}
 
+	bool DriverUtils::StopKernelDriver() noexcept {
+		SC_HANDLE hSCM = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+		if (!hSCM) {
+			return false;
+		}
+
+		SC_HANDLE hService = OpenServiceW(hSCM, L"Sirius for StarlightGUI", SERVICE_ALL_ACCESS);
+		if (!hService) {
+			CloseServiceHandle(hSCM);
+			return false;
+		}
+
+		SERVICE_STATUS serviceStatus;
+		bool result = false;
+		if (QueryServiceStatus(hService, &serviceStatus)) {
+			if (serviceStatus.dwCurrentState == SERVICE_STOPPED) {
+				result = true;
+			}
+			else {
+				result = ControlService(hService, SERVICE_CONTROL_STOP, &serviceStatus);
+			}
+		}
+
+		CloseServiceHandle(hService);
+		CloseServiceHandle(hSCM);
+		return result;
+	}
+
 	void DriverUtils::FixServices() noexcept {
 		SC_HANDLE hSCM, hService;
 

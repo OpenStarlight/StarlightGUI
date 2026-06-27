@@ -4,10 +4,10 @@
   </p>
     Starlight GUI
   <p align="center">
-    <a href="https://www.apache.org/licenses/LICENSE-2.0.html">
-      <img src="https://img.shields.io/badge/License-Apache%202.0-blue?logo=cloudera&logoColor=white" alt="License">
+    <a href="https://www.gnu.org/licenses/gpl-3.0.html">
+      <img src="https://img.shields.io/badge/License-GPL%203.0-blue?logo=gnu&logoColor=white" alt="License">
     </a>
-    <a href="https://opensource.org/license/apache-2-0">
+    <a href="https://opensource.org/license/gpl-3-0">
       <img src="https://img.shields.io/badge/OSI-Certified-brightgreen?logo=opensourceinitiative" alt="OSI Certified">
     </a>
     <a href="https://github.com/microsoft/cppwinrt">
@@ -27,7 +27,7 @@
 Starlight GUI 是一个基于 C++/WinRT 的 WinUI3 开源项目，为开发者的兴趣作品，致力于打造一个功能强大、界面美观、易于使用的开源 Windows 10 / 11 内核级工具箱。项目采用原生的 WinUI3 设计，完美贴合 Windows 11 系统的操作习惯和视觉风格。拥有很多实用功能和自定义设置，增强电脑的使用体验。  
 
 **开发者**: Stars  
-**许可证**: Apache 2.0 License | OSI Certified  
+**许可证**: GPL 3.0 License | OSI Certified  
 **Copyright © 2026 Starlight. Some Rights Reserved.**  
 **网盘下载链接**: `https://pan.quark.cn/s/ee7a29ca2a76`  **提取码**: `vVmj`  （也可在 Github 页面下载）
 

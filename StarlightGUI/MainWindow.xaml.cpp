@@ -89,15 +89,9 @@ namespace winrt::StarlightGUI::implementation
                 loaded = true;
 
                 // 进入主页
-                if (navigate_task_request) {
-                    NavigateToTaskPage();
-                    navigate_task_request = false;
-                }
-                else {
-                    LOG_INFO(L"MainWindow", L"Navigates to StarlightGUI::HomePage because we are initializing MainWindow for the first time.");
-                    MainFrame().Navigate(xaml_typename<StarlightGUI::HomePage>());
-                    RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(0));
-                }
+                LOG_INFO(L"MainWindow", L"Navigates to StarlightGUI::HomePage because we are initializing MainWindow for the first time.");
+                MainFrame().Navigate(xaml_typename<StarlightGUI::HomePage>());
+                RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(0));
 
                 // 检查更新
                 CheckUpdate();
@@ -114,6 +108,14 @@ namespace winrt::StarlightGUI::implementation
             SaveConfig("window_height", height);
 
             LOG_INFO(L"MainWindow", L"Saved window size.");
+            if (auto_stop_driver) {
+                if (DriverUtils::StopKernelDriver()) {
+                    LOG_INFO(L"Driver", L"%s", L"Sirius service stopped automatically.");
+                }
+                else {
+                    LOG_WARNING(L"Driver", L"%s", L"Failed to stop Sirius service automatically.");
+                }
+            }
             RemoveTrayIcon();
             LOGGER_CLOSE();
             });
@@ -142,12 +144,6 @@ namespace winrt::StarlightGUI::implementation
             RemoveTrayIcon();
             m_allowClose = false;
         }
-    }
-
-    void MainWindow::NavigateToTaskPage()
-    {
-        MainFrame().Navigate(xaml_typename<StarlightGUI::TaskPage>());
-        RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(1));
     }
 
     void MainWindow::InitializeTrayIcon()
@@ -332,6 +328,9 @@ namespace winrt::StarlightGUI::implementation
         else
         {
             this->SystemBackdrop(nullptr);
+            if (background_image.empty()) {
+                MainWindowGrid().Background(SolidColorBrush(slg::GetConfiguredElementTheme() == ElementTheme::Dark ? Color{ 255,32,32,32 } : Color{ 255,243,243,243 }));
+            }
         }
 
         LOG_INFO(L"MainWindow", L"Loaded backdrop async with options: [%d, %d]", background_type, option);
@@ -553,24 +552,6 @@ namespace winrt::StarlightGUI::implementation
 
             if (!paths.empty() && g_filePageInstance) {
                 g_filePageInstance->HandleExternalDropFiles(paths);
-            }
-
-            return 0;
-        }
-
-        case WM_COPYDATA:
-        {
-            if (!instance) return 0;
-
-            auto copyData = reinterpret_cast<PCOPYDATASTRUCT>(lParam);
-            if (!copyData || !copyData->lpData) return 0;
-
-            auto command = std::wstring(reinterpret_cast<const wchar_t*>(copyData->lpData));
-            if (copyData->dwData == COPYDATA_NAVIGATE_TASK && command == L"navigate_task") {
-                navigate_task_request = true;
-                instance->RestoreWindowFromTray();
-                instance->NavigateToTaskPage();
-                return 1;
             }
 
             return 0;

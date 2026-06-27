@@ -32,6 +32,19 @@ namespace winrt::StarlightGUI::implementation {
 		InitializeComponent();
 		SetupLocalization();
 
+#ifndef STARLIGHT_PREMIUM
+		PGCard().Opacity(0.45);
+		HypervisorCard().Opacity(0.45);
+		DSEHypervisorCard().Opacity(0.45);
+		PGHypervisorCard().Opacity(0.45);
+		LoadDrvHypervisorCard().Opacity(0.45);
+		ToolTipService::SetToolTip(PGCard(), tbox(L"Common.PremiumOnly"));
+		ToolTipService::SetToolTip(HypervisorCard(), tbox(L"Common.PremiumOnly"));
+		ToolTipService::SetToolTip(DSEHypervisorCard(), tbox(L"Common.PremiumOnly"));
+		ToolTipService::SetToolTip(PGHypervisorCard(), tbox(L"Common.PremiumOnly"));
+		ToolTipService::SetToolTip(LoadDrvHypervisorCard(), tbox(L"Common.PremiumOnly"));
+#endif
+
 		LOG_INFO(L"UtilityPage", L"UtilityPage initialized.");
 	}
 
@@ -121,6 +134,7 @@ namespace winrt::StarlightGUI::implementation {
 
 	slg::coroutine UtilityPage::LoadDriverHypervisorButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
 	{
+#ifdef STARLIGHT_PREMIUM
 		try {
 			auto dialog = winrt::make<winrt::StarlightGUI::implementation::LoadDriverDialog>();
 			dialog.XamlRoot(this->XamlRoot());
@@ -169,6 +183,11 @@ namespace winrt::StarlightGUI::implementation {
 				InfoBarSeverity::Error, g_mainWindowInstance);
 		}
 		co_return;
+#else
+		KernelInstance::DisableHypervisor(); // 随便
+		slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+		co_return;
+#endif
 	}
 
 	void UtilityPage::SetupLocalization() {

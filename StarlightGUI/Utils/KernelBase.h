@@ -124,6 +124,7 @@ namespace winrt::StarlightGUI::implementation {
 	public:
 		static bool LoadKernelDriver(LPCWSTR kernelPath) noexcept;
 		static bool LoadDriver(LPCWSTR kernelPath, LPCWSTR fileName) noexcept;
+		static bool StopKernelDriver() noexcept;
 		static void FixServices() noexcept;
 	};
 }

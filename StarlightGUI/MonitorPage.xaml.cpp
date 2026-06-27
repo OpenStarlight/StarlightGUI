@@ -5,6 +5,7 @@
 #endif
 #include <array>
 #include <string_view>
+#include <utility>
 #include <winrt/XamlToolkit.WinUI.Controls.h>
 #include <unordered_set>
 
@@ -32,13 +33,26 @@ namespace winrt::StarlightGUI::implementation
 		return t(L"Msg.DriverError.Detail", errorMsg.c_str());
 	}
 
-	static constexpr std::array<std::wstring_view, 20> CallbackTypeNames = {
-		L"CreateProcess", L"CreateThread", L"LoadImage", L"Object",
-		L"Registry", L"PowerSetting", L"PlugPlay", L"Shutdown",
-		L"LastChanceShutdown", L"FileSystemChange", L"BugCheck",
-		L"BugCheckReason", L"ExCallback", L"LogonSessionTerminated",
-		L"LogonSessionTerminatedEx", L"DbgPrint", L"IoPriority",
-		L"Coalescing", L"ImageVerification", L"Nmi"
+	static constexpr std::array<std::pair<CallbackType, std::wstring_view>, 19> CallbackTypeOptions = {
+		std::pair{ CallbackType::CreateProcess, L"CreateProcess" },
+		std::pair{ CallbackType::CreateThread, L"CreateThread" },
+		std::pair{ CallbackType::LoadImage, L"LoadImage" },
+		std::pair{ CallbackType::Object, L"Object" },
+		std::pair{ CallbackType::Registry, L"Registry" },
+		std::pair{ CallbackType::PowerSetting, L"PowerSetting" },
+		std::pair{ CallbackType::PlugPlay, L"PlugPlay" },
+		std::pair{ CallbackType::Shutdown, L"Shutdown" },
+		std::pair{ CallbackType::LastChanceShutdown, L"LastChanceShutdown" },
+		std::pair{ CallbackType::FileSystemChange, L"FileSystemChange" },
+		std::pair{ CallbackType::BugCheck, L"BugCheck" },
+		std::pair{ CallbackType::BugCheckReason, L"BugCheckReason" },
+		std::pair{ CallbackType::ExCallback, L"ExCallback" },
+		std::pair{ CallbackType::LogonSessionTerminated, L"LogonSessionTerminated" },
+		std::pair{ CallbackType::LogonSessionTerminatedEx, L"LogonSessionTerminatedEx" },
+		std::pair{ CallbackType::DbgPrint, L"DbgPrint" },
+		std::pair{ CallbackType::IoPriority, L"IoPriority" },
+		std::pair{ CallbackType::Coalescing, L"Coalescing" },
+		std::pair{ CallbackType::Nmi, L"Nmi" }
 	};
 
 	static constexpr std::array<std::wstring_view, 5> HALTableNames = {
@@ -149,6 +163,11 @@ namespace winrt::StarlightGUI::implementation
 
 		LOG_INFO(__WFUNCTION__, L"Loading general list...");
 
+		if (m_callbackType < 0 || m_callbackType > static_cast<int>(CallbackType::Nmi) || (CallbackType)m_callbackType == CallbackType::ImageVerification) {
+			m_callbackType = static_cast<int>(CallbackType::CreateProcess);
+			UpdateCallbackColumns();
+		}
+
 		auto requestedIndex = segmentedIndex;
 		auto requestedCallbackType = m_callbackType;
 		auto requestedHALTableType = m_halTableType;
@@ -162,13 +181,13 @@ namespace winrt::StarlightGUI::implementation
 		std::vector<winrt::StarlightGUI::GeneralEntry> entries;
 		std::vector<winrt::StarlightGUI::GeneralEntry> const* entriesSource = &entries;
 
-		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, CallbackTypeNames.size()> callbackCache;
+		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, static_cast<size_t>(CallbackType::Nmi) + 1> callbackCache;
 		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, HALTableNames.size()> halCache;
 		static std::vector<winrt::StarlightGUI::GeneralEntry> minifilterCache, ssdtCache, sssdtCache, ioTimerCache, idtCache, gdtCache, piddbCache;
 
 		switch (requestedIndex) {
 		case 1:
-			if (requestedCallbackType < 0 || requestedCallbackType >= static_cast<int>(callbackCache.size())) {
+			if (requestedCallbackType < 0 || requestedCallbackType >= static_cast<int>(callbackCache.size()) || (CallbackType)requestedCallbackType == CallbackType::ImageVerification) {
 				requestedCallbackType = 0;
 			}
 			if (force || callbackCache[requestedCallbackType].empty()) {
@@ -275,7 +294,8 @@ namespace winrt::StarlightGUI::implementation
 			else entriesSource = &piddbCache;
 			break;
 		case 9:
-			if (requestedHALTableType < 0 || requestedHALTableType >= static_cast<int>(halCache.size())) {
+			if (requestedHALTableType < 0 ||
+				requestedHALTableType >= static_cast<int>(halCache.size())) {
 				requestedHALTableType = 0;
 			}
 			if (force || halCache[requestedHALTableType].empty()) {
@@ -455,7 +475,7 @@ namespace winrt::StarlightGUI::implementation
 		detailBox.Content(detailPanel);
 		detailBox.Visibility(flag ? Visibility::Collapsed : Visibility::Visible);
 		if (!status && !flag) {
-			auto errorText = createSelectableTextBlock(t(L"Monitor.Msg.GetInfoError"));
+			auto errorText = createSelectableTextBlock(GetDriverErrorMessage());
 			errorText.Foreground(Microsoft::UI::Xaml::Media::SolidColorBrush(Microsoft::UI::Colors::OrangeRed()));
 			flyoutPanel.Children().Append(errorText);
 		}
@@ -494,6 +514,7 @@ namespace winrt::StarlightGUI::implementation
 			auto lifetime = get_strong();
 			auto xamlRoot = XamlRoot();
 			auto target = item;
+			target.ULong1(m_callbackType);
 			if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
 				co_return;
 			}
@@ -501,7 +522,7 @@ namespace winrt::StarlightGUI::implementation
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 				lifetime->WaitAndReloadAsync(1000);
 			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
 			});
 
@@ -576,7 +597,7 @@ namespace winrt::StarlightGUI::implementation
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 				lifetime->WaitAndReloadAsync(1000);
 			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
 			});
 
@@ -705,9 +726,13 @@ namespace winrt::StarlightGUI::implementation
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 				lifetime->WaitAndReloadAsync(1000);
 			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
+			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
 			});
+#ifndef STARLIGHT_PREMIUM
+		item1_1.Opacity(0.45);
+		ToolTipService::SetToolTip(item1_1, tbox(L"Common.PremiumOnly"));
+#endif
 
 		// 分割线1
 		MenuFlyoutSeparator separator1;
@@ -821,11 +846,11 @@ namespace winrt::StarlightGUI::implementation
 	{
 		MenuFlyout flyout;
 
-		for (uint32_t i = 0; i < CallbackTypeNames.size(); ++i) {
+		for (auto const& option : CallbackTypeOptions) {
 			ToggleMenuFlyoutItem item;
-			item.Text(hstring(CallbackTypeNames[i]));
-			item.Tag(box_value(static_cast<int32_t>(i)));
-			item.IsChecked(static_cast<int>(i) == m_callbackType);
+			item.Text(hstring(option.second));
+			item.Tag(box_value(static_cast<int32_t>(option.first)));
+			item.IsChecked(static_cast<int>(option.first) == m_callbackType);
 			item.Click({ this, &MonitorPage::CallbackTypeMenuItem_Click });
 			flyout.Items().Append(item);
 		}
@@ -839,6 +864,12 @@ namespace winrt::StarlightGUI::implementation
 			item.Tag(box_value(static_cast<int32_t>(i)));
 			item.IsChecked(static_cast<int>(i) == m_halTableType);
 			item.Click({ this, &MonitorPage::HALTableMenuItem_Click });
+#ifndef STARLIGHT_PREMIUM
+			if (i > 1) {
+				item.Opacity(0.45);
+				ToolTipService::SetToolTip(item, box_value(t(L"Common.PremiumOnly")));
+			}
+#endif
 			flyout.Items().Append(item);
 		}
 		HALTableButton().Flyout(flyout);
@@ -899,9 +930,6 @@ namespace winrt::StarlightGUI::implementation
 		case CallbackType::Coalescing:
 			labels = { L"CallbackContext", L"SelfReference", L"DeviceObject", L"DriverObject" };
 			break;
-		case CallbackType::ImageVerification:
-			labels = { L"Callback", L"Address2", L"Address3", L"Address4" };
-			break;
 		case CallbackType::Nmi:
 			labels = { L"Routine", L"Context", L"SelfReference", L"" };
 			visibleColumns = 3;
@@ -928,7 +956,14 @@ namespace winrt::StarlightGUI::implementation
 			headerButtons[i].Visibility(visible ? Visibility::Visible : Visibility::Collapsed);
 		}
 
-		CallbackTypeButton().Label(t(L"Monitor.CallbackTypeLabel", std::wstring(CallbackTypeNames[m_callbackType]).c_str()));
+		std::wstring_view callbackTypeName = CallbackTypeOptions[0].second;
+		for (auto const& option : CallbackTypeOptions) {
+			if (static_cast<int>(option.first) == m_callbackType) {
+				callbackTypeName = option.second;
+				break;
+			}
+		}
+		CallbackTypeButton().Label(t(L"Monitor.CallbackTypeLabel", std::wstring(callbackTypeName).c_str()));
 
 		auto flyout = CallbackTypeButton().Flyout().try_as<MenuFlyout>();
 		if (!flyout) return;
@@ -944,14 +979,20 @@ namespace winrt::StarlightGUI::implementation
 
 	void MonitorPage::CallbackTypeMenuItem_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
 	{
-		(void)e;
 		if (!IsLoaded()) return;
 
 		auto item = sender.try_as<ToggleMenuFlyoutItem>();
 		if (!item) return;
 
 		int selectedIndex = unbox_value<int32_t>(item.Tag());
-		if (selectedIndex < 0 || selectedIndex >= static_cast<int>(CallbackTypeNames.size())) return;
+		bool validCallbackType = false;
+		for (auto const& option : CallbackTypeOptions) {
+			if (static_cast<int>(option.first) == selectedIndex) {
+				validCallbackType = true;
+				break;
+			}
+		}
+		if (!validCallbackType) return;
 		if (m_isLoading) {
 			UpdateCallbackColumns();
 			return;
@@ -970,7 +1011,6 @@ namespace winrt::StarlightGUI::implementation
 
 	void MonitorPage::HALTableMenuItem_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
 	{
-		(void)e;
 		if (!IsLoaded()) return;
 
 		auto item = sender.try_as<ToggleMenuFlyoutItem>();
@@ -1075,7 +1115,6 @@ namespace winrt::StarlightGUI::implementation
         winrt::Windows::Foundation::IInspectable const&,
         winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& e)
     {
-        (void)e;
     }
 
 	bool MonitorPage::ApplyFilter(const hstring& target, const hstring& query) {

@@ -126,23 +126,16 @@ namespace winrt::StarlightGUI::implementation {
 		// Loop through the processes and fill the map with PID and CPU usage
 		PMY_SYSTEM_PROCESS_INFORMATION spi = (PMY_SYSTEM_PROCESS_INFORMATION)buffer.data();
 		while (spi) {
-			co_await TaskUtils::ReadSPIAsync(spi, processCpuTable);
+			LONG64 cpuUsage = spi->UserTime.QuadPart + spi->KernelTime.QuadPart;
+			if (cpuUsage > 0) {
+				processCpuTable[(DWORD)(ULONG_PTR)spi->UniqueProcessId] = to_hstring(std::round(cpuUsage / 1000000000.0) / 10.0) + L"s";
+			}
+			else processCpuTable[(DWORD)(ULONG_PTR)spi->UniqueProcessId] = L"0s";
 
 			if (spi->NextEntryOffset == 0)
 				break;
 			spi = (PMY_SYSTEM_PROCESS_INFORMATION)((BYTE*)spi + spi->NextEntryOffset);
 		}
-
-		co_return;
-	}
-
-	winrt::Windows::Foundation::IAsyncAction TaskUtils::ReadSPIAsync(PMY_SYSTEM_PROCESS_INFORMATION& spi, std::map<DWORD, hstring>& processCpuTable) {
-		// Loop through the processes and fill the map with PID and CPU usage
-		LONGLONG cpuUsage = spi->UserTime.QuadPart + spi->KernelTime.QuadPart;
-		if (cpuUsage > 0) {
-			processCpuTable[(DWORD)(ULONG_PTR)spi->UniqueProcessId] = to_hstring(std::round(cpuUsage / 1000000000.0) / 10.0) + L"s";
-		}
-		else processCpuTable[(DWORD)(ULONG_PTR)spi->UniqueProcessId] = L"0s";
 
 		co_return;
 	}

@@ -29,7 +29,6 @@ namespace winrt::StarlightGUI::implementation
         // 驱动和模块
         winrt::Windows::Foundation::IAsyncAction CheckUpdate();
         void SetTrayBackgroundRun(bool enabled);
-        void NavigateToTaskPage();
 
         // 窗口
         static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
@@ -40,7 +39,6 @@ namespace winrt::StarlightGUI::implementation
         inline static bool loaded = false;
         inline static HWND globalHWND;
         inline static constexpr UINT WM_TRAYICON = WM_APP + 100;
-        inline static constexpr ULONG_PTR COPYDATA_NAVIGATE_TASK = 0x534C4754;
         inline static constexpr UINT TRAY_ID = 1;
         inline static constexpr UINT TRAY_CMD_RESTORE = 1001;
         inline static constexpr UINT TRAY_CMD_EXIT = 1002;

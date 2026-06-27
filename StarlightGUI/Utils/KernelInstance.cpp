@@ -646,6 +646,7 @@ namespace winrt::StarlightGUI::implementation {
 		case HalTableType::HalPrivateDispatchTable:
 			information = SystemGetInformation::HalPrivateDispatchTable;
 			break;
+#ifdef STARLIGHT_PREMIUM
 		case HalTableType::HalIommuDispatchTable:
 			information = SystemGetInformation::HalIommuDispatchTable;
 			break;
@@ -655,6 +656,14 @@ namespace winrt::StarlightGUI::implementation {
 		case HalTableType::HalSubComponents:
 			information = SystemGetInformation::HalSubComponents;
 			break;
+#else
+		case HalTableType::HalIommuDispatchTable:
+		case HalTableType::HalAcpiDispatchTable:
+		case HalTableType::HalSubComponents:
+			lastErrorCode = SI_NOT_AVAILABLE;
+			lastErrorMessage = t(L"Common.PremiumOnly");
+			return FALSE;
+#endif
 		default:
 			break;
 		}
@@ -844,6 +853,7 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::EnableHypervisor() noexcept {
+#ifdef STARLIGHT_PREMIUM
 		if (!GetDriverDevice()) return FALSE;
 
 		if (!DeviceIoControl(driverDevice, IOCTL_METAVERSE_CHECK_SUPPORT, NULL, 0, NULL, 0, 0, NULL)) {
@@ -854,14 +864,25 @@ namespace winrt::StarlightGUI::implementation {
 		BOOL result = DeviceIoControl(driverDevice, IOCTL_METAVERSE_INITIALIZE, NULL, 0, NULL, 0, NULL, NULL);
 		QueryError();
 		return result;
+#else
+		lastErrorCode = SI_NOT_AVAILABLE;
+		lastErrorMessage = t(L"Common.PremiumOnly");
+		return FALSE;
+#endif
 	}
 
 	BOOL KernelInstance::DisableHypervisor() noexcept {
+#ifdef STARLIGHT_PREMIUM
 		if (!GetDriverDevice()) return FALSE;
 
 		BOOL result = DeviceIoControl(driverDevice, IOCTL_METAVERSE_EXIT, NULL, 0, NULL, 0, NULL, NULL);
 		QueryError();
 		return result;
+#else 		
+		lastErrorCode = SI_NOT_AVAILABLE;
+		lastErrorMessage = t(L"Common.PremiumOnly");
+		return FALSE;
+#endif
 	}
 
 	BOOL KernelInstance::EnableCreateProcess() noexcept {
@@ -905,6 +926,13 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::EnableDSE(bool hypervisor) noexcept {
+#ifndef STARLIGHT_PREMIUM
+		if (hypervisor) {
+			lastErrorCode = SI_NOT_AVAILABLE;
+			lastErrorMessage = t(L"Common.PremiumOnly");
+			return FALSE;
+		}
+#endif
 		BOOLEAN state = TRUE;
 		BOOL result = SiSetSystemInformation(SystemSetInformation::DSEState, &state, hypervisor ? 1 : 0);
 		QueryError();
@@ -912,6 +940,13 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::DisableDSE(bool hypervisor) noexcept {
+#ifndef STARLIGHT_PREMIUM
+		if (hypervisor) {
+			lastErrorCode = SI_NOT_AVAILABLE;
+			lastErrorMessage = t(L"Common.PremiumOnly");
+			return FALSE;
+		}
+#endif
 		BOOLEAN state = FALSE;
 		BOOL result = SiSetSystemInformation(SystemSetInformation::DSEState, &state, hypervisor ? 1 : 0);
 		QueryError();
@@ -926,9 +961,15 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::DisablePatchGuard(bool hypervisor) noexcept {
+#ifdef STARLIGHT_PREMIUM
 		BOOL result = SiSetSystemInformation(SystemSetInformation::DisablePatchGuard, NULL, hypervisor ? 1 : 0);
 		QueryError();
 		return result;
+#else
+		lastErrorCode = SI_NOT_AVAILABLE;
+		lastErrorMessage = t(L"Common.PremiumOnly");
+		return FALSE;
+#endif
 	}
 
 	BOOL KernelInstance::BlueScreen() {
@@ -1206,7 +1247,7 @@ namespace winrt::StarlightGUI::implementation {
 		return NT_SUCCESS(status);
 	}
 
-		BOOL KernelInstance::RemoveCallback(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+	BOOL KernelInstance::RemoveCallback(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
 		SI_REMOVE_CALLBACK input = { 0 };
 		input.Type = entry.ULong1();
 		input.Address = (PVOID)entry.ULongLong1();
@@ -1217,17 +1258,14 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 
-		BOOL KernelInstance::RemoveMiniFilter(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		SI_REMOVE_CALLBACK input = { 0 };
-		input.Address = (PVOID)entry.ULongLong1();
-
-		BOOL result = SiSetSystemInformation(SystemSetInformation::RemoveCallback, &input, 1);
-		QueryError();
-		return result;
+	BOOL KernelInstance::RemoveMiniFilter(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorMessage = L"Not implemented";
+		return FALSE;
 	}
 
-
-		BOOL KernelInstance::RemovePiDDBCache(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+	BOOL KernelInstance::RemovePiDDBCache(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
+#ifdef STARLIGHT_PREMIUM
 		SI_REMOVE_PIDDB_CACHE input = { 0 };
 		wcsncpy_s(input.Name, entry.String1().c_str(), _TRUNCATE);
 		input.Timestamp = entry.ULong2();
@@ -1235,6 +1273,11 @@ namespace winrt::StarlightGUI::implementation {
 		BOOL result = SiSetSystemInformation(SystemSetInformation::RemoveFromPiDDBCacheTable, &input, 0);
 		QueryError();
 		return result;
+#else
+		lastErrorCode = SI_NOT_AVAILABLE;
+		lastErrorMessage = t(L"Common.PremiumOnly");
+		return FALSE;
+#endif
 	}
 
 	BOOL KernelInstance::ReadMemory(std::vector<BYTE>& data, PVOID address, ULONG size) noexcept {

@@ -71,7 +71,7 @@ namespace winrt::StarlightGUI::implementation
         std::string launchScript = "Set shell = CreateObject(\"Shell.Application\")\r\n";
         launchScript += "shell.ShellExecute \"";
         launchScript += WideStringToString(GetExecutablePath());
-        launchScript += "\", \"--open-taskmgr\", \"\", \"open\", 1\r\n";
+        launchScript += "\", \"\", \"\", \"open\", 1\r\n";
 
         return WriteTextFile(GetConfigSidePath(replaceTaskManagerTriggerScriptName), triggerScript)
             && WriteTextFile(GetConfigSidePath(replaceTaskManagerLaunchScriptName), launchScript);
@@ -168,12 +168,14 @@ namespace winrt::StarlightGUI::implementation
         CheckUpdateButton().IsOn(check_update);
         TaskAutoRefreshButton().IsOn(task_auto_refresh);
         TrayBackgroundRunButton().IsOn(tray_background_run);
+        AutoStopDriverButton().IsOn(auto_stop_driver);
 
         auto_start = QueryTaskExists(autoStartTaskName);
         SaveConfig("auto_start", auto_start);
         AutoStartButton().IsOn(auto_start);
 
         replace_taskmgr = IsTaskManagerReplaced();
+        if (replace_taskmgr) EnsureReplaceTaskManagerScript();
         SaveConfig("replace_taskmgr", replace_taskmgr);
         ReplaceTaskManagerButton().IsOn(replace_taskmgr);
 
@@ -300,6 +302,13 @@ namespace winrt::StarlightGUI::implementation
         tray_background_run = TrayBackgroundRunButton().IsOn();
         SaveConfig("tray_background_run", tray_background_run);
         g_mainWindowInstance->SetTrayBackgroundRun(tray_background_run);
+    }
+
+    void SettingsPage::AutoStopDriverButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
+    {
+        if (!IsLoaded()) return;
+        auto_stop_driver = AutoStopDriverButton().IsOn();
+        SaveConfig("auto_stop_driver", auto_stop_driver);
     }
 
     void SettingsPage::AutoStartButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
@@ -503,6 +512,8 @@ namespace winrt::StarlightGUI::implementation
         AutoStartCard().Description(tbox("Settings.Desc.Card.AutoStart"));
         ReplaceTaskMgrCard().Header(tbox("Settings.Header.Card.ReplaceTaskMgr"));
         ReplaceTaskMgrCard().Description(tbox("Settings.Desc.Card.ReplaceTaskMgr"));
+        AutoStopDriverCard().Header(tbox("Settings.Header.Card.AutoStopDriver"));
+        AutoStopDriverCard().Description(tbox("Settings.Desc.Card.AutoStopDriver"));
         BackgroundExpander().Header(tbox("Settings.Header.Card.Background"));
         BackgroundExpander().Description(tbox("Settings.Desc.Card.Background"));
         AcrylicTypeCard().Header(tbox("Settings.Header.Card.AcrylicType"));

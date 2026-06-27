@@ -17,6 +17,7 @@ namespace winrt::StarlightGUI::implementation {
         check_update = ReadConfig("check_update", true);
         task_auto_refresh = ReadConfig("task_auto_refresh", true);
         tray_background_run = ReadConfig("tray_background_run", false);
+        auto_stop_driver = ReadConfig("auto_stop_driver", false);
         auto_start = ReadConfig("auto_start", false);
         replace_taskmgr = ReadConfig("replace_taskmgr", false);
         navigation_style = ReadConfig("navigation_style", 0);

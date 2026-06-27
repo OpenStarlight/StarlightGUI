@@ -342,6 +342,9 @@ namespace slg {
         if (g_mainWindowInstance) {
             DwmSetWindowAttribute(g_mainWindowInstance->GetWindowHandle(), DWMWA_USE_IMMERSIVE_DARK_MODE, &isDark, sizeof(isDark));
             g_mainWindowInstance->MainWindowGrid().RequestedTheme(targetTheme);
+            g_mainWindowInstance->RootNavigation().RequestedTheme(targetTheme);
+            g_mainWindowInstance->AppTitleBar().RequestedTheme(targetTheme);
+            g_mainWindowInstance->CaptionButtonThemeWorkaround().RequestedTheme(targetTheme);
             g_mainWindowInstance->LoadBackdrop();
         }
 

@@ -58,8 +58,6 @@ namespace winrt::StarlightGUI::implementation {
 		
 		static winrt::Windows::Foundation::IAsyncAction FetchProcessCpuUsage(std::map<DWORD, hstring>& processCpuTable);
 
-		static winrt::Windows::Foundation::IAsyncAction ReadSPIAsync(PMY_SYSTEM_PROCESS_INFORMATION& spi, std::map<DWORD, hstring>& processCpuTable);
-
 		static bool CopyToClipboard(std::wstring str);
 
 		static bool OpenFolderAndSelectFile(std::wstring filePath);

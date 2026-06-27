@@ -1,0 +1,12 @@
+﻿#pragma once
+
+//#define STARLIGHT_PREMIUM
+#define STARLIGHT_VERSION_BASE L"v4.0.0"
+
+#ifdef STARLIGHT_PREMIUM
+#define STARLIGHT_EDITION_NAME L"Premium"
+#define STARLIGHT_VERSION_SUFFIX L" (Premium)"
+#else
+#define STARLIGHT_EDITION_NAME L"Free"
+#define STARLIGHT_VERSION_SUFFIX L" (Free)"
+#endif

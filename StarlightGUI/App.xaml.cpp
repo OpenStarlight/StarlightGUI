@@ -35,23 +35,9 @@ namespace winrt::StarlightGUI::implementation
         return false;
     }
 
-    static HWND FindMainWindowHandle()
+    static void ApplyBuildEditionResources()
     {
-        return FindWindowW(nullptr, L"Starlight GUI");
-    }
-
-    static bool NotifyNavigateTask(HWND hWnd)
-    {
-        if (!hWnd) return false;
-
-        const wchar_t* command = L"navigate_task";
-        COPYDATASTRUCT copyData{};
-        copyData.dwData = MainWindow::COPYDATA_NAVIGATE_TASK;
-        copyData.cbData = (DWORD)((wcslen(command) + 1) * sizeof(wchar_t));
-        copyData.lpData = (PVOID)command;
-
-        DWORD_PTR result = 0;
-        return SendMessageTimeoutW(hWnd, WM_COPYDATA, 0, (LPARAM)&copyData, SMTO_ABORTIFHUNG, 1000, &result) != 0;
+        Application::Current().Resources().Insert(box_value(hstring(L"Version")), box_value(hstring(STARLIGHT_VERSION_BASE STARLIGHT_VERSION_SUFFIX)));
     }
 
     App::App()
@@ -71,19 +57,9 @@ namespace winrt::StarlightGUI::implementation
 
     void App::OnLaunched(LaunchActivatedEventArgs const&)
     {
-        bool launchedByTaskManagerReplacement = HasSwitch(L"--open-taskmgr");
-        bool trustedInstallerRelaunch = HasSwitch(L"--trustedinstaller-relaunch");
-        bool suppressElevateForTaskManagerReplace = false;
+        ApplyBuildEditionResources();
 
-        if (launchedByTaskManagerReplacement) {
-            auto currentWindow = FindMainWindowHandle();
-            if (currentWindow && NotifyNavigateTask(currentWindow)) {
-                Exit();
-                return;
-            }
-            navigate_task_request = true;
-            suppressElevateForTaskManagerReplace = true;
-        }
+        bool trustedInstallerRelaunch = HasSwitch(L"--trustedinstaller-relaunch");
 
         InitializeConfig();
 
@@ -98,15 +74,12 @@ namespace winrt::StarlightGUI::implementation
 
         InitializeLogger();
 
-        if (elevated_run && !suppressElevateForTaskManagerReplace) {
+        if (elevated_run) {
             if (trustedInstallerRelaunch) {
                 LOG_INFO(L"", L"Running as TrustedInstaller!");
             }
             else {
                 std::wstring relaunchArgs = L"--trustedinstaller-relaunch";
-                if (launchedByTaskManagerReplacement) {
-                    relaunchArgs += L" --open-taskmgr";
-                }
                 if (CreateProcessElevated(GetExecutablePath(), true, relaunchArgs)) {
                     Exit();
                     return;
@@ -117,7 +90,10 @@ namespace winrt::StarlightGUI::implementation
             }
         }
 
-        InitializeDriverBeforeWindow();
+        if (!InitializeDriverBeforeWindow()) {
+            Exit();
+            return;
+        }
 
         window = make<MainWindow>();
         window.Activate();
