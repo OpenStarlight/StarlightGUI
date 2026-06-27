@@ -93,8 +93,8 @@ namespace winrt::StarlightGUI::implementation {
 		static BOOL EnableDSE(bool hypervisor = false) noexcept;
 		static BOOL DisableDSE(bool hypervisor = false) noexcept;
 		static BOOL EnableLKD() noexcept;
-		static BOOL DisablePatchGuard(int type) noexcept;
-		static BOOL BlueScreen(int color);
+		static BOOL DisablePatchGuard(bool hypervisor = false) noexcept;
+		static BOOL BlueScreen();
 
 		// Object
 		static BOOL GetObjectDetails(std::wstring fullPath, std::wstring type, winrt::StarlightGUI::ObjectEntry& object) noexcept;
@@ -113,6 +113,9 @@ namespace winrt::StarlightGUI::implementation {
 		static BOOL SiQueryFileInformation(FileGetInformation fileInformation, LPCWSTR filePath, PVOID buffer, ULONG argument) noexcept;
 		static BOOL SiSetSystemInformation(SystemSetInformation systemInformation, PVOID buffer, ULONG argument) noexcept;
 		static BOOL SiQuerySystemInformation(SystemGetInformation systemInformation, PVOID buffer, ULONG argument) noexcept;
+		static BOOL QuerySystemEnumeration(SystemGetInformation information, SI_ENUMERATION& enumData, ULONG itemSize, ULONG argument = 0) noexcept;
+		static BOOL QueryProcessEnumeration(ProcessGetInformation information, ULONG pid, SI_ENUMERATION& enumData, ULONG itemSize, ULONG argument = 0) noexcept;
+		static BOOL QueryFileEnumeration(FileGetInformation information, LPCWSTR path, SI_ENUMERATION& enumData, ULONG itemSize, ULONG argument = 0) noexcept;
 		static std::string GetMiniFilterMajorFunction(ULONG64 Index) noexcept;
 	};
 

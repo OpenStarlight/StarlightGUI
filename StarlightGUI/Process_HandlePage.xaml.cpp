@@ -126,10 +126,6 @@ namespace winrt::StarlightGUI::implementation
 
         co_await wil::resume_foreground(DispatcherQueue());
 
-        if (handles.size() >= 1000) {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcHandle.Msg.TooManyHandles").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
-        }
-
         for (const auto& handle : handles) {
             m_handleList.Append(handle);
         }
@@ -154,7 +150,6 @@ namespace winrt::StarlightGUI::implementation
         AttributesHeaderButton().Content(tbox(L"ProcHandle.Header.Attributes"));
     }
 }
-
 
 
 

@@ -37,7 +37,6 @@ using namespace Windows::System;
 namespace winrt::StarlightGUI::implementation
 {
     static std::vector<winrt::StarlightGUI::KernelModuleInfo> fullRecordedKernelModules;
-    static int safeAcceptedImage = -1;
 
     static hstring GetDriverErrorMessage()
     {
@@ -98,9 +97,15 @@ namespace winrt::StarlightGUI::implementation
 
         // 选项1.1
         auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\uec91", t(L"KernelModule.Menu.Unload").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (KernelInstance::SiUnloadDriver(item.DriverObjectULong())) {
+            auto lifetime = get_strong();
+            auto xamlRoot = XamlRoot();
+            auto target = item;
+            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+                co_return;
+            }
+            if (KernelInstance::SiUnloadDriver(target.DriverObjectULong())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                WaitAndReloadAsync(1000);
+                lifetime->WaitAndReloadAsync(1000);
             }
             else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
@@ -108,9 +113,15 @@ namespace winrt::StarlightGUI::implementation
 
         // 选项1.2
         auto item1_2 = slg::CreateMenuItem(flyoutStyles, L"\ued1a", t(L"KernelModule.Menu.Hide").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (KernelInstance::SiHideDriver(item.DriverObjectULong())) {
+            auto lifetime = get_strong();
+            auto xamlRoot = XamlRoot();
+            auto target = item;
+            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+                co_return;
+            }
+            if (KernelInstance::SiHideDriver(target.DriverObjectULong())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                WaitAndReloadAsync(1000);
+                lifetime->WaitAndReloadAsync(1000);
             }
             else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
@@ -454,6 +465,10 @@ namespace winrt::StarlightGUI::implementation
 
             if (item.Name() == L"AstralX.sys" || item.Name() == L"kernel.sys") {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Msg.EditSelfWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+                co_return;
+            }
+
+            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), XamlRoot()))) {
                 co_return;
             }
 

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <Page
     x:Class="StarlightGUI.UtilityPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -15,7 +15,8 @@
             <essential:RevealFocusPanel x:Name="RevealFocusPanel">
                 <StackPanel>
                     <TextBlock
-                        x:Name="UtilitySysBehaviorUid" Padding="10"
+                        x:Name="UtilitySysBehaviorUid"
+                        Padding="10"
                         HorizontalAlignment="Left"
                         FontSize="14"
                         FontWeight="SemiBold"
@@ -168,9 +169,10 @@
                         </essential:SettingsCard.HeaderIcon>
                         <StackPanel Orientation="Horizontal">
                             <Button
-                                x:Name="UtilityPGDisableUid" Click="Button_Click"
+                                x:Name="UtilityPGDisableUid"
+                                Click="Button_Click"
                                 Content="禁用"
-                                Tag="PatchGuard" />
+                                Tag="PATCHGUARD" />
                         </StackPanel>
                     </essential:SettingsCard>
 
@@ -190,14 +192,16 @@
                         </essential:SettingsCard.HeaderIcon>
                         <StackPanel Orientation="Horizontal">
                             <Button
-                                x:Name="UtilityBSODCrashUid" Click="Button_Click"
+                                x:Name="UtilityBSODCrashUid"
+                                Click="Button_Click"
                                 Content="崩溃"
                                 Tag="BSOD" />
                         </StackPanel>
                     </essential:SettingsCard>
 
                     <TextBlock
-                        x:Name="UtilityHypervisorUid" Padding="10"
+                        x:Name="UtilityHypervisorUid"
+                        Padding="10"
                         HorizontalAlignment="Left"
                         FontSize="14"
                         FontWeight="SemiBold"
@@ -275,9 +279,10 @@
                         </essential:SettingsCard.HeaderIcon>
                         <StackPanel Orientation="Horizontal">
                             <Button
-                                x:Name="UtilityPGHypervisorDisableUid" Click="Button_Click"
+                                x:Name="UtilityPGHypervisorDisableUid"
+                                Click="Button_Click"
                                 Content="禁用"
-                                Tag="PatchGuardHypervisor" />
+                                Tag="PATCHGUARD_HYPERVISOR" />
                         </StackPanel>
                     </essential:SettingsCard>
 

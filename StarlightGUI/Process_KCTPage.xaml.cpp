@@ -134,10 +134,6 @@ namespace winrt::StarlightGUI::implementation
 
         co_await wil::resume_foreground(DispatcherQueue());
 
-        if (kcts.size() >= 1000) {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcKCT.Msg.TooManyRecords").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
-        }
-
         for (const auto& kct : kcts) {
             if (kct.Name().empty()) kct.Name(t(L"Common.Unknown"));
             if (kct.Address().empty()) kct.Address(t(L"Common.Unknown"));
@@ -163,7 +159,6 @@ namespace winrt::StarlightGUI::implementation
         AddressHeaderButton().Content(tbox(L"Common.Address"));
 	}
 }
-
 
 
 

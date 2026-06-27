@@ -265,6 +265,7 @@
     <Image Include="Assets\StarlightNew.png">
       <Filter>Assets</Filter>
     </Image>
+    <Image Include="Assets\Starlight.ico" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Assets">
@@ -315,6 +316,9 @@
     <None Include="$(_WindowsMLLocalNativePath)\DirectML.dll" />
     <None Include="$(_WindowsMLLocalNativePath)\Microsoft.Windows.AI.MachineLearning.dll" />
     <None Include="Assets\Sirius.sys">
+      <Filter>Assets</Filter>
+    </None>
+    <None Include="..\..\Sirius\x64\Release\Sirius.sys">
       <Filter>Assets</Filter>
     </None>
   </ItemGroup>

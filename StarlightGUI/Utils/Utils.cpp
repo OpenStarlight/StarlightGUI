@@ -214,6 +214,33 @@ namespace slg {
         return dialog;
     }
 
+    IAsyncOperation<bool> ShowConfirmDialog(hstring title, hstring content, hstring primaryMessage, hstring closeMessage, XamlRoot xamlRoot) {
+        ContentDialog dialog;
+
+        dialog.Title(box_value(title));
+        dialog.TitleTemplate(XamlReader::Load(LR"(
+        <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon
+                    Margin="0,5,0,0"
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="30"
+                    Glyph="&#xe7ba;" />
+                <TextBlock VerticalAlignment="Center" Text="{Binding}" />
+            </StackPanel>
+        </DataTemplate>
+        )").as<DataTemplate>());
+        dialog.Content(box_value(content));
+        dialog.PrimaryButtonText(primaryMessage);
+        dialog.CloseButtonText(closeMessage);
+        dialog.DefaultButton(ContentDialogButton::Primary);
+        dialog.XamlRoot(xamlRoot);
+        dialog.RequestedTheme(GetConfiguredElementTheme());
+
+        auto result = co_await dialog.ShowAsync();
+        co_return result == ContentDialogResult::Primary;
+    }
+
     DataTemplate GetContentDialogSuccessTemplate() {
         return XamlReader::Load(LR"(
         <DataTemplate xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation">

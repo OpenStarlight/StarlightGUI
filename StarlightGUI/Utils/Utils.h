@@ -84,6 +84,8 @@ namespace slg {
 
     ContentDialog CreateContentDialog(hstring title, hstring content, hstring closeMessage, XamlRoot xamlRoot);
 
+    IAsyncOperation<bool> ShowConfirmDialog(hstring title, hstring content, hstring primaryMessage, hstring closeMessage, XamlRoot xamlRoot);
+
     DataTemplate GetContentDialogSuccessTemplate();
 
     DataTemplate GetContentDialogErrorTemplate();

@@ -14,8 +14,6 @@ using namespace Microsoft::UI::Xaml;
 
 namespace winrt::StarlightGUI::implementation
 {
-    bool confirmed = false;
-
     static hstring GetDriverErrorMessage()
     {
         auto errorMsg = KernelInstance::GetLastErrorMessage();
@@ -150,14 +148,7 @@ namespace winrt::StarlightGUI::implementation
             }
         }
         else {
-            if (!confirmed) {
-                slg::CreateInfoBarAndDisplay(
-                    t(L"Common.Warning").c_str(),
-                    t(L"Disasm.Msg.WriteWarning").c_str(),
-                    InfoBarSeverity::Warning,
-                    g_mainWindowInstance
-                );
-				confirmed = true;
+            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), XamlRoot()))) {
                 co_return;
             }
             ULONG64 address = 0, size = 0, data = 0;
@@ -197,5 +188,3 @@ namespace winrt::StarlightGUI::implementation
 		CharText().Text(t(L"Common.None"));
     }
 }
-
-

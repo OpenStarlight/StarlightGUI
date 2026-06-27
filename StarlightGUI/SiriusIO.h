@@ -1,13 +1,12 @@
 ﻿#pragma once
-#define SIRIUS_DRIVER_VERSION L"5.0.1"
+#define SIRIUS_DRIVER_VERSION L"5.1.1"
+#include "pch.h"
 #if defined(_M_IX86)
 #define PVOID PVOID64
 #define ULONG_PTR unsigned long long
 #endif
 #pragma warning(push)
 #pragma warning(disable: 4201)
-#include <Windows.h>
-#include <winioctl.h>
 /*
  * Sirius ARK IOCTL Definitions
  * @Author Stars
@@ -176,19 +175,8 @@ enum class SystemGetInformation : ULONG {
     /* Operations */
     ReadMemory,                                 // [SI_MEMORY], read memory.
     /* Firmware */
-    BGRT,                                       // [SI_BGRT_DATA], get Boot Graphics Resource Table.
-    FPDT,                                       // [SI_FPDT_DATA], get Firmware Performance Data Table.
-    UEFI,                                       // [SI_UEFI_DATA], get Unified Extensible Firmware Interface info.
-    RSDT,                                       // [SI_RSDT_DATA], get RSDT/XSDT root table info.
-    FADT,                                       // [SI_FADT_DATA], get Fixed ACPI Description Table.
-    MADT,                                       // [SI_MADT_DATA], get Multiple APIC Description Table.
-    GTDT,                                       // [SI_GTDT_DATA], get Generic Timer Description Table.
-    CSRT,                                       // [SI_CSRT_DATA], get Core System Resources Table.
-    DBG2,                                       // [SI_DBG2_DATA], get Debug Port Table 2.
-    WSMT,                                       // [SI_WSMT_DATA], get Windows SMM Security Mitigations Table.
-    iBFT,                                       // [SI_IBFT_DATA], get iSCSI Boot Firmware Table.
+    Firmware,                                   // [SI_FIRMWARE_DATA], get firmware table info. Arg=FirmwareType.
 };
-
 
 typedef struct _SI_SYSTEM_INFORMATION {
     ULONG SystemInformation;                    // System information type.
@@ -251,6 +239,20 @@ enum class ObCallbackType : ULONG {
     Process = 0,
     Thread,
     Desktop
+};
+
+enum class FirmwareType : ULONG {
+    BGRT = 0,                                   // Boot Graphics Resource Table.
+    FPDT,                                       // Firmware Performance Data Table.
+    UEFI,                                       // Unified Extensible Firmware Interface info.
+    RSDT,                                       // RSDT/XSDT root table info.
+    FADT,                                       // Fixed ACPI Description Table.
+    MADT,                                       // Multiple APIC Description Table.
+    GTDT,                                       // Generic Timer Description Table.
+    CSRT,                                       // Core System Resources Table.
+    DBG2,                                       // Debug Port Table 2.
+    WSMT,                                       // Windows SMM Security Mitigations Table.
+    iBFT,                                       // iSCSI Boot Firmware Table.
 };
 
 typedef struct _SI_REMOVE_CALLBACK {
@@ -454,100 +456,17 @@ typedef struct _SI_LOG_ENTRY {
     ULONG Length;
 } SI_LOG_ENTRY, * PSI_LOG_ENTRY;
 
-typedef struct _SI_RSDT_DATA {
-    BOOLEAN Xsdt;
+typedef struct _SI_FIRMWARE_ACPI_HEADER {
     UCHAR Revision;
     UCHAR Checksum;
-    ULONG EntryCount;
     ULONG Length;
-    ULONG RsdtAddress;
-    ULONG64 XsdtAddress;
-    ULONG64 RootTableAddress;
     CHAR Signature[5];
     CHAR OemId[7];
     CHAR OemTableId[9];
     ULONG OemRevision;
     ULONG CreatorId;
     ULONG CreatorRevision;
-} SI_RSDT_DATA, * PSI_RSDT_DATA;
-
-typedef struct _SI_BGRT_DATA {
-    ULONG64 ImageAddress;
-    ULONG ImageOffsetX;
-    ULONG ImageOffsetY;
-    ULONG ImageWidth;
-    ULONG ImageHeight;
-    UCHAR ImageType;
-    UCHAR Status;
-    UCHAR Version;
-} SI_BGRT_DATA, * PSI_BGRT_DATA;
-
-typedef struct _SI_FPDT_DATA {
-    UCHAR Version;
-    ULONG BootRecordCount;
-    ULONG64 BootPerformanceAddress;
-    ULONG64 S3PerformanceAddress;
-    ULONG64 ResetEnd;
-    ULONG64 OsLoaderLoadImageStart;
-    ULONG64 OsLoaderStartImageStart;
-    ULONG64 ExitBootServicesEntry;
-    ULONG64 ExitBootServicesExit;
-    ULONG64 S3ResumeCount;
-    ULONG64 S3FullResume;
-    ULONG64 S3AverageResume;
-} SI_FPDT_DATA, * PSI_FPDT_DATA;
-
-typedef struct _SI_FADT_DATA {
-    ULONG FirmwareCtrl;
-    ULONG Dsdt;
-    UCHAR PreferredPmProfile;
-    USHORT SciInt;
-    ULONG SmiCmd;
-    UCHAR AcpiEnable;
-    UCHAR AcpiDisable;
-    UCHAR S4BiosReq;
-    UCHAR PstateCnt;
-    ULONG Pm1aEvtBlk;
-    ULONG Pm1bEvtBlk;
-    ULONG Pm1aCntBlk;
-    ULONG Pm1bCntBlk;
-    ULONG Pm2CntBlk;
-    ULONG PmTmrBlk;
-    ULONG Gpe0Blk;
-    ULONG Gpe1Blk;
-    UCHAR Pm1EvtLen;
-    UCHAR Pm1CntLen;
-    UCHAR Pm2CntLen;
-    UCHAR PmTmrLen;
-    UCHAR Gpe0BlkLen;
-    UCHAR Gpe1BlkLen;
-    UCHAR Gpe1Base;
-    UCHAR CstCnt;
-    USHORT PLvl2Lat;
-    USHORT PLvl3Lat;
-    USHORT FlushSize;
-    USHORT FlushStride;
-    UCHAR DutyOffset;
-    UCHAR DutyWidth;
-    UCHAR DayAlrm;
-    UCHAR MonAlrm;
-    UCHAR Century;
-    USHORT IapcBootArch;
-    ULONG Flags;
-    UCHAR ResetValue;
-    USHORT ArmBootArch;
-    UCHAR FadtMinorVersion;
-    ULONG64 XFirmwareCtrl;
-    ULONG64 XDsdt;
-    ULONG64 HypervisorVendorId;
-    UCHAR Revision;
-    CHAR Signature[5];
-    CHAR OemId[7];
-    CHAR OemTableId[9];
-    ULONG OemRevision;
-    ULONG CreatorId;
-    ULONG CreatorRevision;
-} SI_FADT_DATA, * PSI_FADT_DATA;
+} SI_FIRMWARE_ACPI_HEADER, * PSI_FIRMWARE_ACPI_HEADER;
 
 typedef struct _SI_MADT_ENTRY_DATA {
     UCHAR Type;
@@ -565,105 +484,134 @@ typedef struct _SI_MADT_ENTRY_DATA {
     CHAR TypeName[32];
 } SI_MADT_ENTRY_DATA, * PSI_MADT_ENTRY_DATA;
 
-typedef struct _SI_MADT_DATA {
-    ULONG LocalApicAddress;
-    ULONG Flags;
-    ULONG EntryCount;
-    UCHAR Revision;
-    CHAR Signature[5];
-    CHAR OemId[7];
-    CHAR OemTableId[9];
-    ULONG OemRevision;
-    ULONG CreatorId;
-    ULONG CreatorRevision;
-} SI_MADT_DATA, * PSI_MADT_DATA;
-
-typedef struct _SI_GTDT_DATA {
-    ULONG64 CounterBlockAddresss;
-    ULONG SecureEL1TimerGSIV;
-    ULONG SecureEL1TimerFlags;
-    ULONG NonSecureEL1TimerGSIV;
-    ULONG NonSecureEL1TimerFlags;
-    ULONG VirtualTimerGSIV;
-    ULONG VirtualTimerFlags;
-    ULONG NonSecureEL2TimerGSIV;
-    ULONG NonSecureEL2TimerFlags;
-    ULONG64 CounterReadBlockAddress;
-    ULONG PlatformTimerCount;
-    ULONG PlatformTimerOffset;
-    UCHAR Revision;
-    CHAR Signature[5];
-    CHAR OemId[7];
-    CHAR OemTableId[9];
-    ULONG OemRevision;
-    ULONG CreatorId;
-    ULONG CreatorRevision;
-} SI_GTDT_DATA, * PSI_GTDT_DATA;
-
-typedef struct _SI_CSRT_DATA {
-    ULONG ResourceGroupCount;
-    UCHAR Revision;
-    CHAR Signature[5];
-    CHAR OemId[7];
-    CHAR OemTableId[9];
-    ULONG OemRevision;
-    ULONG CreatorId;
-    ULONG CreatorRevision;
-} SI_CSRT_DATA, * PSI_CSRT_DATA;
-
-typedef struct _SI_DBG2_DATA {
-    ULONG OffsetDbgDeviceInfo;
-    ULONG NumberDbgDeviceInfo;
-    UCHAR Revision;
-    CHAR Signature[5];
-    CHAR OemId[7];
-    CHAR OemTableId[9];
-    ULONG OemRevision;
-    ULONG CreatorId;
-    ULONG CreatorRevision;
-} SI_DBG2_DATA, * PSI_DBG2_DATA;
-
-typedef struct _SI_WSMT_DATA {
-    ULONG ProtectionFlags;
-    UCHAR Revision;
-    CHAR Signature[5];
-    CHAR OemId[7];
-    CHAR OemTableId[9];
-    ULONG OemRevision;
-    ULONG CreatorId;
-    ULONG CreatorRevision;
-} SI_WSMT_DATA, * PSI_WSMT_DATA;
-
-typedef struct _SI_IBFT_DATA {
-    ULONG Length;
-    UCHAR Revision;
-    CHAR Signature[5];
-    CHAR OemId[7];
-    CHAR OemTableId[9];
-    ULONG OemRevision;
-    ULONG CreatorId;
-    ULONG CreatorRevision;
-} SI_IBFT_DATA, * PSI_IBFT_DATA;
-
-typedef struct _SI_UEFI_DATA {
-    BOOLEAN SecureBootEnabled;
-    BOOLEAN SecureBootCapable;
-    BOOLEAN SetupMode;
-    BOOLEAN AuditMode;
-    BOOLEAN DeployedMode;
-    BOOLEAN BootOptionSupport;
-    BOOLEAN BootCurrentValid;
-    BOOLEAN BootNextValid;
-    BOOLEAN TimeoutValid;
-    BOOLEAN PlatformRecoverySupport;
-    USHORT BootCurrent;
-    USHORT BootNext;
-    USHORT Timeout;
-    ULONG64 OsIndications;
-    ULONG64 OsIndicationsSupported;
-    WCHAR PlatformLang[64];
-    WCHAR Lang[64];
-} SI_UEFI_DATA, * PSI_UEFI_DATA;
+typedef struct _SI_FIRMWARE_DATA {
+    ULONG Type;
+    SI_FIRMWARE_ACPI_HEADER Header;
+    union {
+        struct {
+            BOOLEAN Xsdt;
+            ULONG EntryCount;
+            ULONG RsdtAddress;
+            ULONG64 XsdtAddress;
+            ULONG64 RootTableAddress;
+        } Rsdt;
+        struct {
+            ULONG64 ImageAddress;
+            ULONG ImageOffsetX;
+            ULONG ImageOffsetY;
+            ULONG ImageWidth;
+            ULONG ImageHeight;
+            UCHAR ImageType;
+            UCHAR Status;
+            UCHAR Version;
+        } Bgrt;
+        struct {
+            ULONG BootRecordCount;
+            ULONG64 BootPerformanceAddress;
+            ULONG64 S3PerformanceAddress;
+            ULONG64 ResetEnd;
+            ULONG64 OsLoaderLoadImageStart;
+            ULONG64 OsLoaderStartImageStart;
+            ULONG64 ExitBootServicesEntry;
+            ULONG64 ExitBootServicesExit;
+            ULONG64 S3ResumeCount;
+            ULONG64 S3FullResume;
+            ULONG64 S3AverageResume;
+        } Fpdt;
+        struct {
+            BOOLEAN SecureBootEnabled;
+            BOOLEAN SecureBootCapable;
+            BOOLEAN SetupMode;
+            BOOLEAN AuditMode;
+            BOOLEAN DeployedMode;
+            BOOLEAN BootOptionSupport;
+            BOOLEAN BootCurrentValid;
+            BOOLEAN BootNextValid;
+            BOOLEAN TimeoutValid;
+            BOOLEAN PlatformRecoverySupport;
+            USHORT BootCurrent;
+            USHORT BootNext;
+            USHORT Timeout;
+            ULONG64 OsIndications;
+            ULONG64 OsIndicationsSupported;
+            WCHAR PlatformLang[64];
+            WCHAR Lang[64];
+        } Uefi;
+        struct {
+            ULONG FirmwareCtrl;
+            ULONG Dsdt;
+            UCHAR PreferredPmProfile;
+            USHORT SciInt;
+            ULONG SmiCmd;
+            UCHAR AcpiEnable;
+            UCHAR AcpiDisable;
+            UCHAR S4BiosReq;
+            UCHAR PstateCnt;
+            ULONG Pm1aEvtBlk;
+            ULONG Pm1bEvtBlk;
+            ULONG Pm1aCntBlk;
+            ULONG Pm1bCntBlk;
+            ULONG Pm2CntBlk;
+            ULONG PmTmrBlk;
+            ULONG Gpe0Blk;
+            ULONG Gpe1Blk;
+            UCHAR Pm1EvtLen;
+            UCHAR Pm1CntLen;
+            UCHAR Pm2CntLen;
+            UCHAR PmTmrLen;
+            UCHAR Gpe0BlkLen;
+            UCHAR Gpe1BlkLen;
+            UCHAR Gpe1Base;
+            UCHAR CstCnt;
+            USHORT PLvl2Lat;
+            USHORT PLvl3Lat;
+            USHORT FlushSize;
+            USHORT FlushStride;
+            UCHAR DutyOffset;
+            UCHAR DutyWidth;
+            UCHAR DayAlrm;
+            UCHAR MonAlrm;
+            UCHAR Century;
+            USHORT IapcBootArch;
+            ULONG Flags;
+            UCHAR ResetValue;
+            USHORT ArmBootArch;
+            UCHAR FadtMinorVersion;
+            ULONG64 XFirmwareCtrl;
+            ULONG64 XDsdt;
+            ULONG64 HypervisorVendorId;
+        } Fadt;
+        struct {
+            ULONG LocalApicAddress;
+            ULONG Flags;
+            ULONG EntryCount;
+        } Madt;
+        struct {
+            ULONG64 CounterBlockAddresss;
+            ULONG SecureEL1TimerGSIV;
+            ULONG SecureEL1TimerFlags;
+            ULONG NonSecureEL1TimerGSIV;
+            ULONG NonSecureEL1TimerFlags;
+            ULONG VirtualTimerGSIV;
+            ULONG VirtualTimerFlags;
+            ULONG NonSecureEL2TimerGSIV;
+            ULONG NonSecureEL2TimerFlags;
+            ULONG64 CounterReadBlockAddress;
+            ULONG PlatformTimerCount;
+            ULONG PlatformTimerOffset;
+        } Gtdt;
+        struct {
+            ULONG ResourceGroupCount;
+        } Csrt;
+        struct {
+            ULONG OffsetDbgDeviceInfo;
+            ULONG NumberDbgDeviceInfo;
+        } Dbg2;
+        struct {
+            ULONG ProtectionFlags;
+        } Wsmt;
+    };
+} SI_FIRMWARE_DATA, * PSI_FIRMWARE_DATA;
 
 typedef enum _PS_PROTECTED_TYPE
 {

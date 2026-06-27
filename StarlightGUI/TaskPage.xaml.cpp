@@ -58,7 +58,6 @@ namespace winrt::StarlightGUI::implementation
 
     static std::unordered_map<std::wstring, winrt::Microsoft::UI::Xaml::Media::ImageSource> iconCache;
     static std::unordered_map<std::wstring, winrt::hstring> descriptionCache;
-    static int safeAcceptedPID = -1;
 
     TaskPage::TaskPage() {
         InitializeComponent();
@@ -139,17 +138,17 @@ namespace winrt::StarlightGUI::implementation
 
         // 选项1.3
         auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", t(L"Task.Menu.TerminateMurder").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (safeAcceptedPID == item.Id() || !dangerous_confirm) {
-                if (KernelInstance::SiTerminateProcessEx(item.Id())) {
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                    WaitAndReloadAsync(1000);
-                }
-                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            auto lifetime = get_strong();
+            auto xamlRoot = XamlRoot();
+            auto target = item;
+            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+                co_return;
             }
-            else {
-                safeAcceptedPID = item.Id();
-                slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Task.Msg.MurderWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+            if (KernelInstance::SiTerminateProcessEx(target.Id())) {
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
+                lifetime->WaitAndReloadAsync(1000);
             }
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 
@@ -266,17 +265,17 @@ namespace winrt::StarlightGUI::implementation
 
         // 选项2.4
         auto item2_4 = slg::CreateMenuItem(flyoutStyles, L"\ue8c9", t(L"Task.Menu.SetCritical").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (safeAcceptedPID == item.Id() || !dangerous_confirm) {
-                if (KernelInstance::SetCriticalProcess(item.Id())) {
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                    WaitAndReloadAsync(1000);
-                }
-                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+            auto lifetime = get_strong();
+            auto xamlRoot = XamlRoot();
+            auto target = item;
+            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+                co_return;
             }
-            else {
-                safeAcceptedPID = item.Id();
-                slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Task.Msg.SetCriticalWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+            if (KernelInstance::SetCriticalProcess(target.Id())) {
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
+                lifetime->WaitAndReloadAsync(1000);
             }
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             co_return;
             });
 

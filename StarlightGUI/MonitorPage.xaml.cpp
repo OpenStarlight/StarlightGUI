@@ -491,9 +491,15 @@ namespace winrt::StarlightGUI::implementation
 
 		// 选项1.1
 		auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"Monitor.Menu.Remove").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) mutable -> winrt::Windows::Foundation::IAsyncAction {
-			if (KernelInstance::RemoveCallback(item)) {
+			auto lifetime = get_strong();
+			auto xamlRoot = XamlRoot();
+			auto target = item;
+			if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+				co_return;
+			}
+			if (KernelInstance::RemoveCallback(target)) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-				WaitAndReloadAsync(1000);
+				lifetime->WaitAndReloadAsync(1000);
 			}
 			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
@@ -560,9 +566,15 @@ namespace winrt::StarlightGUI::implementation
 
 		// 选项1.1
 		auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"Monitor.Menu.Unload").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) mutable -> winrt::Windows::Foundation::IAsyncAction {
-			if (KernelInstance::RemoveMiniFilter(item)) {
+			auto lifetime = get_strong();
+			auto xamlRoot = XamlRoot();
+			auto target = item;
+			if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+				co_return;
+			}
+			if (KernelInstance::RemoveMiniFilter(target)) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-				WaitAndReloadAsync(1000);
+				lifetime->WaitAndReloadAsync(1000);
 			}
 			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;
@@ -683,9 +695,15 @@ namespace winrt::StarlightGUI::implementation
 
 		// 选项1.1
 		auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"Monitor.Menu.Remove").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) mutable -> winrt::Windows::Foundation::IAsyncAction {
-			if (KernelInstance::RemovePiDDBCache(item)) {
+			auto lifetime = get_strong();
+			auto xamlRoot = XamlRoot();
+			auto target = item;
+			if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+				co_return;
+			}
+			if (KernelInstance::RemovePiDDBCache(target)) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-				WaitAndReloadAsync(1000);
+				lifetime->WaitAndReloadAsync(1000);
 			}
 			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
 			co_return;

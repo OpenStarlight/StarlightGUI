@@ -24,7 +24,6 @@ namespace winrt::StarlightGUI::implementation
     FilePage* g_filePageInstance = nullptr;
 
 	hstring currentDirectory = L"C:\\";
-    static hstring safeAcceptedName = L"";
     static hstring GetDriverErrorMessage()
     {
         auto errorMsg = KernelInstance::GetLastErrorMessage();
@@ -441,6 +440,7 @@ namespace winrt::StarlightGUI::implementation
         auto list = listView.SelectedItems();
 
         std::vector<winrt::StarlightGUI::FileInfo> selectedFiles;
+        bool hasImportantFile = false;
 
         for (const auto& file : list) {
             auto item = file.as<winrt::StarlightGUI::FileInfo>();
@@ -448,16 +448,11 @@ namespace winrt::StarlightGUI::implementation
             if (item.Flag() == 666) return;
             // 跳过"上个文件夹"选项
             if (item.Flag() == 999) continue;
-            if ((item.Name() == L"Windows" || item.Name() == L"Boot" || item.Name() == L"System32" || item.Name() == L"SysWOW64" || item.Name() == L"Microsoft") &&
-                (safeAcceptedName != L"Windows" && safeAcceptedName != L"Boot" && safeAcceptedName != L"System32" && safeAcceptedName != L"SysWOW64" && safeAcceptedName != L"Microsoft") && dangerous_confirm) {
-                safeAcceptedName = item.Name();
-                slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"File.Msg.ImportantFileWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
-                return;
+            if (item.Name() == L"Windows" || item.Name() == L"Boot" || item.Name() == L"System32" || item.Name() == L"SysWOW64" || item.Name() == L"Microsoft") {
+                hasImportantFile = true;
             }
             selectedFiles.push_back(item);
         }
-
-        safeAcceptedName = L"";
 
         auto flyoutStyles = slg::GetStyles();
 
@@ -480,47 +475,79 @@ namespace winrt::StarlightGUI::implementation
         MenuFlyoutSeparator separator1;
 
         // 选项2.1
-        auto item2_1 = slg::CreateMenuItem(flyoutStyles, L"\ue74d", t(L"File.Menu.Delete").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
-            for (const auto& item : selectedFiles) {
+        auto item2_1 = slg::CreateMenuItem(flyoutStyles, L"\ue74d", t(L"File.Menu.Delete").c_str(), [this, selectedFiles, hasImportantFile](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+            auto lifetime = get_strong();
+            auto xamlRoot = XamlRoot();
+            auto files = selectedFiles;
+            bool important = hasImportantFile;
+            if (dangerous_confirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+                co_return;
+            }
+            for (const auto& item : files) {
                 if (KernelInstance::DeleteFileAuto(item.Path().c_str())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                    WaitAndReloadAsync(1000);
+                    lifetime->WaitAndReloadAsync(1000);
                 }
                 else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             }
+            co_return;
             });
 
         // 选项2.2
-        auto item2_2 = slg::CreateMenuItem(flyoutStyles, L"\ue733", t(L"File.Menu.DeleteKernel").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
-            for (const auto& item : selectedFiles) {
+        auto item2_2 = slg::CreateMenuItem(flyoutStyles, L"\ue733", t(L"File.Menu.DeleteKernel").c_str(), [this, selectedFiles, hasImportantFile](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+            auto lifetime = get_strong();
+            auto xamlRoot = XamlRoot();
+            auto files = selectedFiles;
+            bool important = hasImportantFile;
+            if (dangerous_confirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+                co_return;
+            }
+            for (const auto& item : files) {
                 if (KernelInstance::SiDeleteFile(item.Path().c_str())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                    WaitAndReloadAsync(1000);
+                    lifetime->WaitAndReloadAsync(1000);
                 }
                 else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             }
+            co_return;
             });
 
         // 选项2.3
-        auto item2_3 = slg::CreateMenuItem(flyoutStyles, L"\uf5ab", t(L"File.Menu.DeleteNTFS").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
-            for (const auto& item : selectedFiles) {
+        auto item2_3 = slg::CreateMenuItem(flyoutStyles, L"\uf5ab", t(L"File.Menu.DeleteNTFS").c_str(), [this, selectedFiles, hasImportantFile](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+            auto lifetime = get_strong();
+            auto xamlRoot = XamlRoot();
+            auto files = selectedFiles;
+            bool important = hasImportantFile;
+            if (dangerous_confirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+                co_return;
+            }
+            for (const auto& item : files) {
                 if (KernelInstance::SiDeleteFileEx(item.Path().c_str())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                    WaitAndReloadAsync(1000);
+                    lifetime->WaitAndReloadAsync(1000);
                 }
                 else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             }
+            co_return;
             });
 
         // 选项2.4
-        auto item2_4 = slg::CreateMenuItem(flyoutStyles, L"\ue72e", t(L"File.Menu.Lock").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) {
-            for (const auto& item : selectedFiles) {
+        auto item2_4 = slg::CreateMenuItem(flyoutStyles, L"\ue72e", t(L"File.Menu.Lock").c_str(), [this, selectedFiles, hasImportantFile](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+            auto lifetime = get_strong();
+            auto xamlRoot = XamlRoot();
+            auto files = selectedFiles;
+            bool important = hasImportantFile;
+            if (dangerous_confirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+                co_return;
+            }
+            for (const auto& item : files) {
                 if (KernelInstance::SiLockFile(item.Path().c_str())) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                    WaitAndReloadAsync(1000);
+                    lifetime->WaitAndReloadAsync(1000);
                 }
                 else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
             }
+            co_return;
             });
 
         // 选项2.5
@@ -1446,9 +1473,5 @@ namespace winrt::StarlightGUI::implementation
         SizeHeaderButton().Content(tbox(L"Common.Size"));
     }
 }
-
-
-
-
 
 

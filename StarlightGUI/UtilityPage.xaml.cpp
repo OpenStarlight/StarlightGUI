@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "UtilityPage.xaml.h"
 #if __has_include("UtilityPage.g.cpp")
 #include "UtilityPage.g.cpp"
@@ -11,8 +11,6 @@ using namespace winrt;
 using namespace Microsoft::UI::Xaml;
 
 namespace winrt::StarlightGUI::implementation {
-	static hstring safeAcceptedTag = L"";
-
 	static hstring GetDriverErrorMessage()
 	{
 		auto errorMsg = KernelInstance::GetLastErrorMessage();
@@ -42,15 +40,11 @@ namespace winrt::StarlightGUI::implementation {
 		auto button = sender.as<Button>();
 		std::wstring tag = button.Tag().as<winrt::hstring>().c_str();
 
-		if (safeAcceptedTag != tag) {
-			safeAcceptedTag = tag;
-			slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
+		if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), XamlRoot()))) {
 			co_return;
 		}
 
 		co_await winrt::resume_background();
-
-		LOG_INFO(L"UtilityPage", L"Confirmed we will do: %s", tag.c_str());
 
 		BOOL result = FALSE;
 
@@ -83,10 +77,10 @@ namespace winrt::StarlightGUI::implementation {
 			result = KernelInstance::DisableModifyRegistry();
 		}
 		else if (tag == L"ENABLE_DSE") {
-			result = KernelInstance::EnableDSE();
+			result = KernelInstance::EnableDSE(false);
 		}
 		else if (tag == L"DISABLE_DSE") {
-			result = KernelInstance::DisableDSE();
+			result = KernelInstance::DisableDSE(false);
 		}
 		else if (tag == L"ENABLE_DSE_HYPERVISOR") {
 			result = KernelInstance::EnableDSE(true);
@@ -98,13 +92,13 @@ namespace winrt::StarlightGUI::implementation {
 			result = KernelInstance::EnableLKD();
 		}
 		else if (tag == L"BSOD") {
-			result = KernelInstance::BlueScreen(-1);
+			result = KernelInstance::BlueScreen();
 		}
-		else if (tag == L"PatchGuard") {
-			result = KernelInstance::DisablePatchGuard(0);
+		else if (tag == L"PATCHGUARD") {
+			result = KernelInstance::DisablePatchGuard(false);
 		}
-		else if (tag == L"PatchGuardHypervisor") {
-			result = KernelInstance::DisablePatchGuard(1);
+		else if (tag == L"PATCHGUARD_HYPERVISOR") {
+			result = KernelInstance::DisablePatchGuard(true);
 		}
 		else {
 			co_await wil::resume_foreground(DispatcherQueue());

@@ -146,10 +146,6 @@ namespace winrt::StarlightGUI::implementation
 
         co_await wil::resume_foreground(DispatcherQueue());
 
-        if (modules.size() >= 1000) {
-            slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcModule.Msg.TooManyModules").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
-        }
-
         for (const auto& module : modules) {
             if (module.Name().empty()) module.Name(t(L"Common.Unknown"));
             if (module.Path().empty()) module.Path(t(L"Common.Unknown"));
@@ -176,7 +172,6 @@ namespace winrt::StarlightGUI::implementation
         SizeHeaderButton().Content(tbox(L"Common.Size"));
 	}
 }
-
 
 
 

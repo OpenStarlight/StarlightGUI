@@ -44,6 +44,99 @@ namespace winrt::StarlightGUI::implementation {
 		}
 	}
 
+	BOOL KernelInstance::QuerySystemEnumeration(SystemGetInformation information, SI_ENUMERATION& enumData, ULONG itemSize, ULONG argument) noexcept {
+		enumData.Buffer = NULL;
+		enumData.BufferSize = 0;
+		enumData.Count = 0;
+
+		BOOL result = SiQuerySystemInformation(information, &enumData, argument);
+		QueryError();
+		if (!result) return FALSE;
+		if (enumData.Count == 0) return TRUE;
+		if (itemSize == 0 || enumData.Count > static_cast<ULONG>(-1) / itemSize) {
+			lastErrorCode = SI_INVALID_PARAMETER;
+			lastErrorMessage = L"Invalid enumeration size.";
+			return FALSE;
+		}
+
+		enumData.BufferSize = enumData.Count * itemSize;
+		ULONG capacity = enumData.Count;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		if (!enumData.Buffer) {
+			lastErrorCode = SI_ALLOCATION_FAILED;
+			lastErrorMessage = L"Failed to allocate enumeration buffer.";
+			return FALSE;
+		}
+
+		enumData.Count = 0;
+		result = SiQuerySystemInformation(information, &enumData, argument);
+		QueryError();
+		if (result && enumData.Count > capacity) enumData.Count = capacity;
+		return result;
+	}
+
+	BOOL KernelInstance::QueryProcessEnumeration(ProcessGetInformation information, ULONG pid, SI_ENUMERATION& enumData, ULONG itemSize, ULONG argument) noexcept {
+		enumData.Buffer = NULL;
+		enumData.BufferSize = 0;
+		enumData.Count = 0;
+
+		BOOL result = SiQueryProcessInformation(information, pid, &enumData, argument);
+		QueryError();
+		if (!result) return FALSE;
+		if (enumData.Count == 0) return TRUE;
+		if (itemSize == 0 || enumData.Count > static_cast<ULONG>(-1) / itemSize) {
+			lastErrorCode = SI_INVALID_PARAMETER;
+			lastErrorMessage = L"Invalid enumeration size.";
+			return FALSE;
+		}
+
+		enumData.BufferSize = enumData.Count * itemSize;
+		ULONG capacity = enumData.Count;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		if (!enumData.Buffer) {
+			lastErrorCode = SI_ALLOCATION_FAILED;
+			lastErrorMessage = L"Failed to allocate enumeration buffer.";
+			return FALSE;
+		}
+
+		enumData.Count = 0;
+		result = SiQueryProcessInformation(information, pid, &enumData, argument);
+		QueryError();
+		if (result && enumData.Count > capacity) enumData.Count = capacity;
+		return result;
+	}
+
+	BOOL KernelInstance::QueryFileEnumeration(FileGetInformation information, LPCWSTR path, SI_ENUMERATION& enumData, ULONG itemSize, ULONG argument) noexcept {
+		enumData.Buffer = NULL;
+		enumData.BufferSize = 0;
+		enumData.Count = 0;
+
+		BOOL result = SiQueryFileInformation(information, path, &enumData, argument);
+		QueryError();
+		if (!result) return FALSE;
+		if (enumData.Count == 0) return TRUE;
+		if (itemSize == 0 || enumData.Count > static_cast<ULONG>(-1) / itemSize) {
+			lastErrorCode = SI_INVALID_PARAMETER;
+			lastErrorMessage = L"Invalid enumeration size.";
+			return FALSE;
+		}
+
+		enumData.BufferSize = enumData.Count * itemSize;
+		ULONG capacity = enumData.Count;
+		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		if (!enumData.Buffer) {
+			lastErrorCode = SI_ALLOCATION_FAILED;
+			lastErrorMessage = L"Failed to allocate enumeration buffer.";
+			return FALSE;
+		}
+
+		enumData.Count = 0;
+		result = SiQueryFileInformation(information, path, &enumData, argument);
+		QueryError();
+		if (result && enumData.Count > capacity) enumData.Count = capacity;
+		return result;
+	}
+
 	BOOL KernelInstance::SiTerminateProcess(ULONG pid) noexcept {
 		BOOL result = SiSetProcessInformation(ProcessSetInformation::Terminate, pid, NULL, 0);
 		QueryError();
@@ -155,22 +248,16 @@ namespace winrt::StarlightGUI::implementation {
 
 		PWCHAR pathPtr = targetPath;
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_FILE_DATA) * 10000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 		enumData.Arg = (PVOID)&pathPtr;
 
 		BOOL result = FALSE;
 
 		if (enum_file_mode == 2) {
-			// NTFSPARSER: enum NTFS MFT
-			result = SiQueryFileInformation(FileGetInformation::DirectoryFileByNTFS, targetPath, &enumData, (enum_file_mode == 3) ? 1 : 0);
+			result = QueryFileEnumeration(FileGetInformation::DirectoryFileByNTFS, targetPath, enumData, sizeof(SI_FILE_DATA_FULL), (enum_file_mode == 3) ? 1 : 0);
 		}
 		else {
-			// NTAPI (0) or NTFSIO (1)
-			result = SiQueryFileInformation(FileGetInformation::DirectoryFile, targetPath, &enumData, enum_file_mode);
+			result = QueryFileEnumeration(FileGetInformation::DirectoryFile, targetPath, enumData, sizeof(SI_FILE_DATA), enum_file_mode);
 		}
-
-		QueryError();
 
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			if (enum_file_mode == 2) {
@@ -210,15 +297,12 @@ namespace winrt::StarlightGUI::implementation {
 
 	BOOL KernelInstance::SiEnumProcesses(std::vector<winrt::StarlightGUI::ProcessInfo>& targetList, bool strengthen) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_PROCESS_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
+		ULONG strengthenFlag = 1;
 		if (strengthen) {
-			ULONG strengthenFlag = 1;
 			enumData.Arg = &strengthenFlag;
 		}
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::Process, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::Process, enumData, sizeof(SI_PROCESS_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_PROCESS_DATA processData = (PSI_PROCESS_DATA)enumData.Buffer;
@@ -240,12 +324,9 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumProcessThreads(ULONG pid, std::vector<winrt::StarlightGUI::ThreadInfo>& threads) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_THREAD_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 		enumData.Arg = (PVOID)&pid;
 	
-		BOOL result = SiQueryProcessInformation(ProcessGetInformation::Thread, pid, &enumData, 0);
-		QueryError();
+		BOOL result = QueryProcessEnumeration(ProcessGetInformation::Thread, pid, enumData, sizeof(SI_THREAD_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_THREAD_DATA threadData = (PSI_THREAD_DATA)enumData.Buffer;
@@ -300,12 +381,9 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumProcessHandles(ULONG pid, std::vector<winrt::StarlightGUI::HandleInfo>& handles) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_HANDLE_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 		enumData.Arg = (PVOID)&pid;
 	
-		BOOL result = SiQueryProcessInformation(ProcessGetInformation::Handle, pid, &enumData, 0);
-		QueryError();
+		BOOL result = QueryProcessEnumeration(ProcessGetInformation::Handle, pid, enumData, sizeof(SI_HANDLE_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_HANDLE_DATA handleData = (PSI_HANDLE_DATA)enumData.Buffer;
@@ -326,12 +404,9 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumProcessModules(ULONG pid, std::vector<winrt::StarlightGUI::MokuaiInfo>& modules) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_MODULE_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 		enumData.Arg = (PVOID)&pid;
 	
-		BOOL result = SiQueryProcessInformation(ProcessGetInformation::Module, pid, &enumData, 0);
-		QueryError();
+		BOOL result = QueryProcessEnumeration(ProcessGetInformation::Module, pid, enumData, sizeof(SI_MODULE_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_MODULE_DATA moduleData = (PSI_MODULE_DATA)enumData.Buffer;
@@ -351,12 +426,9 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumProcessKernelCallbackTable(ULONG pid, std::vector<winrt::StarlightGUI::KCTInfo>& kcts) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 		enumData.Arg = (PVOID)&pid;
 	
-		BOOL result = SiQueryProcessInformation(ProcessGetInformation::KernelCallbackTable, pid, &enumData, 0);
-		QueryError();
+		BOOL result = QueryProcessEnumeration(ProcessGetInformation::KernelCallbackTable, pid, enumData, sizeof(SI_FUNCTION_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
@@ -374,11 +446,8 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumDrivers(std::vector<winrt::StarlightGUI::KernelModuleInfo>& kernelModules) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_MODULE_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::Module, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::Module, enumData, sizeof(SI_MODULE_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_MODULE_DATA moduleData = (PSI_MODULE_DATA)enumData.Buffer;
@@ -402,11 +471,8 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumMiniFilter(std::vector<winrt::StarlightGUI::GeneralEntry>& filterList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_MINIFILTER_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::Minifilter, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::Minifilter, enumData, sizeof(SI_MINIFILTER_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_MINIFILTER_DATA minifilterData = (PSI_MINIFILTER_DATA)enumData.Buffer;
@@ -430,11 +496,8 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& ssdtList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::SSDT, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::SSDT, enumData, sizeof(SI_FUNCTION_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
@@ -454,11 +517,8 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumSSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& sssdtList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 3000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::ShadowSSDT, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::ShadowSSDT, enumData, sizeof(SI_FUNCTION_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
@@ -478,11 +538,8 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumIoTimer(std::vector<winrt::StarlightGUI::GeneralEntry>& timerList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_IO_TIMER_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::IOTimer, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::IOTimer, enumData, sizeof(SI_IO_TIMER_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_IO_TIMER_DATA timerData = (PSI_IO_TIMER_DATA)enumData.Buffer;
@@ -503,11 +560,8 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumIDT(std::vector<winrt::StarlightGUI::GeneralEntry>& idtList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_IDT_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::IDT, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::IDT, enumData, sizeof(SI_IDT_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_IDT_DATA idtData = (PSI_IDT_DATA)enumData.Buffer;
@@ -529,11 +583,8 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumGDT(std::vector<winrt::StarlightGUI::GeneralEntry>& gdtList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_GDT_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::GDT, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::GDT, enumData, sizeof(SI_GDT_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_GDT_DATA gdtData = (PSI_GDT_DATA)enumData.Buffer;
@@ -557,11 +608,8 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumPiDDBCacheTable(std::vector<winrt::StarlightGUI::GeneralEntry>& piddbList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_PIDDB_CACHE_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::PiDDBCacheTable, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::PiDDBCacheTable, enumData, sizeof(SI_PIDDB_CACHE_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_PIDDB_CACHE_DATA piddbData = (PSI_PIDDB_CACHE_DATA)enumData.Buffer;
@@ -580,8 +628,6 @@ namespace winrt::StarlightGUI::implementation {
 	
 	BOOL KernelInstance::SiEnumHalDispatchTable(std::vector<winrt::StarlightGUI::GeneralEntry>& halList, HalTableType type) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_FUNCTION_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 
 		SystemGetInformation information = SystemGetInformation::HalDispatchTable;
 		switch (type) {
@@ -601,8 +647,7 @@ namespace winrt::StarlightGUI::implementation {
 			break;
 		}
 	
-		BOOL result = SiQuerySystemInformation(information, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(information, enumData, sizeof(SI_FUNCTION_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
@@ -665,13 +710,10 @@ namespace winrt::StarlightGUI::implementation {
 
 	BOOL KernelInstance::SiEnumCallbacks(std::vector<winrt::StarlightGUI::GeneralEntry>& callbackList, CallbackType type) noexcept {
 		SI_ENUMERATION enumData = { 0 };
-		enumData.BufferSize = sizeof(SI_CALLBACK_DATA) * 1000;
-		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 		ULONG callbackType = (ULONG)type;
 		enumData.Arg = &callbackType;
 	
-		BOOL result = SiQuerySystemInformation(SystemGetInformation::Callback, &enumData, 0);
-		QueryError();
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::Callback, enumData, sizeof(SI_CALLBACK_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_CALLBACK_DATA callbackData = (PSI_CALLBACK_DATA)enumData.Buffer;
@@ -789,15 +831,8 @@ namespace winrt::StarlightGUI::implementation {
 	BOOL KernelInstance::EnableHypervisor() noexcept {
 		if (!GetDriverDevice()) return FALSE;
 
-		BOOL supported = FALSE;
-		if (!DeviceIoControl(driverDevice, IOCTL_METAVERSE_CHECK_SUPPORT, NULL, 0, &supported, sizeof(BOOL), 0, NULL)) {
+		if (!DeviceIoControl(driverDevice, IOCTL_METAVERSE_CHECK_SUPPORT, NULL, 0, NULL, 0, 0, NULL)) {
 			QueryError();
-			return FALSE;
-		}
-
-		if (!supported) {
-			lastErrorCode = SI_NOT_AVAILABLE;
-			lastErrorMessage = L"Virtualization not supported on this system";
 			return FALSE;
 		}
 
@@ -869,20 +904,20 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::EnableLKD() noexcept {
-		BOOL result = SiSetSystemInformation(SystemSetInformation::LKDState, NULL, 0);
+		BOOLEAN state = TRUE;
+		BOOL result = SiSetSystemInformation(SystemSetInformation::LKDState, &state, 0);
 		QueryError();
 		return result;
 	}
 
-	BOOL KernelInstance::DisablePatchGuard(int type) noexcept {
-		BOOL result = SiSetSystemInformation(SystemSetInformation::DisablePatchGuard, NULL, type);
+	BOOL KernelInstance::DisablePatchGuard(bool hypervisor) noexcept {
+		BOOL result = SiSetSystemInformation(SystemSetInformation::DisablePatchGuard, NULL, hypervisor ? 1 : 0);
 		QueryError();
 		return result;
 	}
 
-	BOOL KernelInstance::BlueScreen(int color) {
-		ULONG colorValue = (color == -1) ? 0 : (ULONG)color;
-		BOOL result = SiSetSystemInformation(SystemSetInformation::TriggerBugCheck, &colorValue, (color == -1) ? 0 : 1);
+	BOOL KernelInstance::BlueScreen() {
+		BOOL result = SiSetSystemInformation(SystemSetInformation::TriggerBugCheck, NULL, 0);
 		QueryError();
 		return result;
 	}

@@ -1,7 +1,8 @@
 ﻿#pragma once
 
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#include <Windows.h>
+#include <winioctl.h>
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "version.lib")
 #pragma comment(lib, "shell32.lib")

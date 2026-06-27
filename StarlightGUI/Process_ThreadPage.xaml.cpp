@@ -36,8 +36,6 @@ using namespace Windows::System;
 
 namespace winrt::StarlightGUI::implementation
 {
-    static int safeAcceptedPID = -1;
-
     static hstring GetDriverErrorMessage()
     {
         auto errorMsg = KernelInstance::GetLastErrorMessage();
@@ -112,17 +110,17 @@ namespace winrt::StarlightGUI::implementation
 
         // 选项1.3
         auto item1_3 = slg::CreateMenuItem(flyoutStyles, L"\ue945", t(L"ProcThread.Menu.TerminateMurder").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (safeAcceptedPID == item.Id() || !dangerous_confirm) {
-                if (KernelInstance::SiTerminateThreadEx(item.Id())) {
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
-                    LoadThreadList();
-                }
-                else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_infoWindowInstance);
+            auto lifetime = get_strong();
+            auto xamlRoot = XamlRoot();
+            auto target = item;
+            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+                co_return;
             }
-            else {
-                safeAcceptedPID = item.Id();
-                slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"ProcThread.Msg.MurderWarning").c_str(), InfoBarSeverity::Warning, g_infoWindowInstance);
+            if (KernelInstance::SiTerminateThreadEx(target.Id())) {
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
+                lifetime->LoadThreadList();
             }
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_infoWindowInstance);
             co_return;
             });
 
@@ -389,10 +387,6 @@ namespace winrt::StarlightGUI::implementation
         PreviousModeHeaderButton().Content(box_value(L"PreviousMode"));
     }
 }
-
-
-
-
 
 
 

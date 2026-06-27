@@ -43,7 +43,6 @@ namespace winrt::StarlightGUI::implementation
 {
     static std::unordered_map<hstring, std::optional<winrt::Microsoft::UI::Xaml::Media::ImageSource>> iconCache;
     static std::chrono::steady_clock::time_point lastRefresh;
-    static int safeAcceptedImage = -1;
     static WTMInit_t WTMInit = nullptr;
     static WTMUninit_t WTMUninit = nullptr;
     static WTMSetWindowBand_t WTMSetWindowBand = nullptr;
@@ -942,7 +941,6 @@ namespace winrt::StarlightGUI::implementation
         WindowStyleHeaderButton().Content(tbox(L"Window.Header.Style"));
     }
 }
-
 
 
 
