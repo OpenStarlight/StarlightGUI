@@ -531,38 +531,37 @@ namespace winrt::StarlightGUI::implementation
 
 		// 选项2.1
 		auto item2_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
-		auto item2_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Type").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String2().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
+		std::vector<std::pair<hstring, hstring>> copyItems = {
+			{ t(L"Common.Type"), item.String1() },
+			{ t(L"Common.Module"), item.String2() }
+		};
+		std::array<Button, 4> callbackHeaderButtons = { CallbackEntryHeaderButton(), CallbackHandleHeaderButton(), CallbackAddress3HeaderButton(), CallbackAddress4HeaderButton() };
+		std::array<hstring, 4> callbackValues = { item.String3(), item.String4(), item.String5(), item.String6() };
+		for (uint32_t i = 0; i < callbackHeaderButtons.size(); ++i) {
+			if (callbackHeaderButtons[i].Visibility() != Visibility::Visible) continue;
+
+			auto content = callbackHeaderButtons[i].Content();
+			hstring label;
+			if (auto text = content.try_as<TextBlock>()) {
+				label = text.Text();
 			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub1);
-		auto item2_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", t(L"Common.Module").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String1().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
+			else {
+				label = unbox_value_or<hstring>(content, L"");
 			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub2);
-		auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"Monitor.Header.Entry").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String3().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub3);
-		auto item2_1_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Common.Handle").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String4().c_str())) {
-				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-			}
-			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-			co_return;
-			});
-		item2_1.Items().Append(item2_1_sub4);
+			if (!label.empty()) copyItems.push_back({ label, callbackValues[i] });
+		}
+		for (auto const& copyItem : copyItems) {
+			hstring label = copyItem.first;
+			hstring value = copyItem.second;
+			auto menuItem = slg::CreateMenuItem(flyoutStyles, label.c_str(), [this, value](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
+				if (TaskUtils::CopyToClipboard(value.c_str())) {
+					slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
+				}
+				else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
+				co_return;
+				});
+			item2_1.Items().Append(menuItem);
+		}
 
 		menuFlyout.Items().Append(item1_1);
 		menuFlyout.Items().Append(separator1);
