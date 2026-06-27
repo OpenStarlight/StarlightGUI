@@ -89,6 +89,6 @@
 extern winrt::hstring siriusPath, wtmPath, iamKeyHackerPath;
 extern int enum_file_mode, background_type, mica_type, acrylic_type, navigation_style, image_stretch;
 extern std::string background_image, language, theme;
-extern bool enum_strengthen, pdh_first, elevated_run, dangerous_confirm, check_update, task_auto_refresh, tray_background_run, auto_start, replace_taskmgr, navigate_task_request;
+extern bool enum_strengthen, function_show_deprecated, function_show_unknown, function_use_document_name, pdh_first, elevated_run, dangerous_confirm, check_update, task_auto_refresh, tray_background_run, auto_start, replace_taskmgr, navigate_task_request;
 extern bool hypervisor_mode;
 extern int image_opacity, disasm_count;

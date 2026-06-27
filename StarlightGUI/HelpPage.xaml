@@ -96,7 +96,7 @@
                                         Height="36"
                                         Margin="0,2,0,0"
                                         HorizontalAlignment="Left"
-                                        Fill="{ThemeResource SystemControlForegroundBaseHighBrush}" />
+                                        Fill="Black" />
                                     <Image
                                         Width="36"
                                         Height="36"
@@ -240,7 +240,7 @@
                                         x:Name="HelpKALIDescUid"
                                         FontSize="14"
                                         Foreground="{ThemeResource AppSecondaryTextBrush}"
-                                        Text="擅长内核开发，提供了 SKT64 驱动和 AstralX 代码指导。" />
+                                        Text="擅长内核开发，提供了 Sirius 代码指导。" />
                                 </StackPanel>
                             </StackPanel>
                             <Button

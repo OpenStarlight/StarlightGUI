@@ -241,9 +241,7 @@
                                             TextTrimming="CharacterEllipsis"
                                             TextWrapping="NoWrap">
                                             <ToolTipService.ToolTip>
-                                                <ToolTip
-                                                    essential:ToolTipHelper.AcrylicWorkaround="True"
-                                                    Content="{Binding Name}" />
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding Name}" />
                                             </ToolTipService.ToolTip>
                                         </TextBlock>
                                         <TextBlock
@@ -253,9 +251,7 @@
                                             TextTrimming="CharacterEllipsis"
                                             TextWrapping="NoWrap">
                                             <ToolTipService.ToolTip>
-                                                <ToolTip
-                                                    essential:ToolTipHelper.AcrylicWorkaround="True"
-                                                    Content="{Binding Description}" />
+                                                <ToolTip essential:ToolTipHelper.AcrylicWorkaround="True" Content="{Binding Description}" />
                                             </ToolTipService.ToolTip>
                                         </TextBlock>
                                     </StackPanel>

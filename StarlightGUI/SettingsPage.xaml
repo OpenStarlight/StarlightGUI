@@ -118,6 +118,27 @@
                         Value="16" />
                 </essential:SettingsCard>
 
+                <essential:SettingsCard
+                    x:Name="FunctionDisplayCard"
+                    Margin="0,0,0,10"
+                    essential:RevealFocusPanel.AttachToPanel="{x:Bind RevealFocusPanel}"
+                    Description="控制函数列表中弃用、未知和文档名的显示方式"
+                    Header="函数展示设置"
+                    IsActionIconVisible="False"
+                    IsClickEnabled="True">
+                    <essential:SettingsCard.HeaderIcon>
+                        <FontIcon
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="16"
+                            Glyph="&#xe8a9;" />
+                    </essential:SettingsCard.HeaderIcon>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ToggleButton x:Name="FunctionShowDeprecatedButton" Click="FunctionDisplayButton_Click" />
+                        <ToggleButton x:Name="FunctionShowUnknownButton" Click="FunctionDisplayButton_Click" />
+                        <ToggleButton x:Name="FunctionUseDocumentNameButton" Click="FunctionDisplayButton_Click" />
+                    </StackPanel>
+                </essential:SettingsCard>
+
                 <TextBlock
                     x:Name="SettingsMainUid"
                     Padding="10"

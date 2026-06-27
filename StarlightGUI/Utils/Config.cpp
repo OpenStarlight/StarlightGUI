@@ -5,6 +5,9 @@ namespace winrt::StarlightGUI::implementation {
     void InitializeConfig() {
         enum_file_mode = ReadConfig("enum_file_mode", 0);
         enum_strengthen = ReadConfig("enum_strengthen", false);
+        function_show_deprecated = ReadConfig("function_show_deprecated", false);
+        function_show_unknown = ReadConfig("function_show_unknown", true);
+        function_use_document_name = ReadConfig("function_use_document_name", false);
         pdh_first = ReadConfig("pdh_first", true);
         background_type = ReadConfig("background_type", 0);
         mica_type = ReadConfig("mica_type", 1);

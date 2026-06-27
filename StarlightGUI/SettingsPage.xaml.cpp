@@ -159,6 +159,9 @@ namespace winrt::StarlightGUI::implementation
         ImageStretchComboBox().SelectedIndex(image_stretch);
 
         EnumStrengthenButton().IsOn(enum_strengthen);
+        FunctionShowDeprecatedButton().IsChecked(box_value(function_show_deprecated).as<winrt::Windows::Foundation::IReference<bool>>());
+        FunctionShowUnknownButton().IsChecked(box_value(function_show_unknown).as<winrt::Windows::Foundation::IReference<bool>>());
+        FunctionUseDocumentNameButton().IsChecked(box_value(function_use_document_name).as<winrt::Windows::Foundation::IReference<bool>>());
         PDHFirstButton().IsOn(pdh_first);
 		ElevatedRunButton().IsOn(elevated_run);
         DangerousConfirmButton().IsOn(dangerous_confirm);
@@ -194,6 +197,17 @@ namespace winrt::StarlightGUI::implementation
         if (!IsLoaded()) return;
 		enum_strengthen = EnumStrengthenButton().IsOn();
         SaveConfig("enum_strengthen", enum_strengthen);
+    }
+
+    void SettingsPage::FunctionDisplayButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
+        if (!IsLoaded()) return;
+
+        function_show_deprecated = FunctionShowDeprecatedButton().IsChecked().GetBoolean();
+        function_show_unknown = FunctionShowUnknownButton().IsChecked().GetBoolean();
+        function_use_document_name = FunctionUseDocumentNameButton().IsChecked().GetBoolean();
+        SaveConfig("function_show_deprecated", function_show_deprecated);
+        SaveConfig("function_show_unknown", function_show_unknown);
+        SaveConfig("function_use_document_name", function_use_document_name);
     }
 
     void SettingsPage::PDHFirstButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
@@ -470,6 +484,11 @@ namespace winrt::StarlightGUI::implementation
         EnumFileModeCard().Description(tbox("Settings.Desc.Card.EnumFileMode"));
         EnumStrengthenCard().Header(tbox("Settings.Header.Card.EnumStrengthen"));
         EnumStrengthenCard().Description(tbox("Settings.Desc.Card.EnumStrengthen"));
+        FunctionDisplayCard().Header(tbox("Settings.Header.Card.FunctionDisplay"));
+        FunctionDisplayCard().Description(tbox("Settings.Desc.Card.FunctionDisplay"));
+        FunctionShowDeprecatedButton().Content(tbox(L"Settings.Toggle.ShowDeprecated"));
+        FunctionShowUnknownButton().Content(tbox(L"Settings.Toggle.ShowUnknown"));
+        FunctionUseDocumentNameButton().Content(tbox(L"Settings.Toggle.UseDocumentName"));
         TaskAutoRefreshCard().Header(tbox("Settings.Header.Card.TaskAutoRefresh"));
         TaskAutoRefreshCard().Description(tbox("Settings.Desc.Card.TaskAutoRefresh"));
         PDHFirstCard().Header(tbox("Settings.Header.Card.PDHFirst"));

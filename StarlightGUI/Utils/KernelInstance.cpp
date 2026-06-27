@@ -502,8 +502,14 @@ namespace winrt::StarlightGUI::implementation {
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
+				std::wstring name = StringToWideString(functionData[i].Name);
+				if ((!function_show_deprecated && name.rfind(L"Deprecated", 0) == 0) ||
+					(!function_show_unknown && name.rfind(L"Unknown", 0) == 0)) {
+					continue;
+				}
+
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(functionData[i].Name));
+				entry.String1(name);
 				entry.String2(L"\\SystemRoot\\System32\\ntoskrnl.exe");
 				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
 				entry.ULongLong1((ULONG64)functionData[i].Address);
@@ -523,8 +529,14 @@ namespace winrt::StarlightGUI::implementation {
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
+				std::wstring name = StringToWideString(functionData[i].Name);
+				if ((!function_show_deprecated && name.rfind(L"Deprecated", 0) == 0) ||
+					(!function_show_unknown && name.rfind(L"Unknown", 0) == 0)) {
+					continue;
+				}
+
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(to_hstring(functionData[i].Name));
+				entry.String1(name);
 				entry.String2(L"\\SystemRoot\\System32\\win32k.sys");
 				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
 				entry.ULongLong1((ULONG64)functionData[i].Address);
@@ -647,7 +659,7 @@ namespace winrt::StarlightGUI::implementation {
 			break;
 		}
 	
-		BOOL result = QuerySystemEnumeration(information, enumData, sizeof(SI_FUNCTION_DATA));
+		BOOL result = QuerySystemEnumeration(information, enumData, sizeof(SI_FUNCTION_DATA), function_use_document_name ? 1 : 0);
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
@@ -655,12 +667,15 @@ namespace winrt::StarlightGUI::implementation {
 			hstring ntoskrnlPath = GetSystemDirectoryW(systemDirectory, MAX_PATH) == 0 ? hstring(L"ntoskrnl.exe") : hstring(std::wstring(systemDirectory) + L"\\ntoskrnl.exe");
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				std::wstring name = StringToWideString(functionData[i].Name);
+				if ((!function_show_deprecated && name.rfind(L"Deprecated", 0) == 0) ||
+					(!function_show_unknown && name.rfind(L"Unknown", 0) == 0)) {
+					continue;
+				}
+
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
 				entry.String1(name);
 				entry.String2(ntoskrnlPath);
 				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
-				entry.String4(name.rfind(L"Deprecated", 0) == 0 ? L"Strikethrough" : L"None");
-				entry.String5(name.rfind(L"Unknown", 0) == 0 ? L"Italic" : L"Normal");
 				entry.ULongLong1((ULONG64)functionData[i].Address);
 				entry.ULong1(static_cast<ULONG>(type));
 				halList.push_back(entry);

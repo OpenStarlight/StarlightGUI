@@ -216,6 +216,8 @@ namespace slg {
 
     IAsyncOperation<bool> ShowConfirmDialog(hstring title, hstring content, hstring primaryMessage, hstring closeMessage, XamlRoot xamlRoot) {
         ContentDialog dialog;
+        auto style = Application::Current().Resources().TryLookup(box_value(L"DefaultContentDialogStyle"));
+        if (style) dialog.Style(style.as<Style>());
 
         dialog.Title(box_value(title));
         dialog.TitleTemplate(XamlReader::Load(LR"(

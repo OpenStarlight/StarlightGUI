@@ -1677,10 +1677,8 @@
                                         VerticalAlignment="Center">
                                         <TextBlock
                                             FontSize="14"
-                                            FontStyle="{Binding String5}"
                                             Foreground="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                             Text="{Binding String1}"
-                                            TextDecorations="{Binding String4}"
                                             TextTrimming="CharacterEllipsis"
                                             TextWrapping="NoWrap">
                                             <ToolTipService.ToolTip>
@@ -1689,10 +1687,8 @@
                                         </TextBlock>
                                         <TextBlock
                                             FontSize="12"
-                                            FontStyle="{Binding String5}"
                                             Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                             Text="{Binding String2}"
-                                            TextDecorations="{Binding String4}"
                                             TextTrimming="CharacterEllipsis"
                                             TextWrapping="NoWrap">
                                             <ToolTipService.ToolTip>
@@ -1707,10 +1703,8 @@
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
-                                        FontStyle="{Binding String5}"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}"
-                                        TextDecorations="{Binding String4}" />
+                                        Text="{Binding String3}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
