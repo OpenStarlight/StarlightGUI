@@ -319,9 +319,6 @@
     <None Include="Assets\Sirius.sys">
       <Filter>Assets</Filter>
     </None>
-    <None Include="..\..\Sirius\x64\Release\Sirius.sys">
-      <Filter>Assets</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />
