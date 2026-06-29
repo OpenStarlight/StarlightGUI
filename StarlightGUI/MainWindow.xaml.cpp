@@ -436,12 +436,33 @@ namespace winrt::StarlightGUI::implementation
                 LOG_INFO(L"Updater", L"Current: %d, Latest: %d", currentBuildNumber, latestBuildNumber);
 
                 if (ReadConfig("last_announcement_date", 0) < GetDateAsInt()) {
+                    hstring announcement;
+
+                    if (json.HasKey(L"announcement")) {
+                        announcement = json.GetNamedString(L"announcement");
+                    }
+                    else {
+                        std::wstring legacyAnnouncement;
+
+                        for (int i = 1; i <= 3; ++i) {
+                            std::wstring key = L"an_line" + std::to_wstring(i);
+
+                            if (!json.HasKey(hstring{ key })) continue;
+
+                            std::wstring line{ json.GetNamedString(hstring{ key }) };
+                            if (line.empty()) continue;
+
+                            if (!legacyAnnouncement.empty()) legacyAnnouncement += L"\n";
+                            legacyAnnouncement += line;
+                        }
+
+                        announcement = hstring{ legacyAnnouncement };
+                    }
+
                     auto dialog = winrt::make<winrt::StarlightGUI::implementation::UpdateDialog>();
                     dialog.IsUpdate(false);
                     dialog.LatestVersion(json.GetNamedString(L"an_update_time"));
-                    dialog.SetAnLine(1, json.GetNamedString(L"an_line1"));
-                    dialog.SetAnLine(2, json.GetNamedString(L"an_line2"));
-                    dialog.SetAnLine(3, json.GetNamedString(L"an_line3"));
+                    dialog.Announcement(announcement);
                     dialog.XamlRoot(MainWindowGrid().XamlRoot());
                     co_await dialog.ShowAsync();
                 }

@@ -57,9 +57,10 @@
             x:Name="AnnouncementStackPanel"
             Margin="0,0,0,10"
             Visibility="Collapsed">
-            <TextBlock x:Name="AnnouncementLine1" />
-            <TextBlock x:Name="AnnouncementLine2" />
-            <TextBlock x:Name="AnnouncementLine3" Margin="0,0,0,10" />
+            <TextBlock
+                x:Name="AnnouncementText"
+                Margin="0,0,0,10"
+                TextWrapping="WrapWholeWords" />
             <TextBlock
                 Margin="0,0,0,10"
                 FontSize="12"

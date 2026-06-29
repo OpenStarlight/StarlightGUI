@@ -7,7 +7,6 @@
 
         Boolean IsUpdate{ get; set; };
         String LatestVersion{ get; set; };
-		String GetAnLine(Int32 line);
-        void SetAnLine(Int32 line, String msg);
+        String Announcement{ get; set; };
     }
 }

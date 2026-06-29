@@ -9,6 +9,31 @@ using namespace Microsoft::UI::Xaml;
 
 namespace winrt::StarlightGUI::implementation
 {
+    void UpdateDialog::Announcement(const hstring& value)
+    {
+        std::wstring text{ value };
+        size_t pos = 0;
+
+        while ((pos = text.find(L"\\r\\n", pos)) != std::wstring::npos) {
+            text.replace(pos, 4, L"\n");
+            ++pos;
+        }
+
+        pos = 0;
+        while ((pos = text.find(L"\\n", pos)) != std::wstring::npos) {
+            text.replace(pos, 2, L"\n");
+            ++pos;
+        }
+
+        pos = 0;
+        while ((pos = text.find(L"\\r", pos)) != std::wstring::npos) {
+            text.replace(pos, 2, L"\n");
+            ++pos;
+        }
+
+        m_announcement = hstring{ text };
+    }
+
     UpdateDialog::UpdateDialog() {
         InitializeComponent();
         this->RequestedTheme(slg::GetConfiguredElementTheme());
@@ -34,9 +59,7 @@ namespace winrt::StarlightGUI::implementation
             else {
                 Title(tbox(L"Update.Announcement"));
                 UpdateTimeText().Text(LatestVersion());
-                AnnouncementLine1().Text(GetAnLine(1));
-                AnnouncementLine2().Text(GetAnLine(2));
-                AnnouncementLine3().Text(GetAnLine(3));
+                AnnouncementText().Text(Announcement());
                 PrimaryButtonText(t(L"Update.Confirm"));
                 UpdateStackPanel().Visibility(Visibility::Collapsed);
                 AnnouncementStackPanel().Visibility(Visibility::Visible);
@@ -57,6 +80,4 @@ namespace winrt::StarlightGUI::implementation
         deferral.Complete();
     }
 }
-
-
 
