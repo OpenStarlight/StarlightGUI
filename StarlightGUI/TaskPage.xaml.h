@@ -18,6 +18,7 @@ namespace winrt::StarlightGUI::implementation
         slg::coroutine ModifyToken(ULONG pid);
 
         void ProcessListView_RightTapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
+        void ProcessListView_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& e);
         void ProcessListView_ContainerContentChanging(
             winrt::Microsoft::UI::Xaml::Controls::ListViewBase const& sender,
             winrt::Microsoft::UI::Xaml::Controls::ContainerContentChangingEventArgs const& args);

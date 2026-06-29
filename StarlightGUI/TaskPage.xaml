@@ -71,6 +71,7 @@
                     <AppBarButton
                         x:Name="TerminateProcessButton"
                         Click="TerminateProcessButton_Click"
+                        IsEnabled="False"
                         Label="结束进程">
                         <AppBarButton.Icon>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xe733;" />
@@ -231,7 +232,8 @@
                         Background="Transparent"
                         ContainerContentChanging="ProcessListView_ContainerContentChanging"
                         ItemContainerStyle="{StaticResource ListViewItemStyle}"
-                        RightTapped="ProcessListView_RightTapped">
+                        RightTapped="ProcessListView_RightTapped"
+                        SelectionChanged="ProcessListView_SelectionChanged">
 
                         <!--  进程数据  -->
                         <ListView.ItemTemplate>

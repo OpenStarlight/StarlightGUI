@@ -16,8 +16,8 @@
     <a href="https://space.bilibili.com/670866766">
       <img src="https://img.shields.io/badge/Bilibili-Stars_Azusa-white?logo=bilibili&logoColor=white&labelColor=ff69b4" alt="Bilibili">
     </a>
-    <a href="https://afdian.com/a/StarsAzusa">
-      <img src="https://img.shields.io/badge/Afdian-Stars_Azusa-white?logo=afdian&labelColor=green" alt="Bilibili">
+    <a href="https://ifdian.com/a/StarsAzusa">
+      <img src="https://img.shields.io/badge/Ifdian-Stars_Azusa-white?logo=afdian&labelColor=green" alt="Ifdian">
     </a>
   </p>
 </h1>
@@ -28,10 +28,26 @@ Starlight GUI 是一个基于 C++/WinRT 的 WinUI3 开源项目，为开发者�
 
 **开发者**: Stars  
 **许可证**: GPL 3.0 License | OSI Certified  
-**Copyright © 2026 Starlight. Some Rights Reserved.**  
-**网盘下载链接**: `https://pan.quark.cn/s/ee7a29ca2a76`  **提取码**: `vVmj`  （也可在 Github 页面下载）
+**Copyright © 2026 Starlight. All Rights Reserved.**  
+**下载链接**: 
+- 夸克网盘: `https://pan.quark.cn/s/ee7a29ca2a76` (提取码: `vVmj`)
+- Github Releases/Actions: `https://github.com/OpenStarlight/StarlightGUI`
+- QQ群: `1041508876`
 
 ![Alt](https://repobeats.axiom.co/api/embed/33edd92df6ac6348e3eb2c6c1ba38046ca12e037.svg "Repobeats analytics image")
+
+## 重要: 关于分发渠道调整
+
+自 Starlight GUI **v4.0.0** 及以后，我们将软件分发渠道调整为双渠道。  
+**普通版/免费版**: 可以直接从 **夸克网盘/QQ群/Github Releases/Github Actions** 内直接下载。  
+**高级版**: 自行**构建完整源码**或前往[爱发电](https://ifdian.net/a/StarsAzusa)赞助作者后在QQ群下载。  
+
+### 这意味着什么?
+
+本次改动不代表本软件将进入收费模式。软件的源码仍然**开源**，我们的初心始终不变。你可以自行拉取完整源码进行构建以免费使用高级版。  
+普通版和高级版的功能**几乎没有差别**，仅仅限制了一些极高技术门槛的功能。  
+高级版的目的是为了提供一份给开发者**提供赞助**的渠道，这与许多其他开源项目类似。我们不会为高级版添加验证机制，也不会介意你向朋友分享高级版，只要你没有做违反协议的事(大肆分发、倒卖等)。   
+非常感谢你们的理解。开发不易，请多多支持！
 
 ## 主要功能
 
@@ -61,6 +77,11 @@ Starlight GUI 是一个基于 C++/WinRT 的 WinUI3 开源项目，为开发者�
 - ARK 级系统内核资源查看
 - 功能完善，数据一览无余
 
+### 内存反汇编
+- 读取任意内存
+- 将读取的内存转为十六进制值或汇编代码
+- 写入任意内容至任意内存
+
 ### 设置菜单
 - 功能模块配置
 - 界面个性化设置
@@ -69,7 +90,7 @@ Starlight GUI 是一个基于 C++/WinRT 的 WinUI3 开源项目，为开发者�
 
 ### 环境
 - `Windows 10 / 11` 操作系统
-- `Visual Studio 2026` （推荐）
+- `Visual Studio 2026` (推荐)
 - `C++ 20` 及以上
 -  `C++/WinRT WinUI3` 开发环境
 
@@ -128,11 +149,11 @@ Starlight GUI 是一个基于 C++/WinRT 的 WinUI3 开源项目，为开发者�
 
 **驱动特别提醒/声明**:
 
-- 本软件使用的驱动均为**自行开发/授权使用**
+- 本软件使用的驱动均为**自行开发**
 - 如果在使用途中遇到驱动报毒，请您**临时**为驱动**添加信任**，并确保您在停止使用该软件后**完全移除信任**
 - 驱动的数字签名均来自**非正规渠道**，请勿信任该证书
 - 禁止**未经授权**挪用本项目的驱动并用于其它目的
-> 由于驱动已被签名，可能存在一定误导性，并可能被有心人士用于非法用途。请确保您没有在本项目（以及 SKT64 驱动授权的项目）以外发现您的电脑正在运行相关驱动，如果发现则请立刻进行安全检查！
+> 由于驱动已被签名，可能存在一定误导性，并可能被有心人士用于非法用途。请确保您没有在本项目以外发现您的电脑正在运行相关驱动，如果发现则请立刻进行安全检查！
 
 > 项目使用的技术大多公开，且在本项目里完全处于合法用处。如果本项目的驱动被来自非本项目的程序使用，则其对应的开发者应当承担自己所做出一切行为的后果！本项目的开发者概不负责！
 
@@ -147,7 +168,8 @@ Starlight GUI 是一个基于 C++/WinRT 的 WinUI3 开源项目，为开发者�
 - **Claude**
 
 ### 项目支持
-- **KALI_MC** - 驱动开发
+- **Stars** - 主要开发
+- **PspExitThread** - 驱动开发指导
 - **Wormwaker** - 思路启发、宣传
 - **MuLin** - 程序测试
 - **NtKrnl64** - 本地化
@@ -159,7 +181,7 @@ Starlight GUI 是一个基于 C++/WinRT 的 WinUI3 开源项目，为开发者�
 
 ## 本地化
 项目现已支持多语言本地化，我们欢迎来自世界各地的开发者和用户使用并共同维护本项目！  
-你可以在 **Issues 界面**向我们发起增加新语言的请求，通过后在官方 [Crowdin](https://crowdin.com/project/StarlightGUI) 提交你的语言文件！  
+你可以在 **Issues 界面** 向我们发起增加新语言的请求，通过后在官方 [Crowdin](https://crowdin.com/project/StarlightGUI) 提交你的语言文件！  
 这是项目在 Crowdin 目前的本地化情况：
 [![Crowdin](https://badges.crowdin.net/StarlightGUI/localized.svg)](https://crowdin.com/project/StarlightGUI)
 

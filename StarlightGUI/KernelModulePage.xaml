@@ -71,6 +71,7 @@
                     <AppBarButton
                         x:Name="UnloadModuleButton"
                         Click="UnloadModuleButton_Click"
+                        IsEnabled="False"
                         Label="卸载模块">
                         <AppBarButton.Icon>
                             <FontIcon FontFamily="Segoe Fluent Icons" Glyph="&#xec91;" />
@@ -206,7 +207,8 @@
                         Background="Transparent"
                         ContainerContentChanging="KernelModuleListView_ContainerContentChanging"
                         ItemContainerStyle="{StaticResource ListViewItemStyle}"
-                        RightTapped="KernelModuleListView_RightTapped">
+                        RightTapped="KernelModuleListView_RightTapped"
+                        SelectionChanged="KernelModuleListView_SelectionChanged">
 
                         <!--  进程数据  -->
                         <ListView.ItemTemplate>

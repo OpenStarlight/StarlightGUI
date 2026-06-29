@@ -16,8 +16,8 @@
     <a href="https://space.bilibili.com/670866766">
       <img src="https://img.shields.io/badge/Bilibili-Stars_Azusa-white?logo=bilibili&logoColor=white&labelColor=ff69b4" alt="Bilibili">
     </a>
-    <a href="https://afdian.com/a/StarsAzusa">
-      <img src="https://img.shields.io/badge/Afdian-Stars_Azusa-white?logo=afdian&labelColor=green" alt="Afdian">
+    <a href="https://ifdian.com/a/StarsAzusa">
+      <img src="https://img.shields.io/badge/Ifdian-Stars_Azusa-white?logo=afdian&labelColor=green" alt="Ifdian">
     </a>
   </p>
 </h1>
@@ -28,10 +28,26 @@ Starlight GUI is an open-source WinUI3 project built with C++/WinRT — a passio
 
 **Developer**: Stars
 **License**: GPL 3.0 License | OSI Certified
-**Copyright © 2026 Starlight. Some Rights Reserved.**
-**Download**: `https://pan.quark.cn/s/ee7a29ca2a76`  **Code**: `vVmj`  (Also available on GitHub Releases)
+**Copyright © 2026 Starlight. All Rights Reserved.**
+**Downloads**:
+- Quark Drive: `https://pan.quark.cn/s/ee7a29ca2a76` (Code: `vVmj`)
+- GitHub Releases/Actions: `https://github.com/OpenStarlight/StarlightGUI`
+- QQ Group: `1041508876`
 
 ![Alt](https://repobeats.axiom.co/api/embed/33edd92df6ac6348e3eb2c6c1ba38046ca12e037.svg "Repobeats analytics image")
+
+## Important: Distribution Channel Adjustment
+
+Starting from Starlight GUI **v4.0.0**, the software distribution will be adjusted to a dual-channel model.
+**Standard/Free Edition**: Can be downloaded directly from **Quark Drive / QQ Group / GitHub Releases / GitHub Actions**.
+**Premium Edition**: Build the **complete source code** yourself, or sponsor the author on [Ifdian](https://ifdian.net/a/StarsAzusa) and download it from the QQ Group.
+
+### What does this mean?
+
+This change does not mean the software is becoming paid software. The source code remains **open source**, and our original intention remains unchanged. You can pull and build the complete source code yourself to use the Premium Edition for free.
+The Standard Edition and Premium Edition are **almost identical** in functionality, with only a few extremely technically demanding features restricted.
+The purpose of the Premium Edition is to provide a way to **support the developer**, similar to many other open-source projects. We will not add verification mechanisms to the Premium Edition, and we do not mind you sharing the Premium Edition with friends, as long as you do not violate the license agreement (large-scale redistribution, resale, etc.).
+Thank you very much for your understanding. Development is not easy — your support is greatly appreciated!
 
 ## Key Features
 
@@ -60,6 +76,11 @@ Starlight GUI is an open-source WinUI3 project built with C++/WinRT — a passio
 ### System Monitor
 - ARK-level kernel resource viewer
 - Comprehensive data at a glance
+
+### Memory Disassembly
+- Read arbitrary memory
+- Convert read memory to hexadecimal values or assembly code
+- Write arbitrary content to arbitrary memory
 
 ### Settings
 - Feature module configuration
@@ -128,11 +149,11 @@ By installing and running this software, you acknowledge that you have **read an
 
 **Special Driver Notice/Disclaimer**:
 
-- All drivers used by this software are **self-developed or used under authorization**
+- All drivers used by this software are **self-developed**
 - If you encounter antivirus warnings for drivers during use, please **temporarily** add them to your **trust list**, and make sure to **completely remove the trust** after you stop using the software
 - Driver digital signatures are obtained from **unofficial channels** — do not trust the certificate
 - **Unauthorized** use of this project's drivers for other purposes is **prohibited**
-> Since the drivers are signed, they may be misleading and could potentially be exploited for illegal purposes. Please ensure you have not found these drivers running on your computer outside of this project (or projects authorized by the SKT64 driver). If you do, perform a security check immediately!
+> Since the drivers are signed, they may be misleading and could potentially be exploited for illegal purposes. Please ensure you have not found these drivers running on your computer outside of this project. If you do, perform a security check immediately!
 
 > Most of the technologies used in this project are publicly available and are used entirely legally within this project. If this project's drivers are used by programs outside of this project, the corresponding developers shall bear full responsibility for their actions! The developer of this project assumes no liability!
 
@@ -147,7 +168,8 @@ By installing and running this software, you acknowledge that you have **read an
 - **Claude**
 
 ### Project Support
-- **KALI_MC** — Driver development
+- **Stars** — Main development
+- **PspExitThread** — Driver development guidance
 - **Wormwaker** — Ideas & Promotion
 - **MuLin** — Testing
 - **NtKrnl64** — Localization

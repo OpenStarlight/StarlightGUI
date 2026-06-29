@@ -96,6 +96,11 @@ namespace winrt::StarlightGUI::implementation
         LOG_INFO(L"TaskPage", L"TaskPage initialized.");
     }
 
+    void TaskPage::ProcessListView_SelectionChanged(IInspectable const& sender, SelectionChangedEventArgs const& e)
+    {
+        TerminateProcessButton().IsEnabled(ProcessListView().SelectedItem() != nullptr);
+    }
+
     void TaskPage::ProcessListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
     {
         auto listView = ProcessListView();

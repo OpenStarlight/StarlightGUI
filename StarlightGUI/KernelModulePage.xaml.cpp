@@ -76,6 +76,11 @@ namespace winrt::StarlightGUI::implementation
         LOG_INFO(L"KernelModulePage", L"KernelModulePage initialized.");
     }
 
+    void KernelModulePage::KernelModuleListView_SelectionChanged(IInspectable const& sender, SelectionChangedEventArgs const& e)
+    {
+        UnloadModuleButton().IsEnabled(KernelModuleListView().SelectedItem() != nullptr);
+    }
+
     void KernelModulePage::KernelModuleListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
     {
         auto listView = KernelModuleListView();

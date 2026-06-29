@@ -35,7 +35,7 @@
                                 HorizontalAlignment="Center"
                                 FontSize="16"
                                 Foreground="{ThemeResource AppSecondaryTextBrush}"
-                                Text="Copyright © 2026 Starlight. Some Rights Reserved." />
+                                Text="Copyright © 2026 Starlight. All rights reserved." />
                         </StackPanel>
                     </Button>
                     <TextBlock

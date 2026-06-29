@@ -16,6 +16,7 @@ namespace winrt::StarlightGUI::implementation
         slg::coroutine UnloadModuleButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         slg::coroutine LoadDriverButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         void KernelModuleListView_RightTapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
+        void KernelModuleListView_SelectionChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::SelectionChangedEventArgs const& e);
         void KernelModuleListView_ContainerContentChanging(
             winrt::Microsoft::UI::Xaml::Controls::ListViewBase const& sender,
             winrt::Microsoft::UI::Xaml::Controls::ContainerContentChangingEventArgs const& args);
