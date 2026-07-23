@@ -94,13 +94,15 @@ namespace winrt::StarlightGUI::implementation
                 RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(0));
 
                 // 检查更新
-                CheckUpdate();
+                m_updateAction = CheckUpdate();
                 LOG_INFO(L"MainWindow", L"Completed all loading-stage tasks.");
             }
             });
 
 
         Closed([this](auto&&, auto&&) {
+            LOG_INFO(L"MainWindow", L"Closed event received. Flushing logger before process shutdown.");
+
             int32_t width = this->AppWindow().Size().Width;
             int32_t height = this->AppWindow().Size().Height;
 
@@ -117,7 +119,6 @@ namespace winrt::StarlightGUI::implementation
                 }
             }
             RemoveTrayIcon();
-            LOGGER_CLOSE();
             });
 
         LOG_INFO(L"MainWindow", L"MainWindow initialized.");
@@ -410,103 +411,110 @@ namespace winrt::StarlightGUI::implementation
     IAsyncAction MainWindow::CheckUpdate()
     {
         try {
-            auto weak_this = get_weak();
+            if (!ReadConfig("check_update", true)) co_return;
+
+            auto lifetime = get_strong();
+            auto dispatcher = DispatcherQueue();
 
             int currentBuildNumber = unbox_value<int>(Application::Current().Resources().TryLookup(box_value(L"BuildNumber")));
             int latestBuildNumber = 0;
 
-            if (auto strong_this = weak_this.get()) {
-                co_await winrt::resume_background();
+            co_await winrt::resume_background();
 
-                HttpClient client;
-                Uri uri(L"https://pastebin.com/raw/kz5qViYF");
+            HttpClient client;
+            Uri uri(L"https://pastebin.com/raw/kz5qViYF");
 
-                // 防止获取旧数据
-                client.DefaultRequestHeaders().Append(L"Cache-Control", L"no-cache");
-                client.DefaultRequestHeaders().Append(L"If-None-Match", L"");
+            // 防止获取旧数据
+            client.DefaultRequestHeaders().Append(L"Cache-Control", L"no-cache");
 
-                LOG_INFO(L"Updater", L"Sending update check request...");
-                auto result = co_await client.GetStringAsync(uri);
+            LOG_INFO(L"Updater", L"Sending update check request...");
 
-                auto json = Windows::Data::Json::JsonObject::Parse(result);
-                latestBuildNumber = json.GetNamedNumber(L"build_number");
+            auto result = co_await client.GetStringAsync(uri);
+            LOG_INFO(L"Updater", L"Update response received! Payload length: %zu.", result.size());
 
-                co_await wil::resume_foreground(DispatcherQueue());
+            auto json = Windows::Data::Json::JsonObject::Parse(result);
+            latestBuildNumber = static_cast<int>(json.GetNamedNumber(L"build_number"));
+            LOG_INFO(L"Updater", L"Update response parsed successfully!");
 
-                LOG_INFO(L"Updater", L"Current: %d, Latest: %d", currentBuildNumber, latestBuildNumber);
+            co_await wil::resume_foreground(dispatcher);
 
-                if (ReadConfig("last_announcement_date", 0) < GetDateAsInt()) {
-                    hstring announcement;
+            LOG_INFO(L"Updater", L"Current: %d, Latest: %d", currentBuildNumber, latestBuildNumber);
 
-                    if (json.HasKey(L"announcement")) {
-                        announcement = json.GetNamedString(L"announcement");
+            if (ReadConfig("last_announcement_date", 0) < GetDateAsInt()) {
+                hstring announcement;
+
+                if (json.HasKey(L"announcement")) {
+                    announcement = json.GetNamedString(L"announcement");
+                }
+                else {
+                    std::wstring legacyAnnouncement;
+
+                    for (int i = 1; i <= 3; ++i) {
+                        std::wstring key = L"an_line" + std::to_wstring(i);
+
+                        if (!json.HasKey(hstring{ key })) continue;
+
+                        std::wstring line{ json.GetNamedString(hstring{ key }) };
+                        if (line.empty()) continue;
+
+                        if (!legacyAnnouncement.empty()) legacyAnnouncement += L"\n";
+                        legacyAnnouncement += line;
+                    }
+
+                    announcement = hstring{ legacyAnnouncement };
+                }
+
+                auto dialog = winrt::make<winrt::StarlightGUI::implementation::UpdateDialog>();
+                dialog.IsUpdate(false);
+                dialog.LatestVersion(json.GetNamedString(L"an_update_time"));
+                dialog.Announcement(announcement);
+                dialog.XamlRoot(MainWindowGrid().XamlRoot());
+                co_await dialog.ShowAsync();
+            }
+
+            if (latestBuildNumber == 0) {
+                LOG_WARNING(L"Updater", L"Latest = 0, check failed.");
+                slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"MainWindow.Updater.Failed"), InfoBarSeverity::Warning, g_mainWindowInstance);
+            }
+            else if (latestBuildNumber == currentBuildNumber) {
+                LOG_INFO(L"Updater", L"Latest = current, we are on the latest version.");
+                slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Updater.Latest"), InfoBarSeverity::Informational, g_mainWindowInstance);
+            }
+            else if (latestBuildNumber > currentBuildNumber) {
+                LOG_INFO(L"Updater", L"Latest > current, new version avaliable. Calling up update dialog.");
+                slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Updater.New"), InfoBarSeverity::Informational, g_mainWindowInstance);
+                auto dialog = winrt::make<winrt::StarlightGUI::implementation::UpdateDialog>();
+                dialog.IsUpdate(true);
+                dialog.LatestVersion(json.GetNamedString(L"version"));
+                dialog.XamlRoot(MainWindowGrid().XamlRoot());
+
+                auto dialogResult = co_await dialog.ShowAsync();
+
+                if (dialogResult == ContentDialogResult::Primary) {
+                    Uri target(json.GetNamedString(L"download_link"));
+                    auto launchResult = co_await Launcher::LaunchUriAsync(target);
+
+                    if (launchResult) {
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.OpenInBrowser.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     }
                     else {
-                        std::wstring legacyAnnouncement;
-
-                        for (int i = 1; i <= 3; ++i) {
-                            std::wstring key = L"an_line" + std::to_wstring(i);
-
-                            if (!json.HasKey(hstring{ key })) continue;
-
-                            std::wstring line{ json.GetNamedString(hstring{ key }) };
-                            if (line.empty()) continue;
-
-                            if (!legacyAnnouncement.empty()) legacyAnnouncement += L"\n";
-                            legacyAnnouncement += line;
-                        }
-
-                        announcement = hstring{ legacyAnnouncement };
+                        slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.OpenInBrowser.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
                     }
-
-                    auto dialog = winrt::make<winrt::StarlightGUI::implementation::UpdateDialog>();
-                    dialog.IsUpdate(false);
-                    dialog.LatestVersion(json.GetNamedString(L"an_update_time"));
-                    dialog.Announcement(announcement);
-                    dialog.XamlRoot(MainWindowGrid().XamlRoot());
-                    co_await dialog.ShowAsync();
-                }
-
-                if (!ReadConfig("check_update", true)) co_return;
-
-                if (latestBuildNumber == 0) {
-                    LOG_WARNING(L"Updater", L"Latest = 0, check failed.");
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"MainWindow.Updater.Failed"), InfoBarSeverity::Warning, g_mainWindowInstance);
-                }
-                else if (latestBuildNumber == currentBuildNumber) {
-                    LOG_INFO(L"Updater", L"Latest = current, we are on the latest version.");
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Updater.Latest"), InfoBarSeverity::Informational, g_mainWindowInstance);
-                }
-                else if (latestBuildNumber > currentBuildNumber) {
-                    LOG_INFO(L"Updater", L"Latest > current, new version avaliable. Calling up update dialog.");
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Updater.New"), InfoBarSeverity::Informational, g_mainWindowInstance);
-                    auto dialog = winrt::make<winrt::StarlightGUI::implementation::UpdateDialog>();
-                    dialog.IsUpdate(true);
-                    dialog.LatestVersion(json.GetNamedString(L"version"));
-                    dialog.XamlRoot(MainWindowGrid().XamlRoot());
-
-                    auto result = co_await dialog.ShowAsync();
-
-                    if (result == ContentDialogResult::Primary) {
-                        Uri target(json.GetNamedString(L"download_link"));
-                        auto result = co_await Launcher::LaunchUriAsync(target);
-
-                        if (result) {
-                            slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.OpenInBrowser.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
-                        }
-                        else {
-                            slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.OpenInBrowser.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
-                        }
-                    }
-                }
-                else if (latestBuildNumber < currentBuildNumber) {
-                    LOG_INFO(L"Updater", L"Latest < current, maybe we are on a dev environment.");
-                    slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Updater.Dev"), InfoBarSeverity::Informational, g_mainWindowInstance);
                 }
             }
-        } 
+            else if (latestBuildNumber < currentBuildNumber) {
+                LOG_INFO(L"Updater", L"Latest < current, maybe we are on a dev environment.");
+                slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"MainWindow.Updater.Dev"), InfoBarSeverity::Informational, g_mainWindowInstance);
+            }
+        }
         catch (const hresult_error& e) {
             LOG_ERROR(L"Updater", L"Failed to check update! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
+        }
+        catch (const std::exception& e) {
+            LOG_ERROR(L"Updater", L"Failed to check update! std::exception: %hs", e.what());
+        }
+        catch (...) {
+            LOG_ERROR(L"Updater", L"Failed to check update! Unknown exception.");
         }
 
         co_return;
@@ -525,6 +533,7 @@ namespace winrt::StarlightGUI::implementation
         {
         case WM_CLOSE:
         {
+            LOG_INFO(L"MainWindow", L"WM_CLOSE received. tray=%d, allowClose=%d.", tray_background_run, instance ? instance->m_allowClose : false);
             if (instance && tray_background_run && !instance->m_allowClose) {
                 instance->HideWindowToTray();
                 if (instance->m_trayIconAdded) return 0;
@@ -586,12 +595,26 @@ namespace winrt::StarlightGUI::implementation
             return 0;
         }
 
+        case WM_QUERYENDSESSION:
+            LOG_WARNING(L"MainWindow", L"WM_QUERYENDSESSION received. lParam=0x%p.", reinterpret_cast<void*>(lParam));
+            break;
+
+        case WM_ENDSESSION:
+            LOG_WARNING(L"MainWindow", L"WM_ENDSESSION received. ending=%d, lParam=0x%p.", static_cast<int>(wParam), reinterpret_cast<void*>(lParam));
+            break;
+
+        case WM_DESTROY:
+            LOG_INFO(L"MainWindow", L"WM_DESTROY received.");
+            break;
+
         case WM_NCDESTROY:
         {
+            LOG_INFO(L"MainWindow", L"WM_NCDESTROY received.");
             if (instance) {
                 instance->RemoveTrayIcon();
             }
             RemoveWindowSubclass(hWnd, &MainWindowProc, uIdSubclass);
+            LOGGER_SHUTDOWN();
             break;
         }
         }

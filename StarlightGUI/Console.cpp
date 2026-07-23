@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "Console.h"
+#include "Utils/Diagnostics.h"
 
 #include <dwmapi.h>
 #include <codecvt>
@@ -42,12 +43,15 @@ Console::~Console() {
 }
 
 bool Console::InitializeLogFile() {
-    wchar_t tempPath[MAX_PATH]{};
-    if (GetTempPathW(MAX_PATH, tempPath) == 0) {
-        return false;
-    }
+    constexpr size_t MAX_LOG_FILES = 10;
 
-    m_logFilePath = std::wstring(tempPath) + L"StarlightGUI.log";
+    auto logDirectory = slg::GetExecutableDirectory() / L"Logs";
+    std::error_code error;
+    std::filesystem::create_directories(logDirectory, error);
+    if (error) return false;
+
+    slg::PruneDiagnosticFiles(logDirectory, L".log", MAX_LOG_FILES - 1);
+    m_logFilePath = (logDirectory / (slg::GetDiagnosticTimestamp() + L".log")).wstring();
 
     std::lock_guard<std::mutex> lock(m_fileMutex);
     m_logFile.open(m_logFilePath, std::ios::out | std::ios::trunc);
@@ -73,79 +77,79 @@ bool Console::InitializeLogFile() {
 bool Console::Initialize() {
     if (m_initialized) return true;
 
-    InitializeLogFile();
+    if (!InitializeLogFile()) return false;
 
-    BOOL result = AllocConsole();
-    if (!result && GetLastError() != ERROR_ACCESS_DENIED) {
-        return false;
+    BOOL consoleAvailable = AllocConsole();
+    if (!consoleAvailable && GetLastError() == ERROR_ACCESS_DENIED) consoleAvailable = TRUE;
+
+    if (consoleAvailable) {
+        // 重定向标准流
+        freopen("CONOUT$", "w", stdout);
+        freopen("CONOUT$", "w", stderr);
+        freopen("CONIN$", "r", stdin);
+
+        m_hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+        m_hConsoleInput = GetStdHandle(STD_INPUT_HANDLE);
+        m_hConsoleWnd = GetConsoleWindow();
+
+        DWORD dwMode = 0;
+        if (m_hConsoleOutput && m_hConsoleOutput != INVALID_HANDLE_VALUE && GetConsoleMode(m_hConsoleOutput, &dwMode)) {
+            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT;
+            SetConsoleMode(m_hConsoleOutput, dwMode);
+        }
+
+        SetConsoleOutputCP(CP_UTF8);
+        SetConsoleCP(CP_UTF8);
+        SetConsoleCtrlHandler(HandleConsoleControl, TRUE);
+
+        // 设置字体
+        CONSOLE_FONT_INFOEX cfi{};
+        cfi.cbSize = sizeof(cfi);
+        if (m_hConsoleOutput && m_hConsoleOutput != INVALID_HANDLE_VALUE && GetCurrentConsoleFontEx(m_hConsoleOutput, FALSE, &cfi)) {
+            wcsncpy_s(cfi.FaceName, L"Consolas", _TRUNCATE);
+            cfi.dwFontSize.Y = 16;
+            cfi.FontWeight = FW_NORMAL;
+            SetCurrentConsoleFontEx(m_hConsoleOutput, FALSE, &cfi);
+        }
+
+        if (m_hConsoleWnd) {
+            ShowWindow(m_hConsoleWnd, SW_HIDE);
+
+            HMENU hMenu = GetSystemMenu(m_hConsoleWnd, FALSE);
+            if (hMenu) EnableMenuItem(hMenu, SC_CLOSE, MF_GRAYED);
+
+            SetConsoleTitleW(m_consoleTitle.c_str());
+
+            SetAppearanceByConfig();
+        }
     }
-
-    // 重定向标准流
-    freopen("CONOUT$", "w", stdout);
-    freopen("CONOUT$", "w", stderr);
-    freopen("CONIN$", "r", stdin);
-
-    m_hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-    m_hConsoleInput = GetStdHandle(STD_INPUT_HANDLE);
-    if (!m_hConsoleOutput || m_hConsoleOutput == INVALID_HANDLE_VALUE) {
-        return false;
-    }
-    m_hConsoleWnd = GetConsoleWindow();
-
-    DWORD dwMode = 0;
-    if (GetConsoleMode(m_hConsoleOutput, &dwMode)) {
-        dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT;
-        SetConsoleMode(m_hConsoleOutput, dwMode);
-    }
-
-    SetConsoleOutputCP(CP_UTF8);
-    SetConsoleCP(CP_UTF8);
-
-    SetConsoleCtrlHandler(HandleConsoleControl, TRUE);
-
-    // 设置字体
-    CONSOLE_FONT_INFOEX cfi{};
-    cfi.cbSize = sizeof(CONSOLE_FONT_INFOEX);
-    if (GetCurrentConsoleFontEx(m_hConsoleOutput, FALSE, &cfi)) {
-        wcsncpy_s(cfi.FaceName, L"Consolas", _TRUNCATE);
-        cfi.dwFontSize.Y = 16;
-        cfi.FontWeight = FW_NORMAL;
-        SetCurrentConsoleFontEx(m_hConsoleOutput, FALSE, &cfi);
-    }
-
-    if (m_hConsoleWnd) {
-        // 隐藏
-        ShowWindow(m_hConsoleWnd, SW_HIDE);
-
-        // 禁用关闭按钮
-        HMENU hMenu = GetSystemMenu(m_hConsoleWnd, FALSE);
-        if (hMenu) EnableMenuItem(hMenu, SC_CLOSE, MF_GRAYED);
-
-        // 设置标题
-        SetConsoleTitleW(m_consoleTitle.c_str());
-        
-        // 设置背景
-        SetBackdropByConfig();
-    }
-
-    m_consoleThread = std::thread(&Console::ConsoleThreadProc, this);
-    m_fileWriteThread = std::thread(&Console::FileWriteThreadProc, this);
-
-    Info(L"", L"Logger initialized. Closing console will terminate the application.");
-    Info(L"", L"Log file: %s", m_logFilePath.c_str());
 
     m_shutdown = false;
     m_initialized = true;
 
+    try {
+        m_consoleThread = std::thread(&Console::ConsoleThreadProc, this);
+        m_fileWriteThread = std::thread(&Console::FileWriteThreadProc, this);
+    }
+    catch (...) {
+        Shutdown();
+        return false;
+    }
+
+    Info(L"", L"Logger initialized.");
+    Info(L"", L"Log file: %s", m_logFilePath.c_str());
+
     return true;
 }
 
-void Console::SetBackdropByConfig() {
-    BOOL trueVal = TRUE;
-    auto type = background_type == 0 ? DWMSBT_NONE : background_type == 1 ? (mica_type == 0 ? DWMSBT_MAINWINDOW : DWMSBT_TABBEDWINDOW) : DWMSBT_TRANSIENTWINDOW;
+void Console::SetAppearanceByConfig() {
+    if (!m_hConsoleWnd) return;
+
+    BOOL themeType = theme == "Light" ? FALSE : theme == "Dark" ? TRUE : -1;
+    DWM_SYSTEMBACKDROP_TYPE backgroundType = background_type == 0 ? DWMSBT_NONE : background_type == 1 ? (mica_type == 0 ? DWMSBT_MAINWINDOW : DWMSBT_TABBEDWINDOW) : DWMSBT_TRANSIENTWINDOW;
     MARGINS margins = { -1 };
-    DwmSetWindowAttribute(m_hConsoleWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &trueVal, sizeof(trueVal));
-    DwmSetWindowAttribute(m_hConsoleWnd, DWMWA_SYSTEMBACKDROP_TYPE, &type, sizeof(type));
+    if (themeType != -1) DwmSetWindowAttribute(m_hConsoleWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &themeType, sizeof(themeType));
+    DwmSetWindowAttribute(m_hConsoleWnd, DWMWA_SYSTEMBACKDROP_TYPE, &backgroundType, sizeof(backgroundType));
     DwmExtendFrameIntoClientArea(m_hConsoleWnd, &margins);
 }
 
@@ -443,4 +447,3 @@ HWND Console::GetConsoleHandle() {
 void Console::SetShowTimestamp(bool show) { m_showTimestamp = show; }
 void Console::SetShowLogLevel(bool show) { m_showLogLevel = show; }
 void Console::SetShowSource(bool show) { m_showSource = show; }
-

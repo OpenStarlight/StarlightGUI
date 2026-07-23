@@ -126,6 +126,9 @@
     <ClCompile Include="Utils\CppUtils.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\Diagnostics.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
     <ClCompile Include="Console.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
@@ -177,6 +180,9 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Utils\CppUtils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\Diagnostics.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Utils\Elevator.h">
@@ -319,6 +325,7 @@
     <None Include="Assets\Sirius.sys">
       <Filter>Assets</Filter>
     </None>
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="$(MSBuildThisFileDirectory)..\..\natvis\wil.natvis" />

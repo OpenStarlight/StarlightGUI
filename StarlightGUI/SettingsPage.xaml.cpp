@@ -228,7 +228,7 @@ namespace winrt::StarlightGUI::implementation
 
         g_mainWindowInstance->LoadBackdrop();
 
-        Console::GetInstance().SetBackdropByConfig();
+        Console::GetInstance().SetAppearanceByConfig();
     }
 
     void SettingsPage::MicaTypeComboBox_SelectionChanged(IInspectable const& sender, SelectionChangedEventArgs const& e)

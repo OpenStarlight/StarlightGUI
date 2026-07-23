@@ -46,7 +46,7 @@ public:
     void Shutdown();
 
     void SetTitle(const std::wstring& title);
-    void SetBackdropByConfig();
+    void SetAppearanceByConfig();
 
     void SetShowTimestamp(bool show);
     void SetShowLogLevel(bool show);

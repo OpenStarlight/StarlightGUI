@@ -35,6 +35,7 @@ namespace winrt::StarlightGUI::implementation
 
         std::vector<winrt::StarlightGUI::InfoWindow> m_openWindows;
         NOTIFYICONDATAW m_notifyIconData{};
+        winrt::Windows::Foundation::IAsyncAction m_updateAction{ nullptr };
 
         inline static bool loaded = false;
         inline static HWND globalHWND;

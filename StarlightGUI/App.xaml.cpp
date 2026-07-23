@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "Utils/Config.h"
+#include "Utils/Diagnostics.h"
 #include "App.xaml.h"
 #include "MainWindow.xaml.h"
 #include <shellapi.h>
@@ -42,15 +43,17 @@ namespace winrt::StarlightGUI::implementation
 
     App::App()
     {
+        slg::InitializeCrashHandler();
 
         UnhandledException([](winrt::Windows::Foundation::IInspectable const&,
             winrt::Microsoft::UI::Xaml::UnhandledExceptionEventArgs const& e)
             {
                 LOG_ERROR(L"App", L"===== Unhandled exception detected! =====");
                 LOG_ERROR(L"App", L"Type: 'winrt::hresult_error'");
-                LOG_ERROR(L"App", L"Code: %d", e.Exception().value);
+                LOG_ERROR(L"App", L"Code: 0x%08X", static_cast<uint32_t>(e.Exception().value));
                 LOG_ERROR(L"App", L"Message: %s", e.Message().c_str());
                 LOG_ERROR(L"App", L"=========================================");
+                slg::CreateCrashDump();
                 e.Handled(true);
             });
     }
@@ -81,6 +84,8 @@ namespace winrt::StarlightGUI::implementation
             else {
                 std::wstring relaunchArgs = L"--trustedinstaller-relaunch";
                 if (CreateProcessElevated(GetExecutablePath(), true, relaunchArgs)) {
+                    LOG_INFO(L"", L"TrustedInstaller relaunch succeeded. Exiting bootstrap process.");
+                    LOGGER_SHUTDOWN();
                     Exit();
                     return;
                 }
@@ -91,6 +96,7 @@ namespace winrt::StarlightGUI::implementation
         }
 
         if (!InitializeDriverBeforeWindow()) {
+            LOGGER_SHUTDOWN();
             Exit();
             return;
         }
