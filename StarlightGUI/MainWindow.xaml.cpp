@@ -533,7 +533,6 @@ namespace winrt::StarlightGUI::implementation
         {
         case WM_CLOSE:
         {
-            LOG_INFO(L"MainWindow", L"WM_CLOSE received. tray=%d, allowClose=%d.", tray_background_run, instance ? instance->m_allowClose : false);
             if (instance && tray_background_run && !instance->m_allowClose) {
                 instance->HideWindowToTray();
                 if (instance->m_trayIconAdded) return 0;
@@ -593,23 +592,10 @@ namespace winrt::StarlightGUI::implementation
             pMinMaxInfo->ptMinTrackSize.x = 800;
             pMinMaxInfo->ptMinTrackSize.y = 600;
             return 0;
-        }
-
-        case WM_QUERYENDSESSION:
-            LOG_WARNING(L"MainWindow", L"WM_QUERYENDSESSION received. lParam=0x%p.", reinterpret_cast<void*>(lParam));
-            break;
-
-        case WM_ENDSESSION:
-            LOG_WARNING(L"MainWindow", L"WM_ENDSESSION received. ending=%d, lParam=0x%p.", static_cast<int>(wParam), reinterpret_cast<void*>(lParam));
-            break;
-
-        case WM_DESTROY:
-            LOG_INFO(L"MainWindow", L"WM_DESTROY received.");
-            break;
+        };
 
         case WM_NCDESTROY:
         {
-            LOG_INFO(L"MainWindow", L"WM_NCDESTROY received.");
             if (instance) {
                 instance->RemoveTrayIcon();
             }

@@ -569,6 +569,69 @@ namespace winrt::StarlightGUI::implementation {
 		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
 		return result;
 	}
+
+	BOOL KernelInstance::SiEnumDpcTimers(std::vector<winrt::StarlightGUI::GeneralEntry>& timerList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::DPCTimer, enumData, sizeof(SI_DPC_TIMER_DATA));
+
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_DPC_TIMER_DATA timerData = (PSI_DPC_TIMER_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(to_hstring(timerData[i].Path));
+				entry.String2(ULongToHexString((ULONG64)timerData[i].Timer));
+				entry.String3(ULongToHexString((ULONG64)timerData[i].DPC));
+				entry.String4(ULongToHexString((ULONG64)timerData[i].DeferredRoutine));
+				entry.String5(ULongToHexString((ULONG64)timerData[i].DeferredContext));
+				entry.String6(ULongToHexString((ULONG64)timerData[i].SystemArgument1));
+				entry.String7(ULongToHexString((ULONG64)timerData[i].SystemArgument2));
+				entry.String8(std::to_wstring(timerData[i].Period));
+				entry.String9(ULongToHexString(timerData[i].DueTime));
+				entry.String10(std::to_wstring(timerData[i].Processor));
+				entry.ULongLong1((ULONG64)timerData[i].Timer);
+				entry.ULongLong2((ULONG64)timerData[i].DPC);
+				entry.ULongLong3((ULONG64)timerData[i].DeferredRoutine);
+				entry.ULongLong4((ULONG64)timerData[i].DeferredContext);
+				entry.ULongLong5(timerData[i].DueTime);
+				entry.Long1(timerData[i].Period);
+				entry.ULong1(timerData[i].Processor);
+				timerList.push_back(entry);
+			}
+		}
+
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
+
+	BOOL KernelInstance::SiEnumEResources(std::vector<winrt::StarlightGUI::GeneralEntry>& resourceList) noexcept {
+		SI_ENUMERATION enumData = { 0 };
+
+		BOOL result = QuerySystemEnumeration(SystemGetInformation::Resource, enumData, sizeof(SI_ERESOURCE_DATA));
+
+		if (result && enumData.Count > 0 && enumData.Buffer) {
+			PSI_ERESOURCE_DATA resourceData = (PSI_ERESOURCE_DATA)enumData.Buffer;
+			for (ULONG i = 0; i < enumData.Count; i++) {
+				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
+				entry.String1(ULongToHexString((ULONG64)resourceData[i].Resource));
+				entry.String2(std::to_wstring(resourceData[i].ActiveCount));
+				entry.String3(std::to_wstring(resourceData[i].ContentionCount));
+				entry.String4(std::to_wstring(resourceData[i].NumberOfSharedWaiters));
+				entry.String5(std::to_wstring(resourceData[i].NumberOfExclusiveWaiters));
+				entry.String6(ULongToHexString(resourceData[i].Flag, 8, true, true));
+				entry.ULongLong1((ULONG64)resourceData[i].Resource);
+				entry.Long1(resourceData[i].ActiveCount);
+				entry.ULong1(resourceData[i].ContentionCount);
+				entry.ULong2(resourceData[i].NumberOfSharedWaiters);
+				entry.ULong3(resourceData[i].NumberOfExclusiveWaiters);
+				entry.ULong4(resourceData[i].Flag);
+				resourceList.push_back(entry);
+			}
+		}
+
+		HeapFree(GetProcessHeap(), 0, enumData.Buffer);
+		return result;
+	}
 	
 	BOOL KernelInstance::SiEnumIDT(std::vector<winrt::StarlightGUI::GeneralEntry>& idtList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
@@ -1354,7 +1417,10 @@ namespace winrt::StarlightGUI::implementation {
 
 		HANDLE device = CreateFile(L"\\\\.\\Sirius", GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 
-		if (device == INVALID_HANDLE_VALUE) return FALSE;
+		if (device == INVALID_HANDLE_VALUE) {
+			LOG_ERROR(L"Sirius", L"Failed to create Sirius device handle!");
+			return FALSE;
+		}
 
 		driverDevice = device;
 		return TRUE;

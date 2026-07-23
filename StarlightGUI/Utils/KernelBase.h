@@ -62,6 +62,8 @@ namespace winrt::StarlightGUI::implementation {
 		static BOOL SiEnumSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& ssdts) noexcept;
 		static BOOL SiEnumSSSDT(std::vector<winrt::StarlightGUI::GeneralEntry>& sssdts) noexcept;
 		static BOOL SiEnumIoTimer(std::vector<winrt::StarlightGUI::GeneralEntry>& timers) noexcept;
+		static BOOL SiEnumDpcTimers(std::vector<winrt::StarlightGUI::GeneralEntry>& timers) noexcept;
+		static BOOL SiEnumEResources(std::vector<winrt::StarlightGUI::GeneralEntry>& resources) noexcept;
 		static BOOL SiEnumIDT(std::vector<winrt::StarlightGUI::GeneralEntry>& idtEntries) noexcept;
 		static BOOL SiEnumGDT(std::vector<winrt::StarlightGUI::GeneralEntry>& gdtEntries) noexcept;
 		static BOOL SiEnumPiDDBCacheTable(std::vector<winrt::StarlightGUI::GeneralEntry>& piddbEntries) noexcept;

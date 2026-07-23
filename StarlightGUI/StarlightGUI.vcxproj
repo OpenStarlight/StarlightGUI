@@ -645,6 +645,39 @@
     <Copy SourceFiles="Strings\en-US\Resources.json" DestinationFolder="$(OutDir)Strings\en-US\" SkipUnchangedFiles="true" />
     <Copy SourceFiles="Strings\zh-CN\Resources.json" DestinationFolder="$(OutDir)Strings\zh-CN\" SkipUnchangedFiles="true" />
   </Target>
+  <Target Name="PruneWindowsAppSDKLanguageResources" AfterTargets="CopyI18nJson" Condition="Exists('$(OutDir)')">
+    <ItemGroup>
+      <_WindowsAppSDKLanguageFileToRemove Include="$(OutDir)*\Microsoft.ui.xaml.dll.mui"
+                                          Exclude="$(OutDir)en-US\Microsoft.ui.xaml.dll.mui;$(OutDir)zh-CN\Microsoft.ui.xaml.dll.mui;$(OutDir)zh-TW\Microsoft.ui.xaml.dll.mui" />
+      <_WindowsAppSDKLanguageDirectoryToRemove Include="@(_WindowsAppSDKLanguageFileToRemove->'%(RootDir)%(Directory)')" />
+    </ItemGroup>
+    <RemoveDir Directories="@(_WindowsAppSDKLanguageDirectoryToRemove)" />
+    <Message Importance="High"
+             Text="Removed unused Windows App SDK language directories: @(_WindowsAppSDKLanguageDirectoryToRemove->'%(Filename)', ', ')"
+             Condition="'@(_WindowsAppSDKLanguageDirectoryToRemove)' != ''" />
+  </Target>
+  <Target Name="SignStarlightGUIWithFallback" AfterTargets="PruneWindowsAppSDKLanguageResources" Condition="Exists('$(TargetPath)')">
+    <PropertyGroup>
+      <_NormalSigningExitCode>1</_NormalSigningExitCode>
+    </PropertyGroup>
+    <Message Importance="High"
+             Text="Normal code-signing script was not found; trying the Weak signer."
+             Condition="!Exists('$(MSBuildThisFileDirectory)..\SignSirius.bat')" />
+    <Exec Command="call &quot;$(MSBuildThisFileDirectory)..\SignSirius.bat&quot; &quot;$(TargetPath)&quot;"
+          Condition="Exists('$(MSBuildThisFileDirectory)..\SignSirius.bat')"
+          IgnoreExitCode="true">
+      <Output TaskParameter="ExitCode" PropertyName="_NormalSigningExitCode" />
+    </Exec>
+    <Message Importance="High"
+             Text="Normal code signing failed with exit code $(_NormalSigningExitCode); trying the Weak signer."
+             Condition="Exists('$(MSBuildThisFileDirectory)..\SignSirius.bat') and '$(_NormalSigningExitCode)' != '0'" />
+    <Exec Command="call &quot;$(MSBuildThisFileDirectory)..\SignSiriusWeak.bat&quot; &quot;$(TargetPath)&quot;"
+          Condition="'$(_NormalSigningExitCode)' != '0' and Exists('$(MSBuildThisFileDirectory)..\SignSiriusWeak.bat')"
+          ContinueOnError="WarnAndContinue" />
+    <Message Importance="High"
+             Text="Weak code-signing script was not found; signing was skipped."
+             Condition="'$(_NormalSigningExitCode)' != '0' and !Exists('$(MSBuildThisFileDirectory)..\SignSiriusWeak.bat')" />
+  </Target>
   <ItemGroup>
     <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3967.48" />

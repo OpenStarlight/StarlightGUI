@@ -66,11 +66,10 @@ namespace winrt::StarlightGUI::implementation
 
         InitializeConfig();
 
-        // Set UI language before any XAML page is created.
-        // "system" means follow OS language — don't override MUI.
+        // 在任何 XAML 实例创建前设置语言
         if (language != "system") {
             std::wstring lang(language.begin(), language.end());
-            lang += L'\0'; // double-null terminated multi-string
+            lang += L'\0';
             ULONG numLangs = 0;
             SetProcessPreferredUILanguages(MUI_LANGUAGE_NAME, lang.c_str(), &numLangs);
         }
@@ -95,7 +94,7 @@ namespace winrt::StarlightGUI::implementation
             }
         }
 
-        if (!InitializeDriverBeforeWindow()) {
+        if (!InitializeDriver()) {
             LOGGER_SHUTDOWN();
             Exit();
             return;
@@ -110,10 +109,10 @@ namespace winrt::StarlightGUI::implementation
         LOG_INFO(L"", L"Launching Starlight GUI...");
     }
 
-    bool App::InitializeDriverBeforeWindow()
+    bool App::InitializeDriver()
     {
         try {
-            LOG_INFO(L"Driver", L"Loading driver before window creation...");
+            LOG_INFO(L"Sirius", L"Initializing driver...");
 
             auto installedPath = GetInstalledLocationPath();
             siriusPath = installedPath + L"\\Assets\\Sirius.sys";
@@ -121,13 +120,22 @@ namespace winrt::StarlightGUI::implementation
             iamKeyHackerPath = installedPath + L"\\IAMKeyHacker.dll";
 
             if (DriverUtils::LoadKernelDriver(siriusPath.c_str())) {
-                LOG_INFO(L"Driver", L"Sirius.sys initialized successfully.");
+                LOG_INFO(L"Sirius", L"Driver initialized successfully!");
                 return true;
             }
 
             DWORD error = GetLastError();
+
+            if (error == 2 || error == 3) {
+                LOG_WARNING(L"Sirius", L"Service exists, but the request returned with error 2/3, indicating that file does not exist. We will delete the service and retry.");
+                if (DriverUtils::LoadKernelDriver(siriusPath.c_str())) {
+                    LOG_INFO(L"Sirius", L"Driver initialized successfully!");
+                    return true;
+                }
+            }
+
             hstring message;
-            if (error == 2 || error == 98) {
+            if (error == 98) {
                 message = t(L"MainWindow.Driver.FailedHelp1");
             }
             else if (error == 193) {
@@ -137,12 +145,12 @@ namespace winrt::StarlightGUI::implementation
                 message = t(L"MainWindow.Driver.Failed");
             }
 
-            LOG_ERROR(L"Driver", L"Sirius.sys initialization failed, GetLastError() = %d", error);
+            LOG_ERROR(L"Sirius", L"Driver initialization failed! GetLastError() = %d", error);
             MessageBoxW(nullptr, message.c_str(), t(L"Common.Error").c_str(), MB_OK | MB_ICONERROR);
             return false;
         }
         catch (const hresult_error& e) {
-            LOG_ERROR(L"Driver", L"Failed to load driver! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
+            LOG_ERROR(L"Sirius", L"Driver initialization failed! winrt::hresult_error: %s (%d)", e.message().c_str(), e.code().value);
             MessageBoxW(nullptr, t(L"MainWindow.Driver.Failed").c_str(), t(L"Common.Error").c_str(), MB_OK | MB_ICONERROR);
             return false;
         }

@@ -42,8 +42,6 @@ namespace winrt::StarlightGUI::implementation
         LatestVersionLabelRun().Text(t(L"Update.Text.LatestVersion"));
         UpdateDescriptionText().Text(t(L"Update.Text.Desc"));
         UpdateTipText().Text(t(L"Update.Text.Tip"));
-        QuarkCodeText().Text(t(L"Update.Text.QuarkCode"));
-        NoDirectLinkText().Text(t(L"Update.Text.NoDirectLink"));
         UpdateTimeLabelRun().Text(t(L"Update.Text.UpdateTimeLabel"));
         DontShowAgainCheckBox().Content(tbox(L"Update.Text.DontShow"));
 

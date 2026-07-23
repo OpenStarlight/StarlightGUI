@@ -145,7 +145,7 @@ bool Console::Initialize() {
 void Console::SetAppearanceByConfig() {
     if (!m_hConsoleWnd) return;
 
-    BOOL themeType = theme == "Light" ? FALSE : theme == "Dark" ? TRUE : -1;
+    BOOL themeType = theme == "light" ? FALSE : theme == "dark" ? TRUE : -1;
     DWM_SYSTEMBACKDROP_TYPE backgroundType = background_type == 0 ? DWMSBT_NONE : background_type == 1 ? (mica_type == 0 ? DWMSBT_MAINWINDOW : DWMSBT_TABBEDWINDOW) : DWMSBT_TRANSIENTWINDOW;
     MARGINS margins = { -1 };
     if (themeType != -1) DwmSetWindowAttribute(m_hConsoleWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &themeType, sizeof(themeType));

@@ -13,17 +13,18 @@ namespace winrt::StarlightGUI::implementation {
 
 		hService = OpenServiceW(hSCM, L"Sirius for StarlightGUI", SERVICE_ALL_ACCESS);
 		if (hService) {
-			// Start the service if it"s not running
 			SERVICE_STATUS serviceStatus;
 			if (!QueryServiceStatus(hService, &serviceStatus)) {
+				DeleteService(hService);
 				CloseServiceHandle(hService);
 				CloseServiceHandle(hSCM);
 				return false;
 			}
 
 			if (serviceStatus.dwCurrentState == SERVICE_STOPPED) {
-				LOG_INFO(L"Driver", L"Loading driver: %s", kernelPath);
+				LOG_INFO(L"Sirius", L"Loading driver: %s", kernelPath);
 				if (!StartServiceW(hService, 0, nullptr)) {
+					DeleteService(hService);
 					CloseServiceHandle(hService);
 					CloseServiceHandle(hSCM);
 					return false;
@@ -47,8 +48,9 @@ namespace winrt::StarlightGUI::implementation {
 			}
 
 			// Start the service
-			LOG_INFO(L"Driver", L"Loading driver: %s", kernelPath);
+			LOG_INFO(L"Sirius", L"Loading driver: %s", kernelPath);
 			if (!StartServiceW(hService, 0, nullptr)) {
+				DeleteService(hService);
 				CloseServiceHandle(hService);
 				CloseServiceHandle(hSCM);
 				return false;

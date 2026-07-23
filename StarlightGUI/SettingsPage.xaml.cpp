@@ -227,7 +227,6 @@ namespace winrt::StarlightGUI::implementation
         SaveConfig("background_type", (int)BackgroundComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackdrop();
-
         Console::GetInstance().SetAppearanceByConfig();
     }
 
@@ -241,6 +240,7 @@ namespace winrt::StarlightGUI::implementation
         SaveConfig("mica_type", (int)MicaTypeComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackdrop();
+        Console::GetInstance().SetAppearanceByConfig();
     }
 
     void SettingsPage::AcrylicTypeComboBox_SelectionChanged(IInspectable const& sender, SelectionChangedEventArgs const& e)
@@ -253,6 +253,7 @@ namespace winrt::StarlightGUI::implementation
         SaveConfig("acrylic_type", (int)AcrylicTypeComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackdrop();
+        Console::GetInstance().SetAppearanceByConfig();
     }
     
     void SettingsPage::NavigationComboBox_SelectionChanged(IInspectable const& sender, SelectionChangedEventArgs const& e)

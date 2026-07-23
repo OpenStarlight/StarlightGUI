@@ -74,6 +74,8 @@ namespace winrt::StarlightGUI::implementation
 			SSDTListView().ItemsSource(m_generalList);
 			SSSDTListView().ItemsSource(m_generalList);
 			IoTimerListView().ItemsSource(m_generalList);
+			DpcTimerListView().ItemsSource(m_generalList);
+			ResourceListView().ItemsSource(m_generalList);
 			IDTListView().ItemsSource(m_generalList);
 			GDTListView().ItemsSource(m_generalList);
 			PiDDBListView().ItemsSource(m_generalList);
@@ -183,7 +185,7 @@ namespace winrt::StarlightGUI::implementation
 
 		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, static_cast<size_t>(CallbackType::Nmi) + 1> callbackCache;
 		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, HALTableNames.size()> halCache;
-		static std::vector<winrt::StarlightGUI::GeneralEntry> minifilterCache, ssdtCache, sssdtCache, ioTimerCache, idtCache, gdtCache, piddbCache;
+		static std::vector<winrt::StarlightGUI::GeneralEntry> minifilterCache, ssdtCache, sssdtCache, ioTimerCache, dpcTimerCache, resourceCache, idtCache, gdtCache, piddbCache;
 
 		switch (requestedIndex) {
 		case 1:
@@ -255,6 +257,32 @@ namespace winrt::StarlightGUI::implementation
 			else entriesSource = &ioTimerCache;
 			break;
 		case 6:
+			if (force || dpcTimerCache.empty()) {
+				if (!KernelInstance::SiEnumDpcTimers(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
+				dpcTimerCache = entries;
+				entriesSource = &entries;
+			}
+			else entriesSource = &dpcTimerCache;
+			break;
+		case 7:
+			if (force || resourceCache.empty()) {
+				if (!KernelInstance::SiEnumEResources(entries)) {
+					co_await wil::resume_foreground(DispatcherQueue());
+					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
+					m_isLoading = false;
+					co_return;
+				}
+				resourceCache = entries;
+				entriesSource = &entries;
+			}
+			else entriesSource = &resourceCache;
+			break;
+		case 8:
 			if (force || idtCache.empty()) {
 				if (!KernelInstance::SiEnumIDT(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
@@ -267,7 +295,7 @@ namespace winrt::StarlightGUI::implementation
 			}
 			else entriesSource = &idtCache;
 			break;
-		case 7:
+		case 9:
 			if (force || gdtCache.empty()) {
 				if (!KernelInstance::SiEnumGDT(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
@@ -280,7 +308,7 @@ namespace winrt::StarlightGUI::implementation
 			}
 			else entriesSource = &gdtCache;
 			break;
-		case 8:
+		case 10:
 			if (force || piddbCache.empty()) {
 				if (!KernelInstance::SiEnumPiDDBCacheTable(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
@@ -293,7 +321,7 @@ namespace winrt::StarlightGUI::implementation
 			}
 			else entriesSource = &piddbCache;
 			break;
-		case 9:
+		case 11:
 			if (requestedHALTableType < 0 ||
 				requestedHALTableType >= static_cast<int>(halCache.size())) {
 				requestedHALTableType = 0;
@@ -317,7 +345,7 @@ namespace winrt::StarlightGUI::implementation
 		// 防止意外
 		if (requestedIndex != segmentedIndex ||
 			(requestedIndex == 1 && requestedCallbackType != m_callbackType) ||
-			(requestedIndex == 9 && requestedHALTableType != m_halTableType)) {
+			(requestedIndex == 11 && requestedHALTableType != m_halTableType)) {
 			m_isLoading = false;
 			co_return;
 		}
@@ -331,7 +359,11 @@ namespace winrt::StarlightGUI::implementation
 					!ContainsIgnoreCaseLowerQuery(entry.String3().c_str(), lowerQuery) &&
 					!ContainsIgnoreCaseLowerQuery(entry.String4().c_str(), lowerQuery) &&
 					!ContainsIgnoreCaseLowerQuery(entry.String5().c_str(), lowerQuery) &&
-					!ContainsIgnoreCaseLowerQuery(entry.String6().c_str(), lowerQuery);
+					!ContainsIgnoreCaseLowerQuery(entry.String6().c_str(), lowerQuery) &&
+					!ContainsIgnoreCaseLowerQuery(entry.String7().c_str(), lowerQuery) &&
+					!ContainsIgnoreCaseLowerQuery(entry.String8().c_str(), lowerQuery) &&
+					!ContainsIgnoreCaseLowerQuery(entry.String9().c_str(), lowerQuery) &&
+					!ContainsIgnoreCaseLowerQuery(entry.String10().c_str(), lowerQuery);
 			}
 			if (shouldRemove) continue;
 
@@ -1026,7 +1058,7 @@ namespace winrt::StarlightGUI::implementation
 		bool reload = false;
 		if (!m_isLoading && selectedIndex != m_halTableType) {
 			m_halTableType = selectedIndex;
-			reload = segmentedIndex == 9;
+			reload = segmentedIndex == 11;
 		}
 
 		HALTableButton().Label(t(L"Monitor.HALTableLabel", std::wstring(HALTableNames[m_halTableType]).c_str()));
@@ -1072,10 +1104,11 @@ namespace winrt::StarlightGUI::implementation
                     if (suggestions.Size() >= 20) break;
                 }
             }
-            else if (segmentedIndex >= 1 && segmentedIndex <= 9) {
+            else if (segmentedIndex >= 1 && segmentedIndex <= 11) {
                 for (auto const& entry : m_generalList) {
-					std::array<hstring, 6> fields = {
-						entry.String1(), entry.String2(), entry.String3(), entry.String4(), entry.String5(), entry.String6()
+					std::array<hstring, 10> fields = {
+						entry.String1(), entry.String2(), entry.String3(), entry.String4(), entry.String5(),
+						entry.String6(), entry.String7(), entry.String8(), entry.String9(), entry.String10()
 					};
 					hstring key;
 					for (auto const& field : fields) {
@@ -1182,6 +1215,8 @@ namespace winrt::StarlightGUI::implementation
 		SSDTGrid().Visibility(Visibility::Collapsed);
 		SSSDTGrid().Visibility(Visibility::Collapsed);
 		IoTimerGrid().Visibility(Visibility::Collapsed);
+		DpcTimerGrid().Visibility(Visibility::Collapsed);
+		ResourceGrid().Visibility(Visibility::Collapsed);
 		IDTGrid().Visibility(Visibility::Collapsed);
 		GDTGrid().Visibility(Visibility::Collapsed);
 		PiDDBGrid().Visibility(Visibility::Collapsed);
@@ -1234,21 +1269,31 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		}
 		case 6: {
-			IDTGrid().Visibility(Visibility::Visible);
+			DpcTimerGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
 		case 7: {
-			GDTGrid().Visibility(Visibility::Visible);
+			ResourceGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
 		case 8: {
-			PiDDBGrid().Visibility(Visibility::Visible);
+			IDTGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
 		case 9: {
+			GDTGrid().Visibility(Visibility::Visible);
+			co_await LoadGeneralList(force);
+			break;
+		}
+		case 10: {
+			PiDDBGrid().Visibility(Visibility::Visible);
+			co_await LoadGeneralList(force);
+			break;
+		}
+		case 11: {
 			HALTableButton().Visibility(Visibility::Visible);
 			HALTableButton().Label(t(L"Monitor.HALTableLabel", std::wstring(HALTableNames[m_halTableType]).c_str()));
 			if (auto flyout = HALTableButton().Flyout().try_as<MenuFlyout>()) {
@@ -1279,6 +1324,8 @@ namespace winrt::StarlightGUI::implementation
 		MonitorSegSSDTUid().Text(t(L"Monitor.Seg.SSDT"));
 		MonitorSegSSSDTUid().Text(t(L"Monitor.Seg.SSSDT"));
 		MonitorSegIOTimerUid().Text(t(L"Monitor.Seg.IOTimer"));
+		MonitorSegDPCTimerUid().Text(t(L"Monitor.Seg.DPCTimer"));
+		MonitorSegResourceUid().Text(t(L"Monitor.Seg.Resource"));
 		MonitorSegIDTUid().Text(t(L"Monitor.Seg.IDT"));
 		MonitorSegGDTUid().Text(t(L"Monitor.Seg.GDT"));
 		MonitorSegPiDDBUid().Text(t(L"Monitor.Seg.PiDDB"));
@@ -1302,6 +1349,22 @@ namespace winrt::StarlightGUI::implementation
 		IoTimerModuleHeaderButton().Content(tbox(L"Common.Module"));
 		IoTimerAddressHeaderButton().Content(tbox(L"Common.Address"));
 		IoTimerDeviceObjHeaderButton().Content(tbox(L"Monitor.Header.DeviceObject"));
+		DpcTimerPathHeaderButton().Content(tbox(L"Common.Module"));
+		DpcTimerTimerHeaderButton().Content(tbox(L"Monitor.Header.Timer"));
+		DpcTimerDpcHeaderButton().Content(tbox(L"Monitor.Header.DPC"));
+		DpcTimerRoutineHeaderButton().Content(tbox(L"Monitor.Header.DeferredRoutine"));
+		DpcTimerContextHeaderButton().Content(tbox(L"Monitor.Header.DeferredContext"));
+		DpcTimerArgument1HeaderButton().Content(tbox(L"Monitor.Header.SystemArgument1"));
+		DpcTimerArgument2HeaderButton().Content(tbox(L"Monitor.Header.SystemArgument2"));
+		DpcTimerPeriodHeaderButton().Content(tbox(L"Monitor.Header.Period"));
+		DpcTimerDueTimeHeaderButton().Content(tbox(L"Monitor.Header.DueTime"));
+		DpcTimerProcessorHeaderButton().Content(tbox(L"Monitor.Header.Processor"));
+		ResourceAddressHeaderButton().Content(tbox(L"Monitor.Header.Resource"));
+		ResourceActiveCountHeaderButton().Content(tbox(L"Monitor.Header.ActiveCount"));
+		ResourceContentionCountHeaderButton().Content(tbox(L"Monitor.Header.ContentionCount"));
+		ResourceSharedWaitersHeaderButton().Content(tbox(L"Monitor.Header.SharedWaiters"));
+		ResourceExclusiveWaitersHeaderButton().Content(tbox(L"Monitor.Header.ExclusiveWaiters"));
+		ResourceFlagHeaderButton().Content(tbox(L"Monitor.Header.Flag"));
 		IDTOffsetHeaderButton().Content(tbox(L"Offset"));
 		IDTSelectorHeaderButton().Content(tbox(L"Selector"));
 		IDTTypeHeaderButton().Content(tbox(L"Common.Type"));
@@ -1431,6 +1494,8 @@ namespace winrt::StarlightGUI::implementation
 		AttachColumnSyncToSection(SSDTGrid(), 0);
 		AttachColumnSyncToSection(SSSDTGrid(), 0);
 		AttachColumnSyncToSection(IoTimerGrid(), 0);
+		AttachColumnSyncToSection(DpcTimerGrid(), 0);
+		AttachColumnSyncToSection(ResourceGrid(), 0);
 		AttachColumnSyncToSection(IDTGrid(), 0);
 		AttachColumnSyncToSection(GDTGrid(), 0);
 		AttachColumnSyncToSection(PiDDBGrid(), 0);

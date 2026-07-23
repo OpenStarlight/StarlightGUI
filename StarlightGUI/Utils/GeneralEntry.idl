@@ -12,6 +12,10 @@
 		String String4{ get; set; };
 		String String5{ get; set; };
 		String String6{ get; set; };
+		String String7{ get; set; };
+		String String8{ get; set; };
+		String String9{ get; set; };
+		String String10{ get; set; };
 		Boolean Bool1{ get; set; };
 		Boolean Bool2{ get; set; };
 		Boolean Bool3{ get; set; };
