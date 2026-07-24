@@ -1,7 +1,54 @@
-﻿#include "pch.h"
+﻿#pragma once
+
+#include "pch.h"
 
 // NT 相关定义
-typedef NTSTATUS(NTAPI* NtQueryDirectoryObject_t)(
+typedef struct _UNICODE_STRING {
+	USHORT Length;
+	USHORT MaximumLength;
+	PWSTR  Buffer;
+} UNICODE_STRING;
+typedef UNICODE_STRING* PUNICODE_STRING;
+typedef const UNICODE_STRING* PCUNICODE_STRING;
+
+typedef struct _OBJECT_ATTRIBUTES {
+	ULONG Length;
+	HANDLE RootDirectory;
+	PUNICODE_STRING ObjectName;
+	ULONG Attributes;
+	PVOID SecurityDescriptor;
+	PVOID SecurityQualityOfService;
+} OBJECT_ATTRIBUTES;
+typedef OBJECT_ATTRIBUTES* POBJECT_ATTRIBUTES;
+
+typedef struct _IO_STATUS_BLOCK {
+	union {
+		LONG Status;
+		PVOID Pointer;
+	} DUMMYUNIONNAME;
+	ULONG_PTR Information;
+} IO_STATUS_BLOCK, * PIO_STATUS_BLOCK;
+
+EXTERN_C VOID NTAPI RtlInitUnicodeString(PUNICODE_STRING DestinationString, PCWSTR SourceString);
+EXTERN_C LONG NTAPI NtQueryObject(
+	HANDLE Handle,
+	ULONG ObjectInformationClass,
+	PVOID ObjectInformation,
+	ULONG ObjectInformationLength,
+	PULONG ReturnLength);
+
+#define InitializeObjectAttributes( p, n, a, r, s ) { \
+    (p)->Length = sizeof( OBJECT_ATTRIBUTES );          \
+    (p)->RootDirectory = r;                             \
+    (p)->Attributes = a;                                \
+    (p)->ObjectName = n;                                \
+    (p)->SecurityDescriptor = s;                        \
+    (p)->SecurityQualityOfService = NULL;               \
+    }
+#define OBJ_PERMANENT                       0x00000010L
+#define OBJ_CASE_INSENSITIVE                0x00000040L
+
+typedef LONG(*NtQueryDirectoryObject_t)(
 	HANDLE DirectoryHandle,
 	PVOID Buffer,
 	ULONG Length,
@@ -11,15 +58,15 @@ typedef NTSTATUS(NTAPI* NtQueryDirectoryObject_t)(
 	PULONG ReturnLength
 	);
 
-typedef NTSTATUS(NTAPI* NtQueryObject_t)(
+typedef LONG(*NtQueryObject_t)(
 	HANDLE Handle,
-	OBJECT_INFORMATION_CLASS ObjectInformationClass,
+	ULONG ObjectInformationClass,
 	PVOID ObjectInformation,
 	ULONG ObjectInformationLength,
 	PULONG ReturnLength
 	);
 
-typedef NTSTATUS(NTAPI* NtQuerySymbolicLinkObject_t)(
+typedef LONG(*NtQuerySymbolicLinkObject_t)(
 	HANDLE LinkHandle,
 	PUNICODE_STRING LinkTarget,
 	PULONG ReturnedLength
@@ -42,7 +89,7 @@ typedef enum _EVENT_INFORMATION_CLASS
 	EventBasicInformation
 } EVENT_INFORMATION_CLASS;
 
-typedef NTSTATUS(NTAPI* NtQueryEvent_t)(
+typedef LONG(*NtQueryEvent_t)(
 	HANDLE EventHandle,
 	EVENT_INFORMATION_CLASS EventInformationClass,
 	PVOID EventInformation,
@@ -62,7 +109,7 @@ typedef struct _MUTANT_BASIC_INFORMATION
 	BOOLEAN AbandonedState;
 } MUTANT_BASIC_INFORMATION, *PMUTANT_BASIC_INFORMATION;
 
-typedef NTSTATUS(NTAPI* NtQueryMutant_t)(
+typedef LONG(*NtQueryMutant_t)(
 	HANDLE MutantHandle,
 	MUTANT_INFORMATION_CLASS MutantInformationClass,
 	PVOID MutantInformation,
@@ -81,7 +128,7 @@ typedef struct _SEMAPHORE_BASIC_INFORMATION
 	LONG MaximumCount;
 } SEMAPHORE_BASIC_INFORMATION, *PSEMAPHORE_BASIC_INFORMATION;
 
-typedef NTSTATUS(NTAPI* NtQuerySemaphore_t)(
+typedef LONG(*NtQuerySemaphore_t)(
 	HANDLE SemaphoreHandle,
 	SEMAPHORE_INFORMATION_CLASS SemaphoreInformationClass,
 	PVOID SemaphoreInformation,
@@ -101,7 +148,7 @@ typedef struct _SECTIONBASICINFO {
 	LARGE_INTEGER MaximumSize;
 } SECTION_BASIC_INFORMATION, *PSECTION_BASIC_INFORMATION;
 
-typedef NTSTATUS(NTAPI* NtQuerySection_t)(
+typedef LONG(*NtQuerySection_t)(
 	HANDLE SectionHandle,
 	SECTION_INFORMATION_CLASS SectionInformationClass,
 	PVOID SectionInformation,
@@ -120,7 +167,7 @@ typedef struct _TIMER_BASIC_INFORMATION
 	BOOLEAN TimerState;
 } TIMER_BASIC_INFORMATION, *PTIMER_BASIC_INFORMATION;
 
-typedef NTSTATUS(NTAPI* NtQueryTimer_t)(
+typedef LONG(*NtQueryTimer_t)(
 	HANDLE TimerHandle,
 	TIMER_INFORMATION_CLASS TimerInformationClass,
 	PVOID TimerInformation,
@@ -138,7 +185,7 @@ typedef struct _IO_COMPLETION_BASIC_INFORMATION
 	LONG Depth;
 } IO_COMPLETION_BASIC_INFORMATION, *PIO_COMPLETION_BASIC_INFORMATION;
 
-typedef NTSTATUS(NTAPI* NtQueryIoCompletion_t)(
+typedef LONG(*NtQueryIoCompletion_t)(
 	HANDLE IoCompletionHandle,
 	IO_COMPLETION_INFORMATION_CLASS IoCompletionInformationClass,
 	PVOID IoCompletionInformation,
@@ -146,85 +193,85 @@ typedef NTSTATUS(NTAPI* NtQueryIoCompletion_t)(
 	PULONG ReturnLength
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenDirectoryObject_t)(
+typedef LONG(*NtOpenDirectoryObject_t)(
 	PHANDLE DirectoryHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenSymbolicLinkObject_t)(
+typedef LONG(*NtOpenSymbolicLinkObject_t)(
 	PHANDLE LinkHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenEvent_t)(
+typedef LONG(*NtOpenEvent_t)(
 	PHANDLE EventHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenMutant_t)(
+typedef LONG(*NtOpenMutant_t)(
 	PHANDLE MutantHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenSemaphore_t)(
+typedef LONG(*NtOpenSemaphore_t)(
 	PHANDLE SemaphoreHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenSection_t)(
+typedef LONG(*NtOpenSection_t)(
 	PHANDLE SectionHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenTimer_t)(
+typedef LONG(*NtOpenTimer_t)(
 	PHANDLE TimerHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenFile_t)(
+typedef LONG(*NtOpenFile_t)(
 	PHANDLE FileHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes,
-	PIO_STATUS_BLOCK IoStatusBlock,
+	PVOID ObjectAttributes,
+	PVOID IoStatusBlock,
 	ULONG ShareAccess,
 	ULONG OpenOptions
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenSession_t)(
+typedef LONG(*NtOpenSession_t)(
 	PHANDLE SessionHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenCpuPartition_t)(
+typedef LONG(*NtOpenCpuPartition_t)(
 	PHANDLE CpuPartitionHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenJobObject_t)(
+typedef LONG(*NtOpenJobObject_t)(
 	PHANDLE JobHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenIoCompletion_t)(
+typedef LONG(*NtOpenIoCompletion_t)(
 	PHANDLE IoCompletionHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
-typedef NTSTATUS(NTAPI* NtOpenPartition_t)(
+typedef LONG(*NtOpenPartition_t)(
 	PHANDLE PartitionHandle,
 	ACCESS_MASK DesiredAccess,
-	POBJECT_ATTRIBUTES ObjectAttributes
+	PVOID ObjectAttributes
 	);
 
 typedef struct _OBJECT_DIRECTORY_INFORMATION {
@@ -266,7 +313,7 @@ enum ZBID
 	ZBID_GENUINE_WINDOWS = 14,
 	ZBID_IMMERSIVE_RESTRICTED = 15,
 	ZBID_SYSTEM_TOOLS = 16,
-	//Windows 10+
+	// Windows 10+
 	ZBID_LOCK = 17,
 	ZBID_ABOVELOCK_UX = 18,
 };
@@ -280,18 +327,16 @@ enum ACCENT_STATE {
 };
 
 struct ACCENT_POLICY {
-	int AccentState;
-	int AccentFlags;
-	int GradientColor;
-	int AnimationId;
+	INT AccentState;
+	INT AccentFlags;
+	INT GradientColor;
+	INT AnimationId;
 };
 
 typedef struct _WINDOWCOMPOSITIONATTRIBDATA {
-	int Attrib;
+	INT Attrib;
 	PVOID pvData;
 	SIZE_T cbData;
 } WINDOWCOMPOSITIONATTRIBDATA, *PWINDOWCOMPOSITIONATTRIBDATA;
 
-typedef BOOL(NTAPI* SetWindowCompositionAttribute_t)(
-	HWND hWnd, PWINDOWCOMPOSITIONATTRIBDATA data
-	);
+typedef BOOL(*SetWindowCompositionAttribute_t)(HWND hWnd, PWINDOWCOMPOSITIONATTRIBDATA data);

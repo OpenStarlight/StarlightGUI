@@ -7,9 +7,9 @@
 		HandleInfo();
 
 		String Type{ get; set; };
-		String Handle{ get; set; };
-		String Object{ get; set; };
-		String Access{ get; set; };
-		String Attributes{ get; set; };
+		UInt64 Handle{ get; set; };
+		UInt64 Object{ get; set; };
+		UInt32 Access{ get; set; };
+		UInt32 Attributes{ get; set; };
 	}
 }

@@ -7,11 +7,11 @@
 		ThreadInfo();
 
 		Int32 Id{ get; set; };
-		String EThread{ get; set; };
-		String Address{ get; set; };
-		String Win32Address{ get; set; };
-		String Status{ get; set; };
+		UInt64 EThread{ get; set; };
+		UInt64 Address{ get; set; };
+		UInt64 Win32Address{ get; set; };
+		UInt32 Status{ get; set; };
 		Int32 Priority{ get; set; };
-		String PreviousMode{ get; set; };
+		UInt32 PreviousMode{ get; set; };
 	}
 }

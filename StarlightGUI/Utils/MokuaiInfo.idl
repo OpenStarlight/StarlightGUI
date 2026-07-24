@@ -7,8 +7,8 @@
 		MokuaiInfo();
 
 		String Name{ get; set; };
-		String Address{ get; set; };
-		String Size{ get; set; };
+		UInt64 Address{ get; set; };
+		UInt64 Size{ get; set; };
 		String Path{ get; set; };
 	}
 }

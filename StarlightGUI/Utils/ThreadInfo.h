@@ -11,32 +11,32 @@ namespace winrt::StarlightGUI::implementation
 		int32_t Id() { return m_id; }
 		void Id(int32_t value) { m_id = value; }
 
-		hstring EThread() { return m_ethread; }
-		void EThread(hstring const& value) { m_ethread = value; }
+		ULONG64 EThread() { return m_ethread; }
+		void EThread(ULONG64 value) { m_ethread = value; }
 
-		hstring Address() { return m_address; }
-		void Address(hstring const& value) { m_address = value; }
+		ULONG64 Address() { return m_address; }
+		void Address(ULONG64 value) { m_address = value; }
 
-		hstring Win32Address() { return m_win32Address; }
-		void Win32Address(hstring const& value) { m_win32Address = value; }
+		ULONG64 Win32Address() { return m_win32Address; }
+		void Win32Address(ULONG64 value) { m_win32Address = value; }
 
-		hstring Status() { return m_status; }
-		void Status(hstring const& value) { m_status = value; }
+		ULONG Status() { return m_status; }
+		void Status(ULONG value) { m_status = value; }
 
 		int32_t Priority() { return m_priority; }
 		void Priority(int32_t value) { m_priority = value; }
 
-		hstring PreviousMode() { return m_previousMode; }
-		void PreviousMode(hstring const& value) { m_previousMode = value; }
+		ULONG PreviousMode() { return m_previousMode; }
+		void PreviousMode(ULONG value) { m_previousMode = value; }
 
 	private:
 		int32_t m_id{ 0 };
-		hstring m_ethread{ L"" };
-		hstring m_address{ L"" };
-		hstring m_win32Address{ L"" };
-		hstring m_status{ L"" };
+		ULONG64 m_ethread{ 0 };
+		ULONG64 m_address{ 0 };
+		ULONG64 m_win32Address{ 0 };
+		ULONG m_status{ 0 };
 		int32_t m_priority{ 0 };
-		hstring m_previousMode{ L"" };
+		ULONG m_previousMode{ 0 };
 	};
 }
 

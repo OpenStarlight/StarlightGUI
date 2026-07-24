@@ -111,6 +111,9 @@
     <Midl Include="Utils\GeneralEntry.idl">
       <Filter>Utils\Types</Filter>
     </Midl>
+    <Midl Include="Utils\DisplayValueConverter.idl">
+      <Filter>Utils\Types</Filter>
+    </Midl>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -124,6 +127,9 @@
       <Filter>Utils\Advanced</Filter>
     </ClCompile>
     <ClCompile Include="Utils\CppUtils.cpp">
+      <Filter>Utils</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils\DisplayValueConverter.cpp">
       <Filter>Utils</Filter>
     </ClCompile>
     <ClCompile Include="Utils\Diagnostics.cpp">
@@ -180,6 +186,9 @@
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Utils\CppUtils.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils\DisplayValueConverter.h">
       <Filter>Utils</Filter>
     </ClInclude>
     <ClInclude Include="Utils\Diagnostics.h">

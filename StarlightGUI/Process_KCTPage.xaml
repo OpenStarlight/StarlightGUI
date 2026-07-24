@@ -144,7 +144,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Address}" />
+                                        Text="{Binding Address, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

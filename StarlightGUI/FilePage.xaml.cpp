@@ -576,7 +576,20 @@ namespace winrt::StarlightGUI::implementation
             });
         item3_1.Items().Append(item3_1_sub2);
         auto item3_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\uec92", t(L"File.Header.ModifyTime").c_str(), [this, selectedFiles](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (TaskUtils::CopyToClipboard(selectedFiles[0].ModifyTime().c_str())) {
+            ULARGE_INTEGER rawTime{};
+            rawTime.QuadPart = selectedFiles[0].ModifyTime();
+            FILETIME fileTime{ rawTime.LowPart, rawTime.HighPart };
+            SYSTEMTIME systemTime{};
+            wchar_t timeText[32]{};
+            if (rawTime.QuadPart != 0 && FileTimeToSystemTime(&fileTime, &systemTime)) {
+                swprintf_s(timeText, L"%04u/%02u/%02u %02u:%02u:%02u",
+                    systemTime.wYear, systemTime.wMonth, systemTime.wDay,
+                    systemTime.wHour, systemTime.wMinute, systemTime.wSecond);
+            }
+            else {
+                wcscpy_s(timeText, t(L"Common.Unknown").c_str());
+            }
+            if (TaskUtils::CopyToClipboard(timeText)) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
             else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
@@ -858,8 +871,8 @@ namespace winrt::StarlightGUI::implementation
                 driveInfo.Path(hstring(drivePath));
                 driveInfo.Flag(666);
                 driveInfo.Directory(true);
-                driveInfo.Size(L"");
-                driveInfo.ModifyTime(L"");
+                driveInfo.Size(0);
+                driveInfo.ModifyTime(0);
                 m_allFiles.push_back(driveInfo);
             }
         }
@@ -948,16 +961,8 @@ namespace winrt::StarlightGUI::implementation
     void FilePage::PopulateFileMetaBatch(std::wstring const& directoryPath)
     {
         auto fillUnknownMeta = [](winrt::StarlightGUI::FileInfo const& file) {
-            if (!file.Directory()) {
-                if (file.SizeULong() == 0) file.Size(L"0 B");
-                else file.Size(FormatMemorySize(file.SizeULong()));
-            }
-            else {
-                file.SizeULong(0);
-                file.Size(L"");
-            }
-            if (file.ModifyTime().empty()) file.ModifyTime(t(L"Common.Unknown"));
-            };
+            if (file.Directory()) file.Size(0);
+        };
 
         std::wstring searchPath = directoryPath + L"\\*";
         WIN32_FIND_DATAW data{};
@@ -997,31 +1002,13 @@ namespace winrt::StarlightGUI::implementation
             const bool isDir = (d.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
             if (!isDir) {
                 ULONG64 size = ((ULONG64)d.nFileSizeHigh << 32) | d.nFileSizeLow;
-                file.SizeULong(size);
-                file.Size(FormatMemorySize(size));
+                file.Size(size);
             }
             else {
-                file.SizeULong(0);
-                file.Size(L"");
+                file.Size(0);
             }
 
-            file.ModifyTimeULong(((ULONG64)d.ftLastWriteTime.dwHighDateTime << 32) | d.ftLastWriteTime.dwLowDateTime);
-            SYSTEMTIME st{};
-            if (FileTimeToSystemTime(&d.ftLastWriteTime, &st))
-            {
-                std::wstringstream ss;
-                ss << std::setw(4) << std::setfill(L'0') << st.wYear << L"/"
-                    << std::setw(2) << std::setfill(L'0') << st.wMonth << L"/"
-                    << std::setw(2) << std::setfill(L'0') << st.wDay << L" "
-                    << std::setw(2) << std::setfill(L'0') << st.wHour << L":"
-                    << std::setw(2) << std::setfill(L'0') << st.wMinute << L":"
-                    << std::setw(2) << std::setfill(L'0') << st.wSecond;
-                file.ModifyTime(ss.str());
-            }
-            else
-            {
-                file.ModifyTime(t(L"Common.Unknown"));
-            }
+            file.ModifyTime(((ULONG64)d.ftLastWriteTime.dwHighDateTime << 32) | d.ftLastWriteTime.dwLowDateTime);
         }
     }
 
@@ -1334,9 +1321,9 @@ namespace winrt::StarlightGUI::implementation
             case SortColumn::Name:
                 return LessIgnoreCase(a.Name().c_str(), b.Name().c_str());
             case SortColumn::ModifyTime:
-                return a.ModifyTimeULong() < b.ModifyTimeULong();
+                return a.ModifyTime() < b.ModifyTime();
             case SortColumn::Size:
-                return a.SizeULong() < b.SizeULong();
+                return a.Size() < b.Size();
             default:
                 return false;
             }

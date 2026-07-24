@@ -256,7 +256,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding EThread}" />
+                                        Text="{Binding EThread, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  地址  -->
                                     <TextBlock
@@ -265,7 +265,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Address}" />
+                                        Text="{Binding Address, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  地址  -->
                                     <TextBlock
@@ -274,7 +274,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Win32Address}" />
+                                        Text="{Binding Win32Address, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  状态  -->
                                     <TextBlock
@@ -283,7 +283,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Status}" />
+                                        Text="{Binding Status, Converter={StaticResource DisplayValueConverter}, ConverterParameter=ThreadState}" />
 
                                     <!--  优先级  -->
                                     <TextBlock
@@ -301,7 +301,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding PreviousMode}" />
+                                        Text="{Binding PreviousMode, Converter={StaticResource DisplayValueConverter}, ConverterParameter=PreviousMode}" />
 
                                 </Grid>
                             </DataTemplate>

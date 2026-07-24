@@ -1,0 +1,8 @@
+namespace StarlightGUI
+{
+	[default_interface]
+	runtimeclass DisplayValueConverter : Microsoft.UI.Xaml.Data.IValueConverter
+	{
+		DisplayValueConverter();
+	}
+}

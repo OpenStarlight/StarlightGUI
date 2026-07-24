@@ -9,12 +9,10 @@
 		Int32 Id{ get; set; };
 		String Name{ get; set; };
 		String Description{ get; set; };
-		String MemoryUsage{ get; set; };
-		UInt64 MemoryUsageByte{ get; set; };
-		String CpuUsage{ get; set; };
+		UInt64 MemoryUsage{ get; set; };
+		Double CpuUsage{ get; set; };
 		String ExecutablePath{ get; set; };
-		String EProcess{ get; set; };
-		UInt64 EProcessULong{ get; set; };
+		UInt64 EProcess{ get; set; };
 		Microsoft.UI.Xaml.Media.ImageSource Icon{ get; set; };
 	}
 }

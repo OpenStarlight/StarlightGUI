@@ -3,7 +3,8 @@
     x:Class="StarlightGUI.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:essential="using:WinUI3Package">
+    xmlns:essential="using:WinUI3Package"
+    xmlns:local="using:StarlightGUI">
 
     <Application.Resources>
         <ResourceDictionary>
@@ -33,6 +34,8 @@
                     <SolidColorBrush x:Key="AppSeparatorBrush" Color="#FFD0D0D0" />
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
+
+            <local:DisplayValueConverter x:Key="DisplayValueConverter" />
 
             <x:String x:Key="Version">v4.1.0</x:String>
             <!--  x(Major) xx(Minor) x(Patch) x(Hotfix) x(Preview) → x.xx.x(.x)(-prex)  -->

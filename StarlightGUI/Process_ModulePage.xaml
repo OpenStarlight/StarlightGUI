@@ -180,7 +180,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Address}" />
+                                        Text="{Binding Address, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  大小  -->
                                     <TextBlock
@@ -189,7 +189,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Size}" />
+                                        Text="{Binding Size, Converter={StaticResource DisplayValueConverter}, ConverterParameter=HexCompact}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

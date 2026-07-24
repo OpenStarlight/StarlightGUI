@@ -7,6 +7,6 @@
 		KCTInfo();
 
 		String Name{ get; set; };
-		String Address{ get; set; };
+		UInt64 Address{ get; set; };
 	}
 }

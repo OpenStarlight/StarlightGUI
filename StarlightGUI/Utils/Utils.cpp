@@ -514,11 +514,21 @@ namespace slg {
             lastWidths[i] = headerColumn.ActualWidth();
         }
 
-        auto itemCount = listView.Items().Size();
-        for (uint32_t i = 0; i < itemCount; ++i) {
-            auto itemContainer = listView.ContainerFromIndex(i).try_as<ListViewItem>();
-            if (!itemContainer) continue;
-            ApplyHeaderColumnWidthsToContainer(headerGrid, itemContainer, rowOffset);
+        std::vector<DependencyObject> pending{ listView };
+        while (!pending.empty()) {
+            auto parent = pending.back();
+            pending.pop_back();
+
+            int childCount = VisualTreeHelper::GetChildrenCount(parent);
+            for (int i = 0; i < childCount; ++i) {
+                auto child = VisualTreeHelper::GetChild(parent, i);
+                if (auto itemContainer = child.try_as<ListViewItem>()) {
+                    ApplyHeaderColumnWidthsToContainer(headerGrid, itemContainer, rowOffset);
+                }
+                else {
+                    pending.push_back(child);
+                }
+            }
         }
     }
 }

@@ -14,11 +14,8 @@ namespace winrt::StarlightGUI::implementation
 		hstring Path() { return m_path; }
 		void Path(hstring const& value) { m_path = value; }
 
-		hstring ModifyTime() { return m_modifyTime; }
-		void ModifyTime(hstring const& value) { m_modifyTime = value; }
-
-		ULONG64 ModifyTimeULong() { return m_modifyTimeULong; }
-		void ModifyTimeULong(ULONG64 value) { m_modifyTimeULong = value; }
+		ULONG64 ModifyTime() { return m_modifyTime; }
+		void ModifyTime(ULONG64 value) { m_modifyTime = value; }
 
 		bool Directory() { return m_directory; }
 		void Directory(bool value) { m_directory = value; }
@@ -26,11 +23,8 @@ namespace winrt::StarlightGUI::implementation
 		ULONG Flag() { return m_flag; }
 		void Flag(ULONG value) { m_flag = value; }
 
-		hstring Size() { return m_size; }
-		void Size(hstring const& value) { m_size = value; }
-
-		ULONG64 SizeULong() { return m_sizeULong; }
-		void SizeULong(ULONG64 value) { m_sizeULong = value; }
+		ULONG64 Size() { return m_size; }
+		void Size(ULONG64 value) { m_size = value; }
 
 		ULONG64 MFTID() { return m_mftId; }
 		void MFTID(ULONG64 value) { m_mftId = value; }
@@ -41,11 +35,9 @@ namespace winrt::StarlightGUI::implementation
 	private:
 		hstring m_name{ L"" };
 		hstring m_path{ L"" };
-		hstring m_modifyTime{ L"" };
-		ULONG64 m_modifyTimeULong{ 0 };
+		ULONG64 m_modifyTime{ 0 };
 		ULONG m_flag{ 0 };
-		hstring m_size{ L"" };
-		ULONG64 m_sizeULong{ 0 };
+		ULONG64 m_size{ 0 };
 		ULONG64 m_mftId{ 0 };
 		bool m_directory{ false };
 		winrt::Microsoft::UI::Xaml::Media::ImageSource m_icon{ nullptr };

@@ -272,7 +272,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding WindowStyle}" />
+                                        Text="{Binding WindowStyle, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex32}" />
 
                                     <!--  HWND  -->
                                     <TextBlock
@@ -281,7 +281,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Hwnd}" />
+                                        Text="{Binding Hwnd, Converter={StaticResource DisplayValueConverter}, ConverterParameter=HexHandle}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

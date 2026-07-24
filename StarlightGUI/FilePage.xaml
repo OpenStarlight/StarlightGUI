@@ -284,7 +284,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding ModifyTime}" />
+                                        Text="{Binding Converter={StaticResource DisplayValueConverter}, ConverterParameter=FileModifyTime}" />
 
                                     <!--  大小  -->
                                     <TextBlock
@@ -293,7 +293,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Size}" />
+                                        Text="{Binding Converter={StaticResource DisplayValueConverter}, ConverterParameter=FileSize}" />
 
                                 </Grid>
                             </DataTemplate>

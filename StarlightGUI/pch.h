@@ -37,7 +37,6 @@
 #define LOGGER_OPEN()			Console::GetInstance().OpenConsole()
 #define LOGGER_CLOSE()			Console::GetInstance().CloseConsole()
 #define LOGGER_SHUTDOWN()		Console::GetInstance().Shutdown()
-#define LOGGER_CLEAR()			Console::GetInstance().ClearConsole()
 
 #include <Unknwn.h>
 #include <winrt/Windows.Foundation.h>
@@ -78,6 +77,7 @@
 
 #include <Utils/ObjectEntry.h>
 #include <Utils/GeneralEntry.h>
+#include <Utils/DisplayValueConverter.h>
 
 #include <Utils/TaskUtils.h>
 #include <Utils/CppUtils.h>
@@ -86,7 +86,6 @@
 #include <Utils/Elevator.h>
 #include <Utils/Config.h>
 #include <Utils/I18n.h>
-
 
 extern winrt::hstring siriusPath, wtmPath, iamKeyHackerPath;
 extern int enum_file_mode, background_type, mica_type, acrylic_type, navigation_style, image_stretch;

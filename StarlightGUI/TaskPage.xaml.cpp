@@ -79,18 +79,33 @@ namespace winrt::StarlightGUI::implementation
 
             LoadProcessList(false);
             });
+        cpuRefreshTimer.Interval(std::chrono::seconds(1));
+        cpuRefreshTimer.Tick([this](auto&&, auto&&) {
+            if (!IsLoaded()) return;
+            if (!task_auto_refresh || !g_mainWindowInstance->m_openWindows.empty()) {
+                if (m_isRefreshingCpu) ++m_cpuRequestVersion;
+                m_cpuSnapshot = {};
+                return;
+            }
+            if (m_isRefreshingCpu) return;
 
-        TaskUtils::EnsurePrivileges();
+            RefreshProcessCpuUsage();
+            });
 
         this->Loaded([this](auto&&, auto&&) {
+            m_cpuSnapshot = {};
             autoRefreshTimer.Start();
+            cpuRefreshTimer.Start();
             slg::SyncListViewColumnWidths(HeaderColumnsGrid(), BodyColumnsGrid(), ProcessListView(), 1);
             LoadProcessList();
+            if (task_auto_refresh) RefreshProcessCpuUsage();
 			});
 
         this->Unloaded([this](auto&&, auto&&) {
             ++m_reloadRequestVersion;
+            ++m_cpuRequestVersion;
             autoRefreshTimer.Stop();
+            cpuRefreshTimer.Stop();
             });
 
         LOG_INFO(L"TaskPage", L"TaskPage initialized.");
@@ -121,7 +136,14 @@ namespace winrt::StarlightGUI::implementation
 
         // 选项1.1
         auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"Task.Menu.Terminate"), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (TaskUtils::_TerminateProcess(item.Id())) {
+            BOOL success = FALSE;
+            if (item.Id() != 0) {
+                HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, item.Id());
+                if (hProcess) {
+                    success = TerminateProcess(hProcess, 0);
+                }
+            }
+            if (success) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
@@ -344,7 +366,7 @@ namespace winrt::StarlightGUI::implementation
             });
         item3_2.Items().Append(item3_2_sub3);
         auto item3_2_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", L"EPROCESS", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (TaskUtils::CopyToClipboard(item.EProcess().c_str())) {
+            if (TaskUtils::CopyToClipboard(ULongToHexString(item.EProcess()))) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
             else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
@@ -469,6 +491,8 @@ namespace winrt::StarlightGUI::implementation
             bool shouldRemove = lowerQuery.empty() ? false : !ContainsIgnoreCaseLowerQuery(process.Name().c_str(), lowerQuery);
             if (shouldRemove) continue;
 
+            process.CpuUsage(0.0);
+
             // 如果有缓存的话就直接用，不在获取的时候再跑一遍了
             std::wstring path = process.ExecutablePath().c_str();
             if (!path.empty()) {
@@ -534,8 +558,7 @@ namespace winrt::StarlightGUI::implementation
                 existing.Name(process.Name());
                 existing.ExecutablePath(process.ExecutablePath());
                 existing.EProcess(process.EProcess());
-                existing.EProcessULong(process.EProcessULong());
-                existing.MemoryUsageByte(process.MemoryUsageByte());
+                existing.MemoryUsage(process.MemoryUsage());
 
                 if (!process.Description().empty()) {
                     existing.Description(process.Description());
@@ -625,8 +648,6 @@ namespace winrt::StarlightGUI::implementation
         missingDescriptionProcesses.reserve(processes.size());
         std::unordered_map<int32_t, winrt::hstring> descriptionTable;
 
-        std::map<DWORD, hstring> processCpuTable;
-
         for (auto const& process : processes) {
             if (!process) continue;
 
@@ -652,8 +673,6 @@ namespace winrt::StarlightGUI::implementation
         }
 
         co_await winrt::resume_background();
-
-        co_await TaskUtils::FetchProcessCpuUsage(processCpuTable);
 
         for (auto const& process : missingDescriptionProcesses) {
             if (!process) continue;
@@ -692,16 +711,6 @@ namespace winrt::StarlightGUI::implementation
         for (auto const& process : processes) {
             if (!process) continue;
             if (loadToken != m_currentLoadToken) co_return;
-
-            auto cpuIt = processCpuTable.find((DWORD)process.Id());
-            if (cpuIt != processCpuTable.end()) process.CpuUsage(cpuIt->second);
-            else process.CpuUsage(L"-1 " + t(L"Common.Unknown"));
-
-            if (process.MemoryUsageByte() != 0) process.MemoryUsage(FormatMemorySize(process.MemoryUsageByte()));
-            else process.MemoryUsage(L"-1 " + t(L"Common.Unknown"));
-
-            if (process.EProcess().empty()) process.EProcess(t(L"Common.Unknown"));
-            UpdateRealizedItemMetrics(process);
 
             auto descIt = descriptionTable.find(process.Id());
             if (descIt != descriptionTable.end()) {
@@ -767,6 +776,44 @@ namespace winrt::StarlightGUI::implementation
         }
 
         m_isPostLoading = false;
+        co_return;
+    }
+
+    winrt::Windows::Foundation::IAsyncAction TaskPage::RefreshProcessCpuUsage()
+    {
+        if (m_isRefreshingCpu) co_return;
+
+        auto lifetime = get_strong();
+        auto requestVersion = ++m_cpuRequestVersion;
+        auto previousSnapshot = m_cpuSnapshot;
+        m_isRefreshingCpu = true;
+
+        std::map<DWORD, double> processCpuTable;
+        TaskUtils::ProcessCpuSnapshot currentSnapshot;
+
+        co_await winrt::resume_background();
+        bool success = TaskUtils::FetchProcessCpuUsage(previousSnapshot, currentSnapshot, processCpuTable);
+
+        co_await wil::resume_foreground(DispatcherQueue());
+        if (!IsLoaded() || requestVersion != m_cpuRequestVersion) {
+            m_isRefreshingCpu = false;
+            co_return;
+        }
+
+        if (success) {
+            m_cpuSnapshot = std::move(currentSnapshot);
+            for (auto const& process : m_processList) {
+                auto cpu = processCpuTable.find((DWORD)process.Id());
+                process.CpuUsage(cpu != processCpuTable.end() ? cpu->second : 0.0);
+                UpdateRealizedItemMetrics(process);
+            }
+
+            if (!m_isLoadingProcesses && !m_isSorting && currentSortingType == "CpuUsage") {
+                SortProcessList(currentSortingOption, currentSortingType, false);
+            }
+        }
+
+        m_isRefreshingCpu = false;
         co_return;
     }
 
@@ -847,13 +894,18 @@ namespace winrt::StarlightGUI::implementation
             if (auto text = child.try_as<TextBlock>()) {
                 int column = Grid::GetColumn(text);
                 if (column == 2) {
-                    text.Text(process.EProcess());
+                    text.Text(ULongToHexString(process.EProcess()));
                 }
                 else if (column == 3) {
-                    text.Text(process.CpuUsage());
+                    if (process.CpuUsage() < 0) text.Text(t(L"Common.Unknown"));
+                    else {
+                        wchar_t value[32]{};
+						swprintf_s(value, L"%.1f%%", process.CpuUsage());
+                        text.Text(value);
+                    }
                 }
                 else if (column == 4) {
-                    text.Text(process.MemoryUsage());
+                    text.Text(process.MemoryUsage() == 0 ? t(L"Common.Unknown") : hstring(FormatMemorySize(process.MemoryUsage())));
                 }
             }
         }
@@ -933,30 +985,10 @@ namespace winrt::StarlightGUI::implementation
             IdHeaderButton().Content(box_value(L"PID"));
         }
 
-        auto parseCpu = [](winrt::hstring const& value) mutable -> double {
-            if (value.empty()) return 0.0;
-            try {
-                size_t idx = 0;
-                double result = std::stod(std::wstring(value.c_str()), &idx);
-                return result;
-            }
-            catch (...) {
-                return 0.0;
-            }
-            };
-
         std::vector<winrt::StarlightGUI::ProcessInfo> processes;
         processes.reserve(m_processList.Size());
         for (auto const& process : m_processList) {
             processes.push_back(process);
-        }
-
-        std::unordered_map<int, double> cpuUsageCache;
-        if (activeColumn == SortColumn::CpuUsage) {
-            cpuUsageCache.reserve(processes.size() * 2);
-            for (auto const& process : processes) {
-                cpuUsageCache.insert_or_assign(process.Id(), parseCpu(process.CpuUsage()));
-            }
         }
 
         if (updateHeader) {
@@ -972,17 +1004,11 @@ namespace winrt::StarlightGUI::implementation
             case SortColumn::Name:
                 return LessIgnoreCase(a.Name().c_str(), b.Name().c_str());
             case SortColumn::CpuUsage:
-            {
-                auto aIt = cpuUsageCache.find(a.Id());
-                auto bIt = cpuUsageCache.find(b.Id());
-                double aValue = (aIt != cpuUsageCache.end()) ? aIt->second : parseCpu(a.CpuUsage());
-                double bValue = (bIt != cpuUsageCache.end()) ? bIt->second : parseCpu(b.CpuUsage());
-                return aValue < bValue;
-            }
+                return a.CpuUsage() < b.CpuUsage();
             case SortColumn::EProcess:
-                return a.EProcessULong() < b.EProcessULong();
+                return a.EProcess() < b.EProcess();
             case SortColumn::MemoryUsage:
-                return a.MemoryUsageByte() < b.MemoryUsageByte();
+                return a.MemoryUsage() < b.MemoryUsage();
             case SortColumn::Id:
                 return a.Id() < b.Id();
             default:
@@ -1273,11 +1299,18 @@ namespace winrt::StarlightGUI::implementation
                 co_return;
             }
 
-            // 普通无法结束时，尝试使用内核结束
-            if (TaskUtils::_TerminateProcess(item.Id())) {
+            BOOL success = FALSE;
+            if (item.Id() != 0) {
+                HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, item.Id());
+                if (hProcess) {
+                    success = TerminateProcess(hProcess, 0);
+                }
+            }
+            if (success) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);
             }
+            // 普通无法结束时，尝试使用内核结束
             else if (KernelInstance::SiTerminateProcess(item.Id())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 WaitAndReloadAsync(1000);

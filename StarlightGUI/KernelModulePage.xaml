@@ -255,7 +255,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding ImageBase}" />
+                                        Text="{Binding ImageBase, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  驱动对象  -->
                                     <TextBlock
@@ -264,7 +264,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding DriverObject}" />
+                                        Text="{Binding DriverObject, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64OrNone}" />
 
                                     <!--  大小  -->
                                     <TextBlock
@@ -273,7 +273,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Size}" />
+                                        Text="{Binding Size, Converter={StaticResource DisplayValueConverter}, ConverterParameter=HexCompact}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

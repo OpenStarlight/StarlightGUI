@@ -11,12 +11,12 @@ namespace winrt::StarlightGUI::implementation
 		hstring Name() { return m_name; }
 		void Name(hstring const& value) { m_name = value; }
 
-		hstring Address() { return m_address; }
-		void Address(hstring const& value) { m_address = value; }
+		ULONG64 Address() { return m_address; }
+		void Address(ULONG64 value) { m_address = value; }
 
 	private:
 		hstring m_name{ L"" };
-		hstring m_address{ L"" };
+		ULONG64 m_address{ 0 };
 	};
 }
 

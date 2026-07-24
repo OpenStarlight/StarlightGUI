@@ -87,10 +87,17 @@ namespace winrt::StarlightGUI::implementation
             });
 
         MenuFlyoutSeparator separatorR;
-
+        
         // 选项1.1
         auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"ProcThread.Menu.Terminate").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (TaskUtils::_TerminateThread(item.Id())) {
+            BOOL success = FALSE;
+            if (item.Id() != 0) {
+                HANDLE hThread = OpenThread(THREAD_TERMINATE, FALSE, item.Id());
+                if (hThread) {
+                    success = TerminateThread(hThread, 0);
+                }
+            }
+            if (success) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
                 LoadThreadList();
             }
@@ -162,7 +169,7 @@ namespace winrt::StarlightGUI::implementation
             });
         item3_1.Items().Append(item3_1_sub1);
         auto item3_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", L"ETHREAD", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (TaskUtils::CopyToClipboard(item.EThread().c_str())) {
+            if (TaskUtils::CopyToClipboard(ULongToHexString(item.EThread()).c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
             }
             else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_infoWindowInstance);
@@ -170,7 +177,7 @@ namespace winrt::StarlightGUI::implementation
             });
         item3_1.Items().Append(item3_1_sub2);
         auto item3_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Common.Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (TaskUtils::CopyToClipboard(item.Address().c_str())) {
+            if (TaskUtils::CopyToClipboard(ULongToHexString(item.Address()).c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
             }
             else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_infoWindowInstance);
@@ -323,37 +330,16 @@ namespace winrt::StarlightGUI::implementation
             sortedThreads.push_back(process);
         }
 
-        auto parseHex = [](winrt::hstring const& text) -> ULONG64 {
-            ULONG64 value = 0;
-            if (HexStringToULong(text.c_str(), value)) return value;
-            return 0;
-            };
-
         auto sortActiveColumn = [&](const winrt::StarlightGUI::ThreadInfo& a, const winrt::StarlightGUI::ThreadInfo& b) -> bool {
             switch (activeColumn) {
             case SortColumn::Id:
                 return a.Id() < b.Id();
             case SortColumn::EThread:
-            {
-                auto aValue = parseHex(a.EThread());
-                auto bValue = parseHex(b.EThread());
-                if (aValue != bValue) return aValue < bValue;
                 return a.EThread() < b.EThread();
-            }
             case SortColumn::Address:
-            {
-                auto aValue = parseHex(a.Address());
-                auto bValue = parseHex(b.Address());
-                if (aValue != bValue) return aValue < bValue;
                 return a.Address() < b.Address();
-            }
 			case SortColumn::Win32Address:
-            {
-                auto aValue = parseHex(a.Win32Address());
-                auto bValue = parseHex(b.Win32Address());
-                if (aValue != bValue) return aValue < bValue;
 				return a.Win32Address() < b.Win32Address();
-            }
             case SortColumn::Priority:
                 return a.Priority() < b.Priority();
             default:

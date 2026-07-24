@@ -11,7 +11,7 @@ typedef SISTATUS *PSISTATUS;
 
 // Success codes
 // Success: 0x00000~0x0FFFF, strict success: 0x00000
-// 
+//
 // Operation completed successfully.
 #define SI_SUCCESS				0x00000
 

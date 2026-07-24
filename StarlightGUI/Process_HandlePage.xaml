@@ -203,7 +203,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Object}" />
+                                        Text="{Binding Object, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  句柄  -->
                                     <TextBlock
@@ -212,7 +212,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Handle}" />
+                                        Text="{Binding Handle, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  权限  -->
                                     <TextBlock
@@ -221,7 +221,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Access}" />
+                                        Text="{Binding Access, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex32}" />
 
                                     <!--  属性  -->
                                     <TextBlock
@@ -230,7 +230,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding Attributes}" />
+                                        Text="{Binding Attributes, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex32}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

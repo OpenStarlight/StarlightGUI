@@ -269,8 +269,7 @@ namespace winrt::StarlightGUI::implementation {
 					fileInfo.Path(path + L"\\" + std::wstring(fileData[i].Name));
 					fileInfo.Directory(fileData[i].Directory);
 					fileInfo.Flag(fileData[i].NtfsFlags);
-					fileInfo.Size(FormatMemorySize(fileData[i].DataSize));
-					fileInfo.SizeULong(fileData[i].DataSize);
+					fileInfo.Size(fileData[i].DataSize);
 					fileInfo.MFTID(fileData[i].FileReference);
 					files.push_back(fileInfo);
 				}
@@ -284,8 +283,7 @@ namespace winrt::StarlightGUI::implementation {
 					fileInfo.Path(path + L"\\" + std::wstring(fileData[i].Name));
 					fileInfo.Directory(fileData[i].Directory);
 					fileInfo.Flag(0);
-					fileInfo.Size(FormatMemorySize(fileData[i].DataSize));
-					fileInfo.SizeULong(fileData[i].DataSize);
+					fileInfo.Size(fileData[i].DataSize);
 					files.push_back(fileInfo);
 				}
 			}
@@ -310,10 +308,9 @@ namespace winrt::StarlightGUI::implementation {
 				auto pi = winrt::make<winrt::StarlightGUI::implementation::ProcessInfo>();
 				pi.Id(processData[i].Pid);
 				pi.Name(to_hstring(processData[i].ImageName));
-				pi.EProcess(ULongToHexString((ULONG64)processData[i].Eprocess));
-				pi.EProcessULong((ULONG64)processData[i].Eprocess);
+				pi.EProcess((ULONG64)processData[i].Eprocess);
 				pi.ExecutablePath(to_hstring(processData[i].ImagePath));
-				pi.MemoryUsageByte(processData[i].WorkingSetPrivateSize);
+				pi.MemoryUsage(processData[i].WorkingSetPrivateSize);
 				targetList.push_back(pi);
 			}
 		}
@@ -333,44 +330,12 @@ namespace winrt::StarlightGUI::implementation {
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto threadInfo = winrt::make<winrt::StarlightGUI::implementation::ThreadInfo>();
 				threadInfo.Id(threadData[i].Tid);
-				threadInfo.EThread(ULongToHexString((ULONG64)threadData[i].Ethread));
-				threadInfo.Address(ULongToHexString((ULONG64)threadData[i].StartAddress));
-				threadInfo.Win32Address(ULongToHexString((ULONG64)threadData[i].Win32StartAddress));
-				threadInfo.PreviousMode(threadData[i].PreviousMode == 0 ? L"KernelMode" : L"UserMode");
+				threadInfo.EThread((ULONG64)threadData[i].Ethread);
+				threadInfo.Address((ULONG64)threadData[i].StartAddress);
+				threadInfo.Win32Address((ULONG64)threadData[i].Win32StartAddress);
+				threadInfo.PreviousMode(threadData[i].PreviousMode);
 				threadInfo.Priority(threadData[i].Priority);
-	
-				switch (threadData[i].State) {
-				case Initialized:
-					threadInfo.Status(t(L"Msg.Thread.Initialized"));
-					break;
-				case Ready:
-					threadInfo.Status(t(L"Msg.Thread.Ready"));
-					break;
-				case Running:
-					threadInfo.Status(t(L"Msg.Thread.Running"));
-					break;
-				case Standby:
-					threadInfo.Status(t(L"Msg.Thread.Standby"));
-					break;
-				case Terminated:
-					threadInfo.Status(t(L"Msg.Thread.Terminated"));
-					break;
-				case Waiting:
-					threadInfo.Status(t(L"Msg.Thread.Waiting"));
-					break;
-				case KTHREAD_STATE::Transition:
-					threadInfo.Status(t(L"Msg.Thread.Transition"));
-					break;
-				case DeferredReady:
-					threadInfo.Status(t(L"Msg.Thread.DeferredReady"));
-					break;
-				case GateWaitObsolete:
-					threadInfo.Status(t(L"Msg.Thread.GateWait"));
-					break;
-				default:
-					threadInfo.Status(t(L"Msg.Thread.Unknown"));
-					break;
-				}
+				threadInfo.Status(static_cast<ULONG>(threadData[i].State));
 				threads.push_back(threadInfo);
 			}
 		}
@@ -390,10 +355,10 @@ namespace winrt::StarlightGUI::implementation {
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto handleInfo = winrt::make<winrt::StarlightGUI::implementation::HandleInfo>();
 				handleInfo.Type(to_hstring(handleData[i].TypeName));
-				handleInfo.Object(ULongToHexString((ULONG64)handleData[i].Object));
-				handleInfo.Handle(ULongToHexString((ULONG64)handleData[i].Handle));
-				handleInfo.Access(ULongToHexString(handleData[i].GrantedAccess, 0, false, true));
-				handleInfo.Attributes(ULongToHexString(handleData[i].Attributes, 0, false, true));
+				handleInfo.Object((ULONG64)handleData[i].Object);
+				handleInfo.Handle((ULONG64)handleData[i].Handle);
+				handleInfo.Access(handleData[i].GrantedAccess);
+				handleInfo.Attributes(handleData[i].Attributes);
 				handles.push_back(handleInfo);
 			}
 		}
@@ -413,8 +378,8 @@ namespace winrt::StarlightGUI::implementation {
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto moduleInfo = winrt::make<winrt::StarlightGUI::implementation::MokuaiInfo>();
 				moduleInfo.Name(to_hstring(moduleData[i].Name));
-				moduleInfo.Address(ULongToHexString((ULONG64)moduleData[i].Base));
-				moduleInfo.Size(ULongToHexString(moduleData[i].Size, 0, false, true));
+				moduleInfo.Address((ULONG64)moduleData[i].Base);
+				moduleInfo.Size(moduleData[i].Size);
 				moduleInfo.Path(to_hstring(moduleData[i].Path));
 				modules.push_back(moduleInfo);
 			}
@@ -435,7 +400,7 @@ namespace winrt::StarlightGUI::implementation {
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto kctInfo = winrt::make<winrt::StarlightGUI::implementation::KCTInfo>();
 				kctInfo.Name(to_hstring(functionData[i].Name));
-				kctInfo.Address(ULongToHexString((ULONG64)functionData[i].Address));
+				kctInfo.Address((ULONG64)functionData[i].Address);
 				kcts.push_back(kctInfo);
 			}
 		}
@@ -455,12 +420,9 @@ namespace winrt::StarlightGUI::implementation {
 				auto di = winrt::make<winrt::StarlightGUI::implementation::KernelModuleInfo>();
 				di.Name(to_hstring(moduleData[i].Name));
 				di.Path(to_hstring(moduleData[i].Path));
-				di.ImageBase(ULongToHexString((ULONG64)moduleData[i].Base));
-				di.ImageBaseULong((ULONG64)moduleData[i].Base);
-				di.Size(ULongToHexString(moduleData[i].Size, 0, false, true));
-				di.SizeULong(moduleData[i].Size);
-				di.DriverObject(ULongToHexString((ULONG64)moduleData[i].DriverObject));
-				di.DriverObjectULong((ULONG64)moduleData[i].DriverObject);
+				di.ImageBase((ULONG64)moduleData[i].Base);
+				di.Size(moduleData[i].Size);
+				di.DriverObject((ULONG64)moduleData[i].DriverObject);
 				kernelModules.push_back(di);
 			}
 		}
@@ -480,12 +442,9 @@ namespace winrt::StarlightGUI::implementation {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
 				entry.String1(to_hstring(minifilterData[i].Name));
 				entry.String2(to_hstring(GetMiniFilterMajorFunction(minifilterData[i].MajorFunction)));
-				entry.String3(ULongToHexString((ULONG64)minifilterData[i].PreOperation));
-				entry.String4(ULongToHexString((ULONG64)minifilterData[i].PostOperation));
-				entry.String5(ULongToHexString((ULONG64)minifilterData[i].Base));
-				entry.ULongLong1((ULONG64)minifilterData[i].PreOperation);
-				entry.ULongLong2((ULONG64)minifilterData[i].PostOperation);
-				entry.ULongLong3((ULONG64)minifilterData[i].Base);
+				entry.ULongLong1((ULONG64)minifilterData[i].Base);
+				entry.ULongLong2((ULONG64)minifilterData[i].PreOperation);
+				entry.ULongLong3((ULONG64)minifilterData[i].PostOperation);
 				filterList.push_back(entry);
 			}
 		}
@@ -511,7 +470,6 @@ namespace winrt::StarlightGUI::implementation {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
 				entry.String1(name);
 				entry.String2(L"\\SystemRoot\\System32\\ntoskrnl.exe");
-				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
 				entry.ULongLong1((ULONG64)functionData[i].Address);
 				ssdtList.push_back(entry);
 			}
@@ -538,7 +496,6 @@ namespace winrt::StarlightGUI::implementation {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
 				entry.String1(name);
 				entry.String2(L"\\SystemRoot\\System32\\win32k.sys");
-				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
 				entry.ULongLong1((ULONG64)functionData[i].Address);
 				sssdtList.push_back(entry);
 			}
@@ -558,8 +515,6 @@ namespace winrt::StarlightGUI::implementation {
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
 				entry.String1(to_hstring(timerData[i].Path));
-				entry.String2(ULongToHexString((ULONG64)timerData[i].TimerRoutine));
-				entry.String3(ULongToHexString((ULONG64)timerData[i].DeviceObject));
 				entry.ULongLong1((ULONG64)timerData[i].TimerRoutine);
 				entry.ULongLong2((ULONG64)timerData[i].DeviceObject);
 				timerList.push_back(entry);
@@ -570,7 +525,7 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 
-	BOOL KernelInstance::SiEnumDpcTimers(std::vector<winrt::StarlightGUI::GeneralEntry>& timerList) noexcept {
+	BOOL KernelInstance::SiEnumDPCTimers(std::vector<winrt::StarlightGUI::GeneralEntry>& timerList) noexcept {
 		SI_ENUMERATION enumData = { 0 };
 
 		BOOL result = QuerySystemEnumeration(SystemGetInformation::DPCTimer, enumData, sizeof(SI_DPC_TIMER_DATA));
@@ -580,22 +535,11 @@ namespace winrt::StarlightGUI::implementation {
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
 				entry.String1(to_hstring(timerData[i].Path));
-				entry.String2(ULongToHexString((ULONG64)timerData[i].Timer));
-				entry.String3(ULongToHexString((ULONG64)timerData[i].DPC));
-				entry.String4(ULongToHexString((ULONG64)timerData[i].DeferredRoutine));
-				entry.String5(ULongToHexString((ULONG64)timerData[i].DeferredContext));
-				entry.String6(ULongToHexString((ULONG64)timerData[i].SystemArgument1));
-				entry.String7(ULongToHexString((ULONG64)timerData[i].SystemArgument2));
-				entry.String8(std::to_wstring(timerData[i].Period));
-				entry.String9(ULongToHexString(timerData[i].DueTime));
-				entry.String10(std::to_wstring(timerData[i].Processor));
 				entry.ULongLong1((ULONG64)timerData[i].Timer);
 				entry.ULongLong2((ULONG64)timerData[i].DPC);
 				entry.ULongLong3((ULONG64)timerData[i].DeferredRoutine);
 				entry.ULongLong4((ULONG64)timerData[i].DeferredContext);
-				entry.ULongLong5(timerData[i].DueTime);
 				entry.Long1(timerData[i].Period);
-				entry.ULong1(timerData[i].Processor);
 				timerList.push_back(entry);
 			}
 		}
@@ -613,12 +557,6 @@ namespace winrt::StarlightGUI::implementation {
 			PSI_ERESOURCE_DATA resourceData = (PSI_ERESOURCE_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(ULongToHexString((ULONG64)resourceData[i].Resource));
-				entry.String2(std::to_wstring(resourceData[i].ActiveCount));
-				entry.String3(std::to_wstring(resourceData[i].ContentionCount));
-				entry.String4(std::to_wstring(resourceData[i].NumberOfSharedWaiters));
-				entry.String5(std::to_wstring(resourceData[i].NumberOfExclusiveWaiters));
-				entry.String6(ULongToHexString(resourceData[i].Flag, 8, true, true));
 				entry.ULongLong1((ULONG64)resourceData[i].Resource);
 				entry.Long1(resourceData[i].ActiveCount);
 				entry.ULong1(resourceData[i].ContentionCount);
@@ -642,7 +580,6 @@ namespace winrt::StarlightGUI::implementation {
 			PSI_IDT_DATA idtData = (PSI_IDT_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String1(ULongToHexString((ULONG64)idtData[i].Offset));
 				entry.ULongLong1((ULONG64)idtData[i].Offset);
 				entry.ULong1(i);
 				entry.ULong2(idtData[i].Selector);
@@ -665,8 +602,6 @@ namespace winrt::StarlightGUI::implementation {
 			PSI_GDT_DATA gdtData = (PSI_GDT_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
-				entry.String2(ULongToHexString((ULONG64)gdtData[i].Base));
-				entry.String3(ULongToHexString(gdtData[i].Limit));
 				entry.ULongLong1((ULONG64)gdtData[i].Base);
 				entry.ULongLong2(gdtData[i].Limit);
 				entry.ULong1(i);
@@ -745,7 +680,6 @@ namespace winrt::StarlightGUI::implementation {
 				auto entry = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
 				entry.String1(name);
 				entry.String2(L"\\SystemRoot\\System32\\ntoskrnl.exe");
-				entry.String3(ULongToHexString((ULONG64)functionData[i].Address));
 				entry.ULongLong1((ULONG64)functionData[i].Address);
 				entry.ULong1(static_cast<ULONG>(type));
 				halList.push_back(entry);
@@ -783,16 +717,6 @@ namespace winrt::StarlightGUI::implementation {
 		}
 	}
 
-	static hstring ObCallbackTypeToString(ULONG flag) noexcept
-	{
-		switch ((ObCallbackType)flag) {
-		case ObCallbackType::Process: return L"Process";
-		case ObCallbackType::Thread: return L"Thread";
-		case ObCallbackType::Desktop: return L"Desktop";
-		default: return L"Unknown";
-		}
-	}
-
 	BOOL KernelInstance::SiEnumCallbacks(std::vector<winrt::StarlightGUI::GeneralEntry>& callbackList, CallbackType type) noexcept {
 		SI_ENUMERATION enumData = { 0 };
 		ULONG callbackType = (ULONG)type;
@@ -806,27 +730,6 @@ namespace winrt::StarlightGUI::implementation {
 				auto callback = winrt::make<winrt::StarlightGUI::implementation::GeneralEntry>();
 				callback.String1(CallbackTypeToString(type));
 				callback.String2(to_hstring(callbackData[i].Path));
-				callback.String3(ULongToHexString((ULONG64)callbackData[i].Address));
-				callback.String4(ULongToHexString((ULONG64)callbackData[i].Address2));
-				callback.String5(ULongToHexString((ULONG64)callbackData[i].Address3));
-				callback.String6(ULongToHexString((ULONG64)callbackData[i].Address4));
-				if (type == CallbackType::Object) {
-					callback.String6(ObCallbackTypeToString(callbackData[i].Flag));
-				}
-				else if (type == CallbackType::CreateProcess || type == CallbackType::CreateThread || type == CallbackType::LoadImage ||
-					type == CallbackType::LogonSessionTerminated || type == CallbackType::DbgPrint) {
-					callback.String4(std::to_wstring(callbackData[i].Index));
-					callback.String5(ULongToHexString(callbackData[i].Flag, 0, false, true));
-					callback.String6(L"");
-				}
-				else if (type == CallbackType::BugCheck) {
-					callback.String6(ULongToHexString((ULONG64)callbackData[i].Address4, 0, false, true));
-				}
-				else if (type == CallbackType::BugCheckReason) {
-					callback.String4(ULongToHexString((ULONG64)callbackData[i].Address3));
-					callback.String5(ULongToHexString((ULONG64)callbackData[i].Address4, 0, false, true));
-					callback.String6(ULongToHexString((ULONG64)callbackData[i].Address2, 0, false, true));
-				}
 
 				callback.ULong1((ULONG)type);
 				callback.ULong2(callbackData[i].Index);
@@ -923,14 +826,15 @@ namespace winrt::StarlightGUI::implementation {
 
 	BOOL KernelInstance::EnableHypervisor() noexcept {
 #ifdef STARLIGHT_PREMIUM
-		if (!GetDriverDevice()) return FALSE;
-
-		if (!DeviceIoControl(driverDevice, IOCTL_METAVERSE_CHECK_SUPPORT, NULL, 0, NULL, 0, 0, NULL)) {
+		if (!SiFeatureCollection(FeatureCollection::Virtualization,
+			(COLLECTION_ENUM)VirtualizationCollection::CheckSupport, NULL, 0)) {
 			QueryError();
 			return FALSE;
 		}
 
-		BOOL result = DeviceIoControl(driverDevice, IOCTL_METAVERSE_INITIALIZE, NULL, 0, NULL, 0, NULL, NULL);
+		METAVERSE_CONFIGURATION configuration = { MetaverseMode::Normal };
+		BOOL result = SiFeatureCollection(FeatureCollection::Virtualization,
+			(COLLECTION_ENUM)VirtualizationCollection::StartMetaverse, &configuration, 0);
 		QueryError();
 		return result;
 #else
@@ -942,9 +846,8 @@ namespace winrt::StarlightGUI::implementation {
 
 	BOOL KernelInstance::DisableHypervisor() noexcept {
 #ifdef STARLIGHT_PREMIUM
-		if (!GetDriverDevice()) return FALSE;
-
-		BOOL result = DeviceIoControl(driverDevice, IOCTL_METAVERSE_EXIT, NULL, 0, NULL, 0, NULL, NULL);
+		BOOL result = SiFeatureCollection(FeatureCollection::Virtualization,
+			(COLLECTION_ENUM)VirtualizationCollection::StopMetaverse, NULL, 0);
 		QueryError();
 		return result;
 #else 		
@@ -1110,22 +1013,19 @@ namespace winrt::StarlightGUI::implementation {
 		InitializeObjectAttributes(&objAttr, &objName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
 		HANDLE hDir = NULL;
-		NTSTATUS status = NtOpenDirectoryObject(&hDir, 0x0001 /* DIRECTORY_QUERY */, &objAttr);
+		LONG status = NtOpenDirectoryObject(&hDir, 0x0001 /* DIRECTORY_QUERY */, &objAttr);
 
-		if (!NT_SUCCESS(status) || !hDir) {
-			return FALSE;
-		}
+		if (status < 0 || !hDir) return FALSE;
 
 		ULONG context = 0;
 		ULONG returnLength = 0;
-		std::vector<BYTE> buffer(4096);
+		std::vector<BYTE> buffer(0x1000);
 
 		status = ERROR_SUCCESS;
-		while (NT_SUCCESS(status)) {
+		while (status >= 0) {
 			status = NtQueryDirectoryObject(hDir, buffer.data(), buffer.size(), FALSE, FALSE, &context, &returnLength);
 
-			POBJECT_DIRECTORY_INFORMATION info =
-				(POBJECT_DIRECTORY_INFORMATION)buffer.data();
+			POBJECT_DIRECTORY_INFORMATION info = (POBJECT_DIRECTORY_INFORMATION)buffer.data();
 
 			while (info->Name.Buffer) {
 				winrt::StarlightGUI::ObjectEntry entry = winrt::make<winrt::StarlightGUI::implementation::ObjectEntry>();
@@ -1153,7 +1053,7 @@ namespace winrt::StarlightGUI::implementation {
 
 	BOOL KernelInstance::GetObjectDetails(std::wstring fullPath, std::wstring type, winrt::StarlightGUI::ObjectEntry& entry) noexcept {
 		HANDLE hObject = NULL;
-		NTSTATUS status = ERROR_SUCCESS;
+		LONG status = 0L;
 		ULONG returnLength = 0;
 
 		UNICODE_STRING objName;
@@ -1187,7 +1087,7 @@ namespace winrt::StarlightGUI::implementation {
 		else if (type == L"Device") {
 			// Device 使用 NtOpenFile 打开
 			IO_STATUS_BLOCK ioStatus = { 0 };
-			status = NtOpenFile(&hObject, GENERIC_READ, &objAttr, &ioStatus, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_NON_DIRECTORY_FILE);
+			status = NtOpenFile(&hObject, GENERIC_READ, &objAttr, &ioStatus, FILE_SHARE_READ | FILE_SHARE_WRITE, 0x00000040/* FILE_NON_DIRECTORY_FILE */);
 		}
 		else if (type == L"Session") {
 			status = NtOpenSession(&hObject, GENERIC_READ, &objAttr);
@@ -1209,13 +1109,13 @@ namespace winrt::StarlightGUI::implementation {
 			return FALSE;
 		}
 
-		if (!NT_SUCCESS(status) || !hObject) return FALSE;
+		if (status < 0 || !hObject) return FALSE;
 
 		// 获取基本信息
 		OBJECT_BASIC_INFORMATION basicInfo{};
-		status = NtQueryObject(hObject, ObjectBasicInformation, &basicInfo, sizeof(basicInfo), &returnLength);
+		status = NtQueryObject(hObject, 0, &basicInfo, sizeof(basicInfo), &returnLength);
 
-		if (NT_SUCCESS(status)) {
+		if (status >= 0) {
 			entry.Permanent((basicInfo.Attributes & OBJ_PERMANENT) != 0);
 			entry.References(basicInfo.PointerCount);
 			entry.Handles(basicInfo.HandleCount);
@@ -1245,13 +1145,13 @@ namespace winrt::StarlightGUI::implementation {
 
 				status = NtQuerySymbolicLinkObject(hObject, &target, &bufferLength);
 
-				if (!NT_SUCCESS(status)) {
+				if (status < 0) {
 					target.Buffer = (PWSTR)HeapAlloc(GetProcessHeap(), 0, bufferLength);
 					target.Length = 0;
 					target.MaximumLength = (USHORT)bufferLength;
 
 					status = NtQuerySymbolicLinkObject(hObject, &target, &bufferLength);
-					if (NT_SUCCESS(status)) {
+					if (status >= 0) {
 						entry.Link(std::wstring(target.Buffer, target.Length / sizeof(WCHAR)));
 					}
 					HeapFree(GetProcessHeap(), 0, target.Buffer);
@@ -1261,7 +1161,7 @@ namespace winrt::StarlightGUI::implementation {
 				EVENT_BASIC_INFORMATION eventInfo{};
 
 				status = NtQueryEvent(hObject, EventBasicInformation, &eventInfo, sizeof(eventInfo), &bufferLength);
-				if (NT_SUCCESS(status)) {
+				if (status >= 0) {
 					entry.EventType(eventInfo.EventType == NotificationEvent ? L"Notification (Manual reset)" : L"Synchronization (Auto reset)");
 					entry.EventSignaled(eventInfo.EventState == 0 ? FALSE : TRUE);
 				}
@@ -1270,7 +1170,7 @@ namespace winrt::StarlightGUI::implementation {
 				MUTANT_BASIC_INFORMATION mutantInfo{};
 
 				status = NtQueryMutant(hObject, MutantBasicInformation, &mutantInfo, sizeof(mutantInfo), &bufferLength);
-				if (NT_SUCCESS(status)) {
+				if (status >= 0) {
 					entry.MutantHoldCount(mutantInfo.CurrentCount);
 					entry.MutantAbandoned(mutantInfo.AbandonedState == 0 ? FALSE : TRUE);
 				}
@@ -1279,7 +1179,7 @@ namespace winrt::StarlightGUI::implementation {
 				SEMAPHORE_BASIC_INFORMATION semaphoreInfo{};
 
 				status = NtQuerySemaphore(hObject, SemaphoreBasicInformation, &semaphoreInfo, sizeof(semaphoreInfo), &bufferLength);
-				if (NT_SUCCESS(status)) {
+				if (status >= 0) {
 					entry.SemaphoreCount(semaphoreInfo.CurrentCount);
 					entry.SemaphoreLimit(semaphoreInfo.MaximumCount);
 				}
@@ -1288,7 +1188,7 @@ namespace winrt::StarlightGUI::implementation {
 				SECTION_BASIC_INFORMATION sectionInfo{};
 
 				status = NtQuerySection(hObject, SectionBasicInformation, &sectionInfo, sizeof(sectionInfo), NULL); // 这里传入长度会报错，可能是微软的问题
-				if (NT_SUCCESS(status)) {
+				if (status >= 0) {
 					entry.SectionBaseAddress((ULONG64)sectionInfo.BaseAddress);
 					entry.SectionMaximumSize(sectionInfo.MaximumSize.QuadPart);
 					entry.SectionAttributes(sectionInfo.AllocationAttributes);
@@ -1297,7 +1197,7 @@ namespace winrt::StarlightGUI::implementation {
 			else if (type == L"Timer") {
 				TIMER_BASIC_INFORMATION timerInfo{};
 				status = NtQueryTimer(hObject, TimerBasicInformation, &timerInfo, sizeof(timerInfo), &bufferLength);
-				if (NT_SUCCESS(status)) {
+				if (status >= 0) {
 					entry.TimerRemainingTime(timerInfo.RemainingTime.QuadPart);
 					entry.TimerState(timerInfo.TimerState);
 				}
@@ -1306,14 +1206,14 @@ namespace winrt::StarlightGUI::implementation {
 				IO_COMPLETION_BASIC_INFORMATION ioCompletionInfo{};
 
 				status = NtQueryIoCompletion(hObject, IoCompletionBasicInformation, &ioCompletionInfo, sizeof(ioCompletionInfo), &bufferLength);
-				if (NT_SUCCESS(status)) {
+				if (status >= 0) {
 					entry.IoCompletionDepth(ioCompletionInfo.Depth);
 				}
 			}
 		}
 
 		CloseHandle(hObject);
-		return NT_SUCCESS(status);
+		return status >= 0;
 	}
 
 	BOOL KernelInstance::RemoveCallback(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
@@ -1512,6 +1412,21 @@ namespace winrt::StarlightGUI::implementation {
 		request.Argument = argument;
 
 		BOOL status = DeviceIoControl(driverDevice, IOCTL_SIRIUS_QUERY_SYSTEM_INFORMATION, &request, sizeof(SI_SYSTEM_INFORMATION), &request, sizeof(SI_SYSTEM_INFORMATION), 0, NULL);
+
+		return status;
+	}
+
+	BOOL KernelInstance::SiFeatureCollection(FeatureCollection collection, COLLECTION_ENUM subCollection, PVOID buffer, ULONG argument) noexcept {
+		if (!GetDriverDevice()) return FALSE;
+
+		SI_COLLECTION_INFORMATION request = { 0 };
+		request.CollectionInformation = (FEATURE_ENUM)collection;
+		request.SubCollectionInformation = subCollection;
+		request.Buffer = buffer;
+		request.Argument = argument;
+
+		BOOL status = DeviceIoControl(driverDevice, IOCTL_SIRIUS_FEATURE_COLLECTION,
+			&request, sizeof(SI_COLLECTION_INFORMATION), &request, sizeof(SI_COLLECTION_INFORMATION), 0, NULL);
 
 		return status;
 	}

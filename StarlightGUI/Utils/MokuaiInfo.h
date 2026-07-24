@@ -14,19 +14,19 @@ namespace winrt::StarlightGUI::implementation
 		hstring Name() { return m_name; }
 		void Name(hstring const& value) { m_name = value; }
 
-		hstring Address() { return m_address; }
-		void Address(hstring const& value) { m_address = value; }
+		ULONG64 Address() { return m_address; }
+		void Address(ULONG64 value) { m_address = value; }
 
-		hstring Size() { return m_size; }
-		void Size(hstring const& value) { m_size = value; }
+		ULONG64 Size() { return m_size; }
+		void Size(ULONG64 value) { m_size = value; }
 
 		hstring Path() { return m_path; }
 		void Path(hstring const& value) { m_path = value; }
 
 	private:
 		hstring m_name{ L"" };
-		hstring m_address{ L"" };
-		hstring m_size{ L"" };
+		ULONG64 m_address{ 0 };
+		ULONG64 m_size{ 0 };
 		hstring m_path{ L"" };
 	};
 }

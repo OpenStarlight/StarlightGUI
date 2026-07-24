@@ -14,33 +14,21 @@ namespace winrt::StarlightGUI::implementation
 		hstring Path() { return m_path; }
 		void Path(hstring const& value) { m_path = value; }
 
-		hstring ImageBase() { return m_imageBase; }
-		void ImageBase(hstring const& value) { m_imageBase = value; }
+		ULONG64 ImageBase() { return m_imageBase; }
+		void ImageBase(ULONG64 value) { m_imageBase = value; }
 
-		ULONG64 ImageBaseULong() { return m_imageBaseULong; }
-		void ImageBaseULong(ULONG64 const& value) { m_imageBaseULong = value; }
+		ULONG64 Size() { return m_size; }
+		void Size(ULONG64 value) { m_size = value; }
 
-		hstring Size() { return m_size; }
-		void Size(hstring const& value) { m_size = value; }
-
-		ULONG64 SizeULong() { return m_sizeULong; }
-		void SizeULong(ULONG64 value) { m_sizeULong = value; }
-
-		hstring DriverObject() { return m_driverObject; }
-		void DriverObject(hstring const& value) { m_driverObject = value; }
-
-		ULONG64 DriverObjectULong() { return m_driverObjectULong; }
-		void DriverObjectULong(ULONG64 value) { m_driverObjectULong = value; }
+		ULONG64 DriverObject() { return m_driverObject; }
+		void DriverObject(ULONG64 value) { m_driverObject = value; }
 
 	private:
 		hstring m_name{ L"" };
 		hstring m_path{ L"" };
-		hstring m_imageBase{ L"" };
-		ULONG64 m_imageBaseULong{ 0 };
-		hstring m_size{ L"" };
-		ULONG64 m_sizeULong{ 0 };
-		hstring m_driverObject{ L"" };
-		ULONG64 m_driverObjectULong{ 0 };
+		ULONG64 m_imageBase{ 0 };
+		ULONG64 m_size{ 0 };
+		ULONG64 m_driverObject{ 0 };
 	};
 }
 

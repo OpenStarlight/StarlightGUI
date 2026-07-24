@@ -8,12 +8,10 @@
 
 		String Name{ get; set; };
 		String Path{ get; set; };
-		String ModifyTime{ get; set; };
-		UInt64 ModifyTimeULong{ get; set; };
+		UInt64 ModifyTime{ get; set; };
 		Boolean Directory{ get; set; };
 		UInt32 Flag{ get; set; };
-		String Size{ get; set; };
-		UInt64 SizeULong{ get; set; };
+		UInt64 Size{ get; set; };
 		UInt64 MFTID{ get; set; };
 		Microsoft.UI.Xaml.Media.ImageSource Icon{ get; set; };
 	}

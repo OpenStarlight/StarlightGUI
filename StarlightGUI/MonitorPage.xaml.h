@@ -29,10 +29,11 @@ namespace winrt::StarlightGUI::implementation
         winrt::Windows::Foundation::IAsyncAction LoadPartitionList(std::wstring path, bool reportError = true);
         winrt::Windows::Foundation::IAsyncAction LoadObjectList();
         winrt::Windows::Foundation::IAsyncAction LoadGeneralList(bool force);
-        winrt::Windows::Foundation::IAsyncAction WaitAndReloadAsync(int interval);
+        winrt::Windows::Foundation::IAsyncAction WaitAndReloadAsync(int interval, bool force = true);
 
         void InitializeFlyout();
         void UpdateCallbackColumns();
+        winrt::Microsoft::UI::Xaml::Controls::ListView GetGeneralListView(int index);
         void SearchBox_TextChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxTextChangedEventArgs const& e);
         void SearchBox_SuggestionChosen(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxSuggestionChosenEventArgs const& e);
         void SearchBox_QuerySubmitted(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::AutoSuggestBoxQuerySubmittedEventArgs const& e);

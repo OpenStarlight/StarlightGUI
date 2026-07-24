@@ -8,11 +8,8 @@
 
 		String Name{ get; set; };
 		String Path{ get; set; };
-		String ImageBase{ get; set; };
-		UInt64 ImageBaseULong{ get; set; };
-		String Size{ get; set; };
-		UInt64 SizeULong{ get; set; };
-		String DriverObject{ get; set; };
-		UInt64 DriverObjectULong{ get; set; };
+		UInt64 ImageBase{ get; set; };
+		UInt64 Size{ get; set; };
+		UInt64 DriverObject{ get; set; };
 	}
 }

@@ -93,7 +93,7 @@ namespace winrt::StarlightGUI::implementation
 
         auto flyoutStyles = slg::GetStyles();
 
-        if (item.Name() == L"AstralX.sys" || item.Name() == L"kernel.sys") {
+        if (item.Name() == L"Sirius.sys") {
             slg::CreateInfoBarAndDisplay(t(L"Common.Warning"), t(L"Msg.EditSelfWarning").c_str(), InfoBarSeverity::Warning, g_mainWindowInstance);
             return;
         }
@@ -108,7 +108,7 @@ namespace winrt::StarlightGUI::implementation
             if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
-            if (KernelInstance::SiUnloadDriver(target.DriverObjectULong())) {
+            if (KernelInstance::SiUnloadDriver(target.DriverObject())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 lifetime->WaitAndReloadAsync(1000);
             }
@@ -124,7 +124,7 @@ namespace winrt::StarlightGUI::implementation
             if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
-            if (KernelInstance::SiHideDriver(target.DriverObjectULong())) {
+            if (KernelInstance::SiHideDriver(target.DriverObject())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                 lifetime->WaitAndReloadAsync(1000);
             }
@@ -154,7 +154,7 @@ namespace winrt::StarlightGUI::implementation
             });
         item2_1.Items().Append(item2_1_sub2);
         auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"Common.Base").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (TaskUtils::CopyToClipboard(item.ImageBase().c_str())) {
+            if (TaskUtils::CopyToClipboard(ULongToHexString(item.ImageBase()).c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
             else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
@@ -162,7 +162,10 @@ namespace winrt::StarlightGUI::implementation
             });
         item2_1.Items().Append(item2_1_sub3);
         auto item2_1_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"KernelModule.Header.DriverObj").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            if (TaskUtils::CopyToClipboard(item.DriverObject().c_str())) {
+            auto driverObject = item.DriverObject() == 0
+                ? std::wstring(t(L"Common.None").c_str())
+                : ULongToHexString(item.DriverObject());
+            if (TaskUtils::CopyToClipboard(driverObject.c_str())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
             else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
@@ -228,9 +231,6 @@ namespace winrt::StarlightGUI::implementation
 
             if (kernelModule.Name().empty()) kernelModule.Name(t(L"Common.Unknown"));
             if (kernelModule.Path().empty()) kernelModule.Path(t(L"Common.Unknown"));
-            if (kernelModule.ImageBase().empty()) kernelModule.ImageBase(t(L"Common.Unknown"));
-            if (kernelModule.DriverObject().empty()) kernelModule.DriverObject(t(L"Common.Unknown"));
-            if (kernelModule.DriverObjectULong() == 0x0) kernelModule.DriverObject(t(L"Common.None"));
 
             m_kernelModuleList.Append(kernelModule);
         }
@@ -335,11 +335,11 @@ namespace winrt::StarlightGUI::implementation
             case SortColumn::Name:
                 return LessIgnoreCase(a.Name().c_str(), b.Name().c_str());
             case SortColumn::ImageBase:
-                return a.ImageBaseULong() < b.ImageBaseULong();
+                return a.ImageBase() < b.ImageBase();
             case SortColumn::DriverObject:
-                return a.DriverObjectULong() < b.DriverObjectULong();
+                return a.DriverObject() < b.DriverObject();
             case SortColumn::Size:
-                return a.SizeULong() < b.SizeULong();
+                return a.Size() < b.Size();
             default:
                 return false;
             }
@@ -477,7 +477,7 @@ namespace winrt::StarlightGUI::implementation
                 co_return;
             }
 
-            if (KernelInstance::SiUnloadDriver(item.DriverObjectULong())) {
+            if (KernelInstance::SiUnloadDriver(item.DriverObject())) {
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 
                 LoadKernelModuleList();

@@ -292,7 +292,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding EProcess}" />
+                                        Text="{Binding EProcess, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  CPU  -->
                                     <TextBlock
@@ -301,7 +301,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding CpuUsage}" />
+                                        Text="{Binding CpuUsage, Converter={StaticResource DisplayValueConverter}, ConverterParameter=CpuUsage}" />
 
                                     <!--  内存使用  -->
                                     <TextBlock
@@ -310,7 +310,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding MemoryUsage}" />
+                                        Text="{Binding MemoryUsage, Converter={StaticResource DisplayValueConverter}, ConverterParameter=MemorySizeOrUnknown}" />
 
                                     <!--  进程ID  -->
                                     <TextBlock

@@ -1,6 +1,9 @@
 ﻿#pragma once
-#define SIRIUS_DRIVER_VERSION L"5.1.1"
-#include "pch.h"
+
+#include "Sirius.h"
+#include "SiriusCollection.h"
+
+#define SIRIUS_DRIVER_VERSION L"7.1.0"
 #if defined(_M_IX86)
 #define PVOID PVOID64
 #define ULONG_PTR unsigned long long
@@ -19,9 +22,9 @@
   */
 #define IOCTL_SIRIUS_SET_PROCESS_INFORMATION    CTL_CODE(FILE_DEVICE_UNKNOWN, 0x000, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_SIRIUS_QUERY_PROCESS_INFORMATION  CTL_CODE(FILE_DEVICE_UNKNOWN, 0x001, METHOD_BUFFERED, FILE_ANY_ACCESS)
-enum class ProcessSetInformation : ULONG {
+enum class ProcessSetInformation : FEATURE_ENUM {
     /* Operations */
-    Terminate = 0,                              // Terminate the process. Arg=0: normal, Arg=1: thread, Arg=2: memory.
+    Terminate,                                  // Terminate the process. Arg=0: normal, Arg=1: thread, Arg=2: memory.
     Hide,                                       // Hide the process. (BSOD Warning)
     Suspend,                                    // Suspend the process.
     Resume,                                     // Resume the process.
@@ -33,9 +36,9 @@ enum class ProcessSetInformation : ULONG {
     InjectDll,                                  // [SI_INJECT_DLL], inject a DLL into the process. Arg=0: CreateRemoteThread, Arg=1: QueueUserAPC, Arg=2: Manual Map.
 };
 
-enum class ProcessGetInformation : ULONG {
-    BasicInformation = 0,                       // [SI_PROCESS_DATA], return the basic information of the process.
-    FullInformation = 1,                        // [SI_PROCESS_DATA_FULL], return the full information of the process.
+enum class ProcessGetInformation : FEATURE_ENUM {
+    BasicInformation,                           // [SI_PROCESS_DATA], return the basic information of the process.
+    FullInformation,                            // [SI_PROCESS_DATA_FULL], return the full information of the process.
     Protection,                                 // [SI_PROCESS_PROTECTION], return the process protection state.
     Critical,                                   // [BOOLEAN state], return the process critical state.
     Thread,                                     // [SI_ENUMERATION], enum process threads.
@@ -45,7 +48,7 @@ enum class ProcessGetInformation : ULONG {
 };
 
 typedef struct _SI_PROCESS_INFORMATION {
-    ULONG ProcessInformation;                   // Process information type.
+    FEATURE_ENUM ProcessInformation;            // Process information type.
     ULONG PID;                                  // Process ID.
     PVOID Buffer;                               // Argument buffer.
     ULONG Argument;                             // Extra arguments.
@@ -62,9 +65,9 @@ typedef struct _SI_PROCESS_PROTECTION
  */
 #define IOCTL_SIRIUS_SET_THREAD_INFORMATION     CTL_CODE(FILE_DEVICE_UNKNOWN, 0x002, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_SIRIUS_QUERY_THREAD_INFORMATION   CTL_CODE(FILE_DEVICE_UNKNOWN, 0x003, METHOD_BUFFERED, FILE_ANY_ACCESS)
-enum class ThreadSetInformation : ULONG {
+enum class ThreadSetInformation : FEATURE_ENUM {
     /* Operations */
-    Terminate = 0,                              // Terminate the thread. Arg=0: normal, Arg=1: super (BSOD warning).
+    Terminate,                                  // Terminate the thread. Arg=0: normal, Arg=1: super (BSOD warning).
     Suspend,                                    // Suspend the thread.
     Resume,                                     // Resume the thread.
     /* Attributes */
@@ -74,15 +77,15 @@ enum class ThreadSetInformation : ULONG {
     InjectDll,                                  // [SI_INJECT_DLL], inject a DLL into the thread. Arg=0: QueueUserAPC, Arg=1: Thread Hijacking, Arg=2: Manual Map.
 };
 
-enum class ThreadGetInformation : ULONG {
-    BasicInformation = 0,                       // [SI_THREAD_DATA], return the basic information of the thread.
-    FullInformation = 1,                        // [SI_THREAD_DATA_FULL], return the full information of the thread.
+enum class ThreadGetInformation : FEATURE_ENUM {
+    BasicInformation,                           // [SI_THREAD_DATA], return the basic information of the thread.
+    FullInformation,                            // [SI_THREAD_DATA_FULL], return the full information of the thread.
     PreviousMode,                               // [CHAR mode], return the thread previous mode.
     ApcQueueable,                               // [BOOLEAN state], return the thread ApcQueueable state.
 };
 
 typedef struct _SI_THREAD_INFORMATION {
-    ULONG ThreadInformation;                    // Thread information type.
+    FEATURE_ENUM ThreadInformation;             // Thread information type.
     ULONG TID;                                  // Thread ID.
     PVOID Buffer;                               // Argument buffer.
     ULONG Argument;                             // Extra arguments.
@@ -93,21 +96,21 @@ typedef struct _SI_THREAD_INFORMATION {
  */
 #define IOCTL_SIRIUS_SET_FILE_INFORMATION       CTL_CODE(FILE_DEVICE_UNKNOWN, 0x00E, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_SIRIUS_QUERY_FILE_INFORMATION     CTL_CODE(FILE_DEVICE_UNKNOWN, 0x00F, METHOD_BUFFERED, FILE_ANY_ACCESS)
-enum class FileSetInformation : ULONG {
-    Delete = 0,                                 // Delete the file or directory. Arg=0: normal, Arg=1: ntfs.
+enum class FileSetInformation : FEATURE_ENUM {
+    Delete,                                     // Delete the file or directory. Arg=0: normal, Arg=1: ntfs.
     Copy,                                       // [WCHAR targetPath], copy the file or directory. Arg=0: normal, Arg=1: ntfs.
     Rename                                      // [WCHAR targetPath], rename the file or directory. Arg=0: normal, Arg=1: ntfs.
 };
 
-enum class FileGetInformation : ULONG {
-    FullInformation = 0,                        // WIP
+enum class FileGetInformation : FEATURE_ENUM {
+    FullInformation,                            // WIP
     RawData,                                    // Read file raw data. Arg=0: normal, Arg=1: ntfs.
     DirectoryFile,                              // [SI_ENUMERATION], enum files. Arg=0: normal, Arg=1: ntfs direct.
     DirectoryFileByNTFS,                        // [SI_ENUMERATION], enum NTFS MFT. Arg=0: file only, Argument=1: full.
 };
 
 typedef struct _SI_FILE_INFORMATION {
-    ULONG FileInformation;                      // File information type.
+    FEATURE_ENUM FileInformation;               // File information type.
     WCHAR File[512];                            // File path.
     PVOID Buffer;                               // Argument buffer.
     ULONG Argument;                             // Extra arguments.
@@ -126,8 +129,8 @@ typedef struct _SI_FILE_RAW_READ {
  */
 #define IOCTL_SIRIUS_SET_SYSTEM_INFORMATION     CTL_CODE(FILE_DEVICE_UNKNOWN, 0x100, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_SIRIUS_QUERY_SYSTEM_INFORMATION   CTL_CODE(FILE_DEVICE_UNKNOWN, 0x101, METHOD_BUFFERED, FILE_ANY_ACCESS)
-enum class SystemSetInformation : ULONG {
-    WriteMemory = 0,                            // [SI_MEMORY], write memory.
+enum class SystemSetInformation : FEATURE_ENUM {
+    WriteMemory,                                // [SI_MEMORY], write memory.
     TriggerBugCheck,
     LoadImage,                                  // [SI_LOAD_IMAGE], load a image.
     UnloadImage,                                // [SI_UNLOAD_IMAGE], unload a image.
@@ -144,9 +147,9 @@ enum class SystemSetInformation : ULONG {
     RemoveFromMmUnloadedDrivers,                // [SI_REMOVE_UNLOADED_DRIVER], remove a unloaded driver entry.
 };
 
-enum class SystemGetInformation : ULONG {
+enum class SystemGetInformation : FEATURE_ENUM {
     /* Objects */
-    Process = 0,                                // [SI_ENUMERATION], enum processes.
+    Process,                                    // [SI_ENUMERATION], enum processes.
     Thread,                                     // [SI_ENUMERATION], enum threads.
     Module,                                     // [SI_ENUMERATION], enum modules.
     Handle,                                     // [SI_ENUMERATION], enum handles.
@@ -179,7 +182,7 @@ enum class SystemGetInformation : ULONG {
 };
 
 typedef struct _SI_SYSTEM_INFORMATION {
-    ULONG SystemInformation;                    // System information type.
+    FEATURE_ENUM SystemInformation;             // System information type.
     PVOID Buffer;                               // Argument buffer.
     ULONG Argument;                             // Extra arguments.
 } SI_SYSTEM_INFORMATION, * PSI_SYSTEM_INFORMATION;
@@ -205,15 +208,24 @@ typedef struct _SI_ERROR_DETAIL {
 #define IOCTL_MONITOR_REGISTRIES		        CTL_CODE(FILE_DEVICE_UNKNOWN, 0x613, METHOD_BUFFERED, FILE_ANY_ACCESS)
 #define IOCTL_MONITOR_FILES		    	        CTL_CODE(FILE_DEVICE_UNKNOWN, 0x614, METHOD_BUFFERED, FILE_ANY_ACCESS)
 
+/*
+ * Collection section
+ */
+#define IOCTL_SIRIUS_FEATURE_COLLECTION         CTL_CODE(FILE_DEVICE_UNKNOWN, 0x900, METHOD_BUFFERED, FILE_ANY_ACCESS)
+enum class FeatureCollection : FEATURE_ENUM {
+    Virtualization,
+    Monitor,
+};
 
-// 虚拟化：如果由某个进程打开设备句柄并发送 IOCTL 开启，必须在退出时关闭，未关闭会自动关
-// 可在注册表 HKLM\\SOFTWARE\\Sirius 创建 DWORD AutoVirtualization=1 以自动启动虚拟化
-#define IOCTL_METAVERSE_INITIALIZE          CTL_CODE(FILE_DEVICE_UNKNOWN, 0x900, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_METAVERSE_EXIT                CTL_CODE(FILE_DEVICE_UNKNOWN, 0x901, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_METAVERSE_CHECK_SUPPORT       CTL_CODE(FILE_DEVICE_UNKNOWN, 0x902, METHOD_BUFFERED, FILE_ANY_ACCESS)
+typedef struct _SI_COLLECTION_INFORMATION {
+    FEATURE_ENUM CollectionInformation;         // Collection information type.
+    COLLECTION_ENUM SubCollectionInformation;   // Sub collection information type.
+    PVOID Buffer;                               // Argument buffer.
+    ULONG Argument;                             // Extra arguments.
+} SI_COLLECTION_INFORMATION, * PSI_COLLECTION_INFORMATION;
 
-enum class CallbackType : ULONG {
-    CreateProcess = 0,
+enum class CallbackType : TYPE_ENUM {
+    CreateProcess,
     CreateThread,
     LoadImage,
     Object,
@@ -235,14 +247,14 @@ enum class CallbackType : ULONG {
     Nmi
 };
 
-enum class ObCallbackType : ULONG {
-    Process = 0,
+enum class ObCallbackType : TYPE_ENUM {
+    Process,
     Thread,
     Desktop
 };
 
-enum class FirmwareType : ULONG {
-    BGRT = 0,                                   // Boot Graphics Resource Table.
+enum class FirmwareType : TYPE_ENUM {
+    BGRT,                                       // Boot Graphics Resource Table.
     FPDT,                                       // Firmware Performance Data Table.
     UEFI,                                       // Unified Extensible Firmware Interface info.
     RSDT,                                       // RSDT/XSDT root table info.

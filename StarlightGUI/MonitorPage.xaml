@@ -92,7 +92,7 @@
                             <TextBlock x:Name="MonitorSegIOTimerUid" Text="I/O 定时器" />
                         </StackPanel>
                     </essential:SegmentedItem>
-                    <essential:SegmentedItem x:Name="DpcTimerSegmentedItem">
+                    <essential:SegmentedItem x:Name="DPCTimerSegmentedItem">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon
                                 FontFamily="Segoe Fluent Icons"
@@ -489,7 +489,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
+                                        Text="{Binding Converter={StaticResource DisplayValueConverter}, ConverterParameter=CallbackColumn1}" />
 
                                     <!--  句柄  -->
                                     <TextBlock
@@ -498,7 +498,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String4}" />
+                                        Text="{Binding Converter={StaticResource DisplayValueConverter}, ConverterParameter=CallbackColumn2}" />
 
                                     <!--  Address3  -->
                                     <TextBlock
@@ -507,7 +507,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String5}" />
+                                        Text="{Binding Converter={StaticResource DisplayValueConverter}, ConverterParameter=CallbackColumn3}" />
 
                                     <!--  Address4  -->
                                     <TextBlock
@@ -516,7 +516,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String6}" />
+                                        Text="{Binding Converter={StaticResource DisplayValueConverter}, ConverterParameter=CallbackColumn4}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -674,7 +674,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
+                                        Text="{Binding ULongLong1, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  PreFilter  -->
                                     <TextBlock
@@ -683,7 +683,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String4}" />
+                                        Text="{Binding ULongLong2, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  PostFilter  -->
                                     <TextBlock
@@ -692,7 +692,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String5}" />
+                                        Text="{Binding ULongLong3, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -819,7 +819,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
+                                        Text="{Binding ULongLong1, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -932,7 +932,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
+                                        Text="{Binding ULongLong1, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -1044,7 +1044,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String2}" />
+                                        Text="{Binding ULongLong1, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  对象  -->
                                     <TextBlock
@@ -1053,7 +1053,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
+                                        Text="{Binding ULongLong2, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -1077,7 +1077,7 @@
         </Grid>
 
         <Grid
-            x:Name="DpcTimerGrid"
+            x:Name="DPCTimerGrid"
             Grid.Row="1"
             Visibility="Collapsed">
             <Grid.RowDefinitions>
@@ -1092,26 +1092,22 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="115" />
-                        <ColumnDefinition Width="115" />
-                        <ColumnDefinition Width="135" />
-                        <ColumnDefinition Width="135" />
-                        <ColumnDefinition Width="125" />
-                        <ColumnDefinition Width="125" />
-                        <ColumnDefinition Width="70" />
-                        <ColumnDefinition Width="145" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
 
                     <Button
-                        x:Name="DpcTimerPathHeaderButton"
+                        x:Name="DPCTimerPathHeaderButton"
                         Grid.Column="0"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         Content="模块"
                         CornerRadius="0" />
                     <Button
-                        x:Name="DpcTimerTimerHeaderButton"
+                        x:Name="DPCTimerTimerHeaderButton"
                         Grid.Column="1"
                         Height="32"
                         HorizontalAlignment="Stretch"
@@ -1120,7 +1116,7 @@
                         Content="Timer"
                         CornerRadius="0" />
                     <Button
-                        x:Name="DpcTimerDpcHeaderButton"
+                        x:Name="DPCTimerDpcHeaderButton"
                         Grid.Column="2"
                         Height="32"
                         HorizontalAlignment="Stretch"
@@ -1129,7 +1125,7 @@
                         Content="DPC"
                         CornerRadius="0" />
                     <Button
-                        x:Name="DpcTimerRoutineHeaderButton"
+                        x:Name="DPCTimerRoutineHeaderButton"
                         Grid.Column="3"
                         Height="32"
                         HorizontalAlignment="Stretch"
@@ -1138,7 +1134,7 @@
                         Content="DeferredRoutine"
                         CornerRadius="0" />
                     <Button
-                        x:Name="DpcTimerContextHeaderButton"
+                        x:Name="DPCTimerContextHeaderButton"
                         Grid.Column="4"
                         Height="32"
                         HorizontalAlignment="Stretch"
@@ -1147,49 +1143,13 @@
                         Content="DeferredContext"
                         CornerRadius="0" />
                     <Button
-                        x:Name="DpcTimerArgument1HeaderButton"
+                        x:Name="DPCTimerPeriodHeaderButton"
                         Grid.Column="5"
                         Height="32"
                         HorizontalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
-                        Content="SystemArgument1"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="DpcTimerArgument2HeaderButton"
-                        Grid.Column="6"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="SystemArgument2"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="DpcTimerPeriodHeaderButton"
-                        Grid.Column="7"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
                         Content="Period"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="DpcTimerDueTimeHeaderButton"
-                        Grid.Column="8"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="DueTime"
-                        CornerRadius="0" />
-                    <Button
-                        x:Name="DpcTimerProcessorHeaderButton"
-                        Grid.Column="9"
-                        Height="32"
-                        HorizontalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        Content="Processor"
                         CornerRadius="0" />
                 </Grid>
             </Border>
@@ -1202,20 +1162,16 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="115" />
-                        <ColumnDefinition Width="115" />
-                        <ColumnDefinition Width="135" />
-                        <ColumnDefinition Width="135" />
-                        <ColumnDefinition Width="125" />
-                        <ColumnDefinition Width="125" />
-                        <ColumnDefinition Width="70" />
-                        <ColumnDefinition Width="145" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="80" />
                     </Grid.ColumnDefinitions>
 
                     <ListView
-                        x:Name="DpcTimerListView"
-                        Grid.ColumnSpan="10"
+                        x:Name="DPCTimerListView"
+                        Grid.ColumnSpan="6"
                         Background="Transparent"
                         ItemContainerStyle="{StaticResource ListViewItemStyle}">
                         <ListView.ItemTemplate>
@@ -1223,14 +1179,10 @@
                                 <Grid Height="45">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="115" />
-                                        <ColumnDefinition Width="115" />
-                                        <ColumnDefinition Width="135" />
-                                        <ColumnDefinition Width="135" />
-                                        <ColumnDefinition Width="125" />
-                                        <ColumnDefinition Width="125" />
-                                        <ColumnDefinition Width="70" />
-                                        <ColumnDefinition Width="145" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="80" />
                                     </Grid.ColumnDefinitions>
 
@@ -1253,63 +1205,35 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String2}" />
+                                        Text="{Binding ULongLong1, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                     <TextBlock
                                         Grid.Column="2"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
+                                        Text="{Binding ULongLong2, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                     <TextBlock
                                         Grid.Column="3"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String4}" />
+                                        Text="{Binding ULongLong3, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                     <TextBlock
                                         Grid.Column="4"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String5}" />
+                                        Text="{Binding ULongLong4, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                     <TextBlock
                                         Grid.Column="5"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String6}" />
-                                    <TextBlock
-                                        Grid.Column="6"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String7}" />
-                                    <TextBlock
-                                        Grid.Column="7"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String8}" />
-                                    <TextBlock
-                                        Grid.Column="8"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String9}" />
-                                    <TextBlock
-                                        Grid.Column="9"
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="12"
-                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String10}" />
+                                        Text="{Binding Long1}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -1344,34 +1268,6 @@
                         IsHitTestVisible="False" />
                     <Border
                         Grid.Column="5"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="6"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="7"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="8"
-                        HorizontalAlignment="Left"
-                        VerticalAlignment="Stretch"
-                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
-                        BorderThickness="1,0,0,0"
-                        IsHitTestVisible="False" />
-                    <Border
-                        Grid.Column="9"
                         HorizontalAlignment="Left"
                         VerticalAlignment="Stretch"
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
@@ -1396,12 +1292,13 @@
                 CornerRadius="5,5,0,0">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="110" />
-                        <ColumnDefinition Width="130" />
-                        <ColumnDefinition Width="130" />
-                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <Button
@@ -1456,6 +1353,14 @@
                         BorderThickness="1,0,0,0"
                         Content="Flag"
                         CornerRadius="0" />
+                    <Button
+                        Grid.Column="6"
+                        Height="32"
+                        HorizontalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        CornerRadius="0"
+                        IsHitTestVisible="False" />
                 </Grid>
             </Border>
             <Border
@@ -1466,73 +1371,75 @@
                 CornerRadius="0,0,5,5">
                 <Grid>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="110" />
-                        <ColumnDefinition Width="130" />
-                        <ColumnDefinition Width="130" />
-                        <ColumnDefinition Width="140" />
+                        <ColumnDefinition Width="150" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
                     <ListView
                         x:Name="ResourceListView"
-                        Grid.ColumnSpan="6"
+                        Grid.ColumnSpan="7"
                         Background="Transparent"
                         ItemContainerStyle="{StaticResource ListViewItemStyle}">
                         <ListView.ItemTemplate>
                             <DataTemplate>
                                 <Grid Height="45">
                                     <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="110" />
-                                        <ColumnDefinition Width="130" />
-                                        <ColumnDefinition Width="130" />
-                                        <ColumnDefinition Width="140" />
+                                        <ColumnDefinition Width="150" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
                                     <TextBlock
                                         Grid.Column="0"
-                                        Margin="16,0,0,0"
+                                        HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String1}" />
+                                        Text="{Binding ULongLong1, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                     <TextBlock
                                         Grid.Column="1"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String2}" />
+                                        Text="{Binding Long1}" />
                                     <TextBlock
                                         Grid.Column="2"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
+                                        Text="{Binding ULong1}" />
                                     <TextBlock
                                         Grid.Column="3"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String4}" />
+                                        Text="{Binding ULong2}" />
                                     <TextBlock
                                         Grid.Column="4"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String5}" />
+                                        Text="{Binding ULong3}" />
                                     <TextBlock
                                         Grid.Column="5"
                                         HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String6}" />
+                                        Text="{Binding ULong4, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex32}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -1572,6 +1479,13 @@
                         BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                         BorderThickness="1,0,0,0"
                         IsHitTestVisible="False" />
+                    <Border
+                        Grid.Column="6"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Stretch"
+                        BorderBrush="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                        BorderThickness="1,0,0,0"
+                        IsHitTestVisible="False" />
                 </Grid>
             </Border>
         </Grid>
@@ -1592,8 +1506,8 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="*" />
@@ -1661,8 +1575,8 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="*" />
@@ -1678,8 +1592,8 @@
                                 <Grid Height="45">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="*" />
@@ -1692,7 +1606,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String1}" />
+                                        Text="{Binding ULongLong1, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  Selector  -->
                                     <TextBlock
@@ -1789,10 +1703,10 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
@@ -1868,10 +1782,10 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="150" />
-                        <ColumnDefinition Width="150" />
                         <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="100" />
-                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
+                        <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
@@ -1886,10 +1800,10 @@
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="150" />
-                                        <ColumnDefinition Width="150" />
                                         <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="100" />
-                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
+                                        <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
 
@@ -1909,7 +1823,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String2}" />
+                                        Text="{Binding ULongLong1, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
 
                                     <!--  段界限  -->
                                     <TextBlock
@@ -1918,7 +1832,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
+                                        Text="{Binding ULongLong2, Converter={StaticResource DisplayValueConverter}, ConverterParameter=HexCompact}" />
 
                                     <!--  Type  -->
                                     <TextBlock
@@ -2012,7 +1926,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="100" />
                     </Grid.ColumnDefinitions>
 
@@ -2052,7 +1966,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="80" />
                         <ColumnDefinition Width="100" />
                     </Grid.ColumnDefinitions>
 
@@ -2067,7 +1981,7 @@
                                 <Grid Height="45">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="100" />
+                                        <ColumnDefinition Width="80" />
                                         <ColumnDefinition Width="100" />
                                     </Grid.ColumnDefinitions>
 
@@ -2102,7 +2016,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding ULong2}" />
+                                        Text="{Binding ULong2, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex32}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>
@@ -2222,7 +2136,7 @@
                                         VerticalAlignment="Center"
                                         FontSize="12"
                                         Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
-                                        Text="{Binding String3}" />
+                                        Text="{Binding ULongLong1, Converter={StaticResource DisplayValueConverter}, ConverterParameter=Hex64}" />
                                 </Grid>
                             </DataTemplate>
                         </ListView.ItemTemplate>

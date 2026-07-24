@@ -69,26 +69,41 @@ namespace winrt::StarlightGUI::implementation
 		{
 			ObjectTreeView().ItemsSource(m_itemList);
 			ObjectListView().ItemsSource(m_objectList);
-			CallbackListView().ItemsSource(m_generalList);
-			MiniFilterListView().ItemsSource(m_generalList);
-			SSDTListView().ItemsSource(m_generalList);
-			SSSDTListView().ItemsSource(m_generalList);
-			IoTimerListView().ItemsSource(m_generalList);
-			DpcTimerListView().ItemsSource(m_generalList);
-			ResourceListView().ItemsSource(m_generalList);
-			IDTListView().ItemsSource(m_generalList);
-			GDTListView().ItemsSource(m_generalList);
-			PiDDBListView().ItemsSource(m_generalList);
-			HALTableListView().ItemsSource(m_generalList);
 		}
 		UpdateCallbackColumns();
         InitializeColumnSyncBindings();
 
+		Loaded([this](auto&&, auto&&) {
+			if (auto listView = GetGeneralListView(segmentedIndex)) {
+				listView.ItemsSource(m_generalList);
+			}
+			});
+
 		Unloaded([this](auto&&, auto&&) {
 			++m_reloadRequestVersion;
+			if (auto listView = GetGeneralListView(segmentedIndex)) {
+				listView.ItemsSource(nullptr);
+			}
 			});
 
 		LOG_INFO(L"MonitorPage", L"MonitorPage initialized.");
+	}
+
+	ListView MonitorPage::GetGeneralListView(int index) {
+		switch (index) {
+		case 1: return CallbackListView();
+		case 2: return MiniFilterListView();
+		case 3: return SSDTListView();
+		case 4: return SSSDTListView();
+		case 5: return IoTimerListView();
+		case 6: return DPCTimerListView();
+		case 7: return ResourceListView();
+		case 8: return IDTListView();
+		case 9: return GDTListView();
+		case 10: return PiDDBListView();
+		case 11: return HALTableListView();
+		default: return nullptr;
+		}
 	}
 
 	winrt::Windows::Foundation::IAsyncAction MonitorPage::LoadPartitionList(std::wstring path, bool reportError) {
@@ -185,7 +200,7 @@ namespace winrt::StarlightGUI::implementation
 
 		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, static_cast<size_t>(CallbackType::Nmi) + 1> callbackCache;
 		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, HALTableNames.size()> halCache;
-		static std::vector<winrt::StarlightGUI::GeneralEntry> minifilterCache, ssdtCache, sssdtCache, ioTimerCache, dpcTimerCache, resourceCache, idtCache, gdtCache, piddbCache;
+		static std::vector<winrt::StarlightGUI::GeneralEntry> minifilterCache, ssdtCache, sssdtCache, ioTimerCache, DPCTimerCache, resourceCache, idtCache, gdtCache, piddbCache;
 
 		switch (requestedIndex) {
 		case 1:
@@ -257,17 +272,17 @@ namespace winrt::StarlightGUI::implementation
 			else entriesSource = &ioTimerCache;
 			break;
 		case 6:
-			if (force || dpcTimerCache.empty()) {
-				if (!KernelInstance::SiEnumDpcTimers(entries)) {
+			if (force || DPCTimerCache.empty()) {
+				if (!KernelInstance::SiEnumDPCTimers(entries)) {
 					co_await wil::resume_foreground(DispatcherQueue());
 					slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), GetDriverErrorMessage(), InfoBarSeverity::Error, g_mainWindowInstance);
 					m_isLoading = false;
 					co_return;
 				}
-				dpcTimerCache = entries;
+				DPCTimerCache = entries;
 				entriesSource = &entries;
 			}
-			else entriesSource = &dpcTimerCache;
+			else entriesSource = &DPCTimerCache;
 			break;
 		case 7:
 			if (force || resourceCache.empty()) {
@@ -340,17 +355,8 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		}
 
-		co_await wil::resume_foreground(DispatcherQueue());
-
-		// 防止意外
-		if (requestedIndex != segmentedIndex ||
-			(requestedIndex == 1 && requestedCallbackType != m_callbackType) ||
-			(requestedIndex == 11 && requestedHALTableType != m_halTableType)) {
-			m_isLoading = false;
-			co_return;
-		}
-
-		m_generalList.Clear();
+		std::vector<winrt::StarlightGUI::GeneralEntry> visibleEntries;
+		visibleEntries.reserve(entriesSource->size());
 		for (const auto& entry : *entriesSource) {
 			bool shouldRemove = false;
 			if (!lowerQuery.empty()) {
@@ -358,23 +364,48 @@ namespace winrt::StarlightGUI::implementation
 					!ContainsIgnoreCaseLowerQuery(entry.String2().c_str(), lowerQuery) &&
 					!ContainsIgnoreCaseLowerQuery(entry.String3().c_str(), lowerQuery) &&
 					!ContainsIgnoreCaseLowerQuery(entry.String4().c_str(), lowerQuery) &&
-					!ContainsIgnoreCaseLowerQuery(entry.String5().c_str(), lowerQuery) &&
-					!ContainsIgnoreCaseLowerQuery(entry.String6().c_str(), lowerQuery) &&
-					!ContainsIgnoreCaseLowerQuery(entry.String7().c_str(), lowerQuery) &&
-					!ContainsIgnoreCaseLowerQuery(entry.String8().c_str(), lowerQuery) &&
-					!ContainsIgnoreCaseLowerQuery(entry.String9().c_str(), lowerQuery) &&
-					!ContainsIgnoreCaseLowerQuery(entry.String10().c_str(), lowerQuery);
+					!ContainsIgnoreCaseLowerQuery(entry.String5().c_str(), lowerQuery);
+				if (shouldRemove) {
+					std::array<std::wstring, 20> rawFields = {
+						ULongToHexString(entry.ULongLong1()), ULongToHexString(entry.ULongLong2()),
+						ULongToHexString(entry.ULongLong3()), ULongToHexString(entry.ULongLong4()),
+						ULongToHexString(entry.ULongLong5()),
+						std::to_wstring(entry.LongLong1()), std::to_wstring(entry.LongLong2()),
+						std::to_wstring(entry.LongLong3()), std::to_wstring(entry.LongLong4()),
+						std::to_wstring(entry.LongLong5()),
+						std::to_wstring(entry.ULong1()), std::to_wstring(entry.ULong2()),
+						std::to_wstring(entry.ULong3()), std::to_wstring(entry.ULong4()),
+						std::to_wstring(entry.ULong5()),
+						std::to_wstring(entry.Long1()), std::to_wstring(entry.Long2()),
+						std::to_wstring(entry.Long3()), std::to_wstring(entry.Long4()),
+						std::to_wstring(entry.Long5())
+					};
+					for (auto const& field : rawFields) {
+						if (ContainsIgnoreCaseLowerQuery(field, lowerQuery)) {
+							shouldRemove = false;
+							break;
+						}
+					}
+				}
 			}
 			if (shouldRemove) continue;
 
-			if (entry.String1().empty()) entry.String1(t(L"Common.Unknown"));
-			if (entry.String2().empty()) entry.String2(t(L"Common.Unknown"));
-			if (entry.String3().empty()) entry.String3(t(L"Common.Unknown"));
-			if (entry.String4().empty()) entry.String4(t(L"Common.Unknown"));
-			if (entry.String5().empty()) entry.String5(t(L"Common.Unknown"));
-			if (entry.String6().empty()) entry.String6(t(L"Common.Unknown"));
+			visibleEntries.push_back(entry);
+		}
 
-			m_generalList.Append(entry);
+		co_await wil::resume_foreground(DispatcherQueue());
+
+		if (!IsLoaded() ||
+			requestedIndex != segmentedIndex ||
+			(requestedIndex == 1 && requestedCallbackType != m_callbackType) ||
+			(requestedIndex == 11 && requestedHALTableType != m_halTableType)) {
+			m_isLoading = false;
+			co_return;
+		}
+
+		m_generalList = winrt::single_threaded_observable_vector<winrt::StarlightGUI::GeneralEntry>(std::move(visibleEntries));
+		if (auto listView = GetGeneralListView(requestedIndex)) {
+			listView.ItemsSource(m_generalList);
 		}
 
 		LOG_INFO(__WFUNCTION__, L"Loaded general list, %d entry(s) in total.", m_generalList.Size());
@@ -568,7 +599,42 @@ namespace winrt::StarlightGUI::implementation
 			{ t(L"Common.Module"), item.String2() }
 		};
 		std::array<Button, 4> callbackHeaderButtons = { CallbackEntryHeaderButton(), CallbackHandleHeaderButton(), CallbackAddress3HeaderButton(), CallbackAddress4HeaderButton() };
-		std::array<hstring, 4> callbackValues = { item.String3(), item.String4(), item.String5(), item.String6() };
+		auto callbackValue = [&item](uint32_t column) -> hstring {
+			auto type = static_cast<CallbackType>(item.ULong1());
+			if (column == 0) return hstring(ULongToHexString(item.ULongLong1()));
+			if (type == CallbackType::CreateProcess || type == CallbackType::CreateThread ||
+				type == CallbackType::LoadImage || type == CallbackType::LogonSessionTerminated ||
+				type == CallbackType::DbgPrint) {
+				if (column == 1) return to_hstring(item.ULong2());
+				if (column == 2) return hstring(ULongToHexString(item.ULong3(), 0, true, true));
+			}
+			else if (type == CallbackType::Object && column == 3) {
+				switch (static_cast<ObCallbackType>(item.ULong3())) {
+				case ObCallbackType::Process: return L"Process";
+				case ObCallbackType::Thread: return L"Thread";
+				case ObCallbackType::Desktop: return L"Desktop";
+				default: return t(L"Common.Unknown");
+				}
+			}
+			else if (type == CallbackType::BugCheckReason) {
+				if (column == 1) return hstring(ULongToHexString(item.ULongLong3()));
+				if (column == 2) return hstring(ULongToHexString(item.ULongLong4(), 0, true, true));
+				if (column == 3) return hstring(ULongToHexString(item.ULongLong2(), 0, true, true));
+			}
+			else if (type == CallbackType::BugCheck && column == 3) {
+				return hstring(ULongToHexString(item.ULongLong4(), 0, true, true));
+			}
+
+			switch (column) {
+			case 1: return hstring(ULongToHexString(item.ULongLong2()));
+			case 2: return hstring(ULongToHexString(item.ULongLong3()));
+			case 3: return hstring(ULongToHexString(item.ULongLong4()));
+			default: return t(L"Common.Unknown");
+			}
+		};
+		std::array<hstring, 4> callbackValues = {
+			callbackValue(0), callbackValue(1), callbackValue(2), callbackValue(3)
+		};
 		for (uint32_t i = 0; i < callbackHeaderButtons.size(); ++i) {
 			if (callbackHeaderButtons[i].Visibility() != Visibility::Visible) continue;
 
@@ -654,7 +720,7 @@ namespace winrt::StarlightGUI::implementation
 			});
 		item2_1.Items().Append(item2_1_sub2);
 		auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"Common.Base").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String3().c_str())) {
+			if (TaskUtils::CopyToClipboard(ULongToHexString(item.ULongLong1()).c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 			}
 			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
@@ -662,7 +728,7 @@ namespace winrt::StarlightGUI::implementation
 			});
 		item2_1.Items().Append(item2_1_sub3);
 		auto item2_1_sub4 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", L"PreFilter", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String4().c_str())) {
+			if (TaskUtils::CopyToClipboard(ULongToHexString(item.ULongLong2()).c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 			}
 			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
@@ -670,7 +736,7 @@ namespace winrt::StarlightGUI::implementation
 			});
 		item2_1.Items().Append(item2_1_sub4);
 		auto item2_1_sub5 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", L"PostFilter", [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String5().c_str())) {
+			if (TaskUtils::CopyToClipboard(ULongToHexString(item.ULongLong3()).c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 			}
 			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
@@ -718,7 +784,7 @@ namespace winrt::StarlightGUI::implementation
 			});
 		item2_1.Items().Append(item2_1_sub2);
 		auto item2_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"Common.Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String3().c_str())) {
+			if (TaskUtils::CopyToClipboard(ULongToHexString(item.ULongLong1()).c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 			}
 			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
@@ -835,7 +901,7 @@ namespace winrt::StarlightGUI::implementation
 			});
 		item1_1.Items().Append(item1_1_sub2);
 		auto item1_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb19", t(L"Common.Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-			if (TaskUtils::CopyToClipboard(item.String3().c_str())) {
+			if (TaskUtils::CopyToClipboard(ULongToHexString(item.ULongLong1()).c_str())) {
 				slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
 			}
 			else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_mainWindowInstance);
@@ -1106,9 +1172,8 @@ namespace winrt::StarlightGUI::implementation
             }
             else if (segmentedIndex >= 1 && segmentedIndex <= 11) {
                 for (auto const& entry : m_generalList) {
-					std::array<hstring, 10> fields = {
-						entry.String1(), entry.String2(), entry.String3(), entry.String4(), entry.String5(),
-						entry.String6(), entry.String7(), entry.String8(), entry.String9(), entry.String10()
+					std::array<hstring, 5> fields = {
+						entry.String1(), entry.String2(), entry.String3(), entry.String4(), entry.String5()
 					};
 					hstring key;
 					for (auto const& field : fields) {
@@ -1134,7 +1199,7 @@ namespace winrt::StarlightGUI::implementation
             searchBox.ItemsSource(suggestions);
         }
 
-		WaitAndReloadAsync(250);
+		WaitAndReloadAsync(250, false);
 	}
 
     void MonitorPage::SearchBox_SuggestionChosen(
@@ -1166,7 +1231,7 @@ namespace winrt::StarlightGUI::implementation
 		co_return;
 	}
 
-	winrt::Windows::Foundation::IAsyncAction MonitorPage::WaitAndReloadAsync(int interval) {
+	winrt::Windows::Foundation::IAsyncAction MonitorPage::WaitAndReloadAsync(int interval, bool force) {
 		auto lifetime = get_strong();
 		auto requestVersion = ++m_reloadRequestVersion;
 
@@ -1174,7 +1239,7 @@ namespace winrt::StarlightGUI::implementation
 		co_await wil::resume_foreground(DispatcherQueue());
 
 		if (!IsLoaded() || requestVersion != m_reloadRequestVersion) co_return;
-		RefreshButton_Click(nullptr, nullptr);
+		HandleSegmentedChange(segmentedIndex, force);
 
 		co_return;
 	}
@@ -1200,11 +1265,14 @@ namespace winrt::StarlightGUI::implementation
 
 		auto weak_this = get_weak();
 		int32_t previousObjectIndex = ObjectTreeView().SelectedIndex();
+		if (auto listView = GetGeneralListView(segmentedIndex)) {
+			listView.ItemsSource(nullptr);
+		}
 		segmentedIndex = index;
 
 		m_itemList.Clear();
 		m_objectList.Clear();
-		m_generalList.Clear();
+		m_generalList = winrt::single_threaded_observable_vector<winrt::StarlightGUI::GeneralEntry>();
 
 		DefaultText().Visibility(Visibility::Collapsed);
 		CallbackTypeButton().Visibility(Visibility::Collapsed);
@@ -1215,7 +1283,7 @@ namespace winrt::StarlightGUI::implementation
 		SSDTGrid().Visibility(Visibility::Collapsed);
 		SSSDTGrid().Visibility(Visibility::Collapsed);
 		IoTimerGrid().Visibility(Visibility::Collapsed);
-		DpcTimerGrid().Visibility(Visibility::Collapsed);
+		DPCTimerGrid().Visibility(Visibility::Collapsed);
 		ResourceGrid().Visibility(Visibility::Collapsed);
 		IDTGrid().Visibility(Visibility::Collapsed);
 		GDTGrid().Visibility(Visibility::Collapsed);
@@ -1269,7 +1337,7 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		}
 		case 6: {
-			DpcTimerGrid().Visibility(Visibility::Visible);
+			DPCTimerGrid().Visibility(Visibility::Visible);
 			co_await LoadGeneralList(force);
 			break;
 		}
@@ -1349,16 +1417,12 @@ namespace winrt::StarlightGUI::implementation
 		IoTimerModuleHeaderButton().Content(tbox(L"Common.Module"));
 		IoTimerAddressHeaderButton().Content(tbox(L"Common.Address"));
 		IoTimerDeviceObjHeaderButton().Content(tbox(L"Monitor.Header.DeviceObject"));
-		DpcTimerPathHeaderButton().Content(tbox(L"Common.Module"));
-		DpcTimerTimerHeaderButton().Content(tbox(L"Monitor.Header.Timer"));
-		DpcTimerDpcHeaderButton().Content(tbox(L"Monitor.Header.DPC"));
-		DpcTimerRoutineHeaderButton().Content(tbox(L"Monitor.Header.DeferredRoutine"));
-		DpcTimerContextHeaderButton().Content(tbox(L"Monitor.Header.DeferredContext"));
-		DpcTimerArgument1HeaderButton().Content(tbox(L"Monitor.Header.SystemArgument1"));
-		DpcTimerArgument2HeaderButton().Content(tbox(L"Monitor.Header.SystemArgument2"));
-		DpcTimerPeriodHeaderButton().Content(tbox(L"Monitor.Header.Period"));
-		DpcTimerDueTimeHeaderButton().Content(tbox(L"Monitor.Header.DueTime"));
-		DpcTimerProcessorHeaderButton().Content(tbox(L"Monitor.Header.Processor"));
+		DPCTimerPathHeaderButton().Content(tbox(L"Common.Module"));
+		DPCTimerTimerHeaderButton().Content(tbox(L"Monitor.Header.Timer"));
+		DPCTimerDpcHeaderButton().Content(tbox(L"Monitor.Header.DPC"));
+		DPCTimerRoutineHeaderButton().Content(tbox(L"Monitor.Header.DeferredRoutine"));
+		DPCTimerContextHeaderButton().Content(tbox(L"Monitor.Header.DeferredContext"));
+		DPCTimerPeriodHeaderButton().Content(tbox(L"Monitor.Header.Period"));
 		ResourceAddressHeaderButton().Content(tbox(L"Monitor.Header.Resource"));
 		ResourceActiveCountHeaderButton().Content(tbox(L"Monitor.Header.ActiveCount"));
 		ResourceContentionCountHeaderButton().Content(tbox(L"Monitor.Header.ContentionCount"));
@@ -1494,7 +1558,7 @@ namespace winrt::StarlightGUI::implementation
 		AttachColumnSyncToSection(SSDTGrid(), 0);
 		AttachColumnSyncToSection(SSSDTGrid(), 0);
 		AttachColumnSyncToSection(IoTimerGrid(), 0);
-		AttachColumnSyncToSection(DpcTimerGrid(), 0);
+		AttachColumnSyncToSection(DPCTimerGrid(), 0);
 		AttachColumnSyncToSection(ResourceGrid(), 0);
 		AttachColumnSyncToSection(IDTGrid(), 0);
 		AttachColumnSyncToSection(GDTGrid(), 0);
