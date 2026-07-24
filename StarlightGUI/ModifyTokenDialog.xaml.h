@@ -8,13 +8,13 @@ namespace winrt::StarlightGUI::implementation
     {
         ModifyTokenDialog();
 
-        ULONG TargetPID() const { return m_targetPID; }
+        ULONG TargetPID() const { return m_targetPid; }
 
         void OnPrimaryButtonClick(winrt::Microsoft::UI::Xaml::Controls::ContentDialog const& sender,
             winrt::Microsoft::UI::Xaml::Controls::ContentDialogButtonClickEventArgs const& args);
 
     private:
-        ULONG m_targetPID{ 0 };
+        ULONG m_targetPid{ 0 };
     };
 }
 

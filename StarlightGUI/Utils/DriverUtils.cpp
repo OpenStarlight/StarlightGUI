@@ -1,203 +1,95 @@
-﻿#include "pch.h"
+#include "pch.h"
 #include "KernelBase.h"
-#include <shellapi.h>
+#include "Utils.h"
+#include <array>
+
+namespace {
+	bool LoadDriverService(LPCWSTR driverPath, LPCWSTR serviceName, LPCWSTR logSource, bool deleteOnFailure) noexcept {
+		SC_HANDLE serviceManager = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT | SC_MANAGER_CREATE_SERVICE);
+		if (!serviceManager) return false;
+
+		DWORD serviceAccess = SERVICE_QUERY_STATUS | SERVICE_START;
+		if (deleteOnFailure) serviceAccess |= DELETE;
+		SC_HANDLE service = OpenServiceW(serviceManager, serviceName, serviceAccess);
+		if (!service) {
+			service = CreateServiceW(serviceManager, serviceName, serviceName, serviceAccess,
+				SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START, SERVICE_ERROR_IGNORE,
+				driverPath, NULL, NULL, NULL, NULL, NULL);
+		}
+
+		if (!service) {
+			CloseServiceHandle(serviceManager);
+			return false;
+		}
+
+		SERVICE_STATUS serviceStatus{};
+		bool result = QueryServiceStatus(service, &serviceStatus);
+		if (result && serviceStatus.dwCurrentState == SERVICE_STOPPED) {
+			LOG_INFO(logSource, L"Loading driver: %s", driverPath);
+			result = StartServiceW(service, 0, nullptr) || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING;
+		}
+
+		if (!result && deleteOnFailure) DeleteService(service);
+
+		CloseServiceHandle(service);
+		CloseServiceHandle(serviceManager);
+		return result;
+	}
+}
 
 namespace winrt::StarlightGUI::implementation {
 	bool DriverUtils::LoadKernelDriver(LPCWSTR kernelPath) noexcept {
-		SC_HANDLE hSCM, hService;
-
-		hSCM = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-		if (!hSCM) {
-			return false;
-		}
-
-		hService = OpenServiceW(hSCM, L"Sirius for StarlightGUI", SERVICE_ALL_ACCESS);
-		if (hService) {
-			SERVICE_STATUS serviceStatus;
-			if (!QueryServiceStatus(hService, &serviceStatus)) {
-				DeleteService(hService);
-				CloseServiceHandle(hService);
-				CloseServiceHandle(hSCM);
-				return false;
-			}
-
-			if (serviceStatus.dwCurrentState == SERVICE_STOPPED) {
-				LOG_INFO(L"Sirius", L"Loading driver: %s", kernelPath);
-				if (!StartServiceW(hService, 0, nullptr)) {
-					DeleteService(hService);
-					CloseServiceHandle(hService);
-					CloseServiceHandle(hSCM);
-					return false;
-				}
-			}
-
-			CloseServiceHandle(hService);
-			CloseServiceHandle(hSCM);
-			return true;
-		}
-		else {
-			// Create the service
-			hService = CreateServiceW(hSCM, L"Sirius for StarlightGUI", L"Sirius for StarlightGUI", SERVICE_ALL_ACCESS,
-				SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START,
-				SERVICE_ERROR_IGNORE, kernelPath, NULL, NULL, NULL,
-				NULL, NULL);
-
-			if (!hService) {
-				CloseServiceHandle(hSCM);
-				return false;
-			}
-
-			// Start the service
-			LOG_INFO(L"Sirius", L"Loading driver: %s", kernelPath);
-			if (!StartServiceW(hService, 0, nullptr)) {
-				DeleteService(hService);
-				CloseServiceHandle(hService);
-				CloseServiceHandle(hSCM);
-				return false;
-			}
-
-			CloseServiceHandle(hService);
-			CloseServiceHandle(hSCM);
-			return true;
-		}
-		return false;
+		return LoadDriverService(kernelPath, L"Sirius for StarlightGUI", L"Sirius", true);
 	}
 
 	bool DriverUtils::LoadDriver(LPCWSTR kernelPath, LPCWSTR fileName) noexcept {
-		SC_HANDLE hSCM, hService;
-
-		hSCM = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-		if (!hSCM) {
-			return false;
-		}
-
-		hService = OpenServiceW(hSCM, fileName, SERVICE_ALL_ACCESS);
-		if (hService) {
-			// Start the service if it"s not running
-			SERVICE_STATUS serviceStatus;
-			if (!QueryServiceStatus(hService, &serviceStatus)) {
-				CloseServiceHandle(hService);
-				CloseServiceHandle(hSCM);
-				return false;
-			}
-
-			if (serviceStatus.dwCurrentState == SERVICE_STOPPED) {
-				LOG_INFO(L"Driver", L"Loading driver: %s", kernelPath);
-				if (!StartServiceW(hService, 0, nullptr)) {
-					CloseServiceHandle(hService);
-					CloseServiceHandle(hSCM);
-					return false;
-				}
-			}
-
-			CloseServiceHandle(hService);
-			CloseServiceHandle(hSCM);
-			return true;
-		}
-		else {
-			// Create the service
-			hService = CreateServiceW(hSCM, fileName, fileName, SERVICE_ALL_ACCESS,
-				SERVICE_KERNEL_DRIVER, SERVICE_DEMAND_START,
-				SERVICE_ERROR_IGNORE, kernelPath, NULL, NULL, NULL,
-				NULL, NULL);
-
-			if (!hService) {
-				CloseServiceHandle(hSCM);
-				return false;
-			}
-
-			// Start the service
-			LOG_INFO(L"Driver", L"Loading driver: %s", kernelPath);
-			if (!StartServiceW(hService, 0, nullptr)) {
-				CloseServiceHandle(hService);
-				CloseServiceHandle(hSCM);
-				return false;
-			}
-
-			CloseServiceHandle(hService);
-			CloseServiceHandle(hSCM);
-			return true;
-		}
-		return false;
+		return LoadDriverService(kernelPath, fileName, L"Driver", false);
 	}
 
 	bool DriverUtils::StopKernelDriver() noexcept {
-		SC_HANDLE hSCM = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-		if (!hSCM) {
+		SC_HANDLE serviceManager = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
+		if (!serviceManager) return false;
+
+		SC_HANDLE service = OpenServiceW(serviceManager, L"Sirius for StarlightGUI", SERVICE_QUERY_STATUS | SERVICE_STOP);
+		if (!service) {
+			CloseServiceHandle(serviceManager);
 			return false;
 		}
 
-		SC_HANDLE hService = OpenServiceW(hSCM, L"Sirius for StarlightGUI", SERVICE_ALL_ACCESS);
-		if (!hService) {
-			CloseServiceHandle(hSCM);
-			return false;
-		}
+		SERVICE_STATUS serviceStatus{};
+		bool result = QueryServiceStatus(service, &serviceStatus);
+		if (result && serviceStatus.dwCurrentState != SERVICE_STOPPED)
+			result = ControlService(service, SERVICE_CONTROL_STOP, &serviceStatus);
 
-		SERVICE_STATUS serviceStatus;
-		bool result = false;
-		if (QueryServiceStatus(hService, &serviceStatus)) {
-			if (serviceStatus.dwCurrentState == SERVICE_STOPPED) {
-				result = true;
-			}
-			else {
-				result = ControlService(hService, SERVICE_CONTROL_STOP, &serviceStatus);
-			}
-		}
-
-		CloseServiceHandle(hService);
-		CloseServiceHandle(hSCM);
+		CloseServiceHandle(service);
+		CloseServiceHandle(serviceManager);
 		return result;
 	}
 
 	void DriverUtils::FixServices() noexcept {
-		SC_HANDLE hSCM, hService;
+		SC_HANDLE serviceManager = OpenSCManagerW(NULL, NULL, SC_MANAGER_CONNECT);
+		if (!serviceManager) return;
 
-		hSCM = OpenSCManagerW(NULL, NULL, SC_MANAGER_ALL_ACCESS);
-		if (!hSCM) {
-			return;
-		}
+		constexpr std::array serviceNames{
+			L"Sirius for StarlightGUI",
+			L"StarlightGUI Kernel Driver",
+			L"AstralX"
+		};
 
-		hService = OpenServiceW(hSCM, L"Sirius for StarlightGUI", SERVICE_ALL_ACCESS);
-		if (hService) {
-			SERVICE_STATUS serviceStatus;
-			if (QueryServiceStatus(hService, &serviceStatus)) {
-				if (serviceStatus.dwCurrentState != SERVICE_STOPPED) {
-					ControlService(hService, SERVICE_CONTROL_STOP, &serviceStatus);
-					DeleteService(hService);
-				}
+		for (LPCWSTR serviceName : serviceNames) {
+			SC_HANDLE service = OpenServiceW(serviceManager, serviceName, SERVICE_QUERY_STATUS | SERVICE_STOP | DELETE);
+			if (!service) continue;
+
+			SERVICE_STATUS serviceStatus{};
+			if (QueryServiceStatus(service, &serviceStatus)) {
+				if (serviceStatus.dwCurrentState != SERVICE_STOPPED)
+					ControlService(service, SERVICE_CONTROL_STOP, &serviceStatus);
+				DeleteService(service);
 			}
-
-			CloseServiceHandle(hService);
+			CloseServiceHandle(service);
 		}
 
-		hService = OpenServiceW(hSCM, L"StarlightGUI Kernel Driver", SERVICE_ALL_ACCESS);
-		if (hService) {
-			SERVICE_STATUS serviceStatus;
-			if (QueryServiceStatus(hService, &serviceStatus)) {
-				if (serviceStatus.dwCurrentState != SERVICE_STOPPED) {
-					ControlService(hService, SERVICE_CONTROL_STOP, &serviceStatus);
-					DeleteService(hService);
-				}
-			}
-
-			CloseServiceHandle(hService);
-		}
-
-		hService = OpenServiceW(hSCM, L"AstralX", SERVICE_ALL_ACCESS);
-		if (hService) {
-			SERVICE_STATUS serviceStatus;
-			if (QueryServiceStatus(hService, &serviceStatus)) {
-				if (serviceStatus.dwCurrentState != SERVICE_STOPPED) {
-					ControlService(hService, SERVICE_CONTROL_STOP, &serviceStatus);
-					DeleteService(hService);
-				}
-			}
-
-			CloseServiceHandle(hService);
-		}
-
-		CloseServiceHandle(hSCM);
-
+		CloseServiceHandle(serviceManager);
 		slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Settings.Msg.FixCompleted"), InfoBarSeverity::Success, g_mainWindowInstance);
 	}
 }

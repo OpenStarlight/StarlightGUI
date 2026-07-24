@@ -5,7 +5,9 @@
 #endif
 
 
+#include <algorithm>
 #include <winrt/Microsoft.UI.Xaml.h>
+#include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.System.h>
@@ -13,12 +15,16 @@
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <winrt/Windows.Foundation.h>
+#include <wil/cppwinrt_helpers.h>
 #include <TlHelp32.h>
 #include <Psapi.h>
 #include <array>
 #include <sstream>
 #include <iomanip>
+#include <vector>
+#include <Utils/Config.h>
 #include <Utils/Utils.h>
+#include <Utils/CppUtils.h>
 #include <Utils/TaskUtils.h>
 #include <Utils/KernelBase.h>
 #include <InfoWindow.xaml.h>
@@ -92,9 +98,10 @@ namespace winrt::StarlightGUI::implementation
         auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"ProcThread.Menu.Terminate").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             BOOL success = FALSE;
             if (item.Id() != 0) {
-                HANDLE hThread = OpenThread(THREAD_TERMINATE, FALSE, item.Id());
-                if (hThread) {
-                    success = TerminateThread(hThread, 0);
+                HANDLE threadHandle = OpenThread(THREAD_TERMINATE, FALSE, item.Id());
+                if (threadHandle) {
+                    success = TerminateThread(threadHandle, 0);
+                    CloseHandle(threadHandle);
                 }
             }
             if (success) {
@@ -120,7 +127,7 @@ namespace winrt::StarlightGUI::implementation
             auto lifetime = get_strong();
             auto xamlRoot = XamlRoot();
             auto target = item;
-            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+            if (dangerousConfirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
             if (KernelInstance::SiTerminateThreadEx(target.Id())) {
@@ -241,7 +248,7 @@ namespace winrt::StarlightGUI::implementation
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         // 更新线程数量文本
-        ThreadCountText().Text(t(L"ProcThread.Detail", static_cast<size_t>(m_threadList.Size()), static_cast<long long>(duration.count())));
+        ThreadCountText().Text(t(L"ProcThread.Detail", (size_t)m_threadList.Size(), (long long)duration.count()));
         LoadingRing().IsActive(false);
 
         LOG_INFO(__WFUNCTION__, L"Loaded thread list, %d entry(s) in total.", m_threadList.Size());

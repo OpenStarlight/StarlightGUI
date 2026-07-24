@@ -1,15 +1,27 @@
 ﻿#include "pch.h"
 #include "FilePage.xaml.h"
+#include <winrt/Microsoft.UI.Dispatching.h>
+#include <winrt/Windows.Storage.h>
+#include <winrt/WinUI3Package.h>
+#include <wil/cppwinrt_helpers.h>
 #if __has_include("FilePage.g.cpp")
 #include "FilePage.g.cpp"
 #endif
 
+#include <algorithm>
 #include <chrono>
+#include <filesystem>
 #include <shellapi.h>
 #include <CopyFileDialog.xaml.h>
 #include <array>
+#include <sstream>
 #include <unordered_set>
 #include <winrt/Windows.ApplicationModel.DataTransfer.h>
+#include "Utils/Config.h"
+#include "Utils/CppUtils.h"
+#include "Utils/KernelBase.h"
+#include "Utils/TaskUtils.h"
+#include "Utils/Utils.h"
 
 using namespace winrt;
 using namespace WinUI3Package;
@@ -18,6 +30,8 @@ using namespace Microsoft::UI::Xaml;
 
 namespace winrt::StarlightGUI::implementation
 {
+    namespace fs = std::filesystem;
+
     // 文件页虚拟根目录，代表此电脑
     static const std::wstring kFileHomePage = L"::drives::";
 
@@ -154,7 +168,7 @@ namespace winrt::StarlightGUI::implementation
         if (stateIt == m_tabStates.end()) return;
 
         auto& state = stateIt->second;
-        if (state.history.empty() || state.historyIndex < 0 || state.historyIndex >= static_cast<int>(state.history.size())) return;
+        if (state.history.empty() || state.historyIndex < 0 || state.historyIndex >= (int)state.history.size()) return;
 
         currentDirectory = hstring(state.history[state.historyIndex]);
         SyncCurrentTabUI();
@@ -177,15 +191,15 @@ namespace winrt::StarlightGUI::implementation
         auto& state = stateIt->second;
 
         if (pushHistory) {
-            if (state.historyIndex >= 0 && state.historyIndex < static_cast<int>(state.history.size()) - 1) {
+            if (state.historyIndex >= 0 && state.historyIndex < (int)state.history.size() - 1) {
                 state.history.erase(state.history.begin() + state.historyIndex + 1, state.history.end());
             }
             if (state.history.empty() || state.history.back() != normalizedPath) {
                 state.history.push_back(normalizedPath);
-                state.historyIndex = static_cast<int>(state.history.size()) - 1;
+                state.historyIndex = (int)state.history.size() - 1;
             }
             else {
-                state.historyIndex = static_cast<int>(state.history.size()) - 1;
+                state.historyIndex = (int)state.history.size() - 1;
             }
         }
 
@@ -223,7 +237,7 @@ namespace winrt::StarlightGUI::implementation
         std::wstring tabId = unbox_value<hstring>(tab.Tag()).c_str();
         auto stateIt = m_tabStates.find(tabId);
         if (stateIt == m_tabStates.end()) return;
-        if (stateIt->second.history.empty() || stateIt->second.historyIndex < 0 || stateIt->second.historyIndex >= static_cast<int>(stateIt->second.history.size())) return;
+        if (stateIt->second.history.empty() || stateIt->second.historyIndex < 0 || stateIt->second.historyIndex >= (int)stateIt->second.history.size()) return;
 
         auto headerPanel = StackPanel();
         headerPanel.Orientation(Orientation::Horizontal);
@@ -256,7 +270,7 @@ namespace winrt::StarlightGUI::implementation
 
         auto& state = stateIt->second;
         bool canGoBack = state.historyIndex > 0;
-        bool canGoForward = !state.history.empty() && state.historyIndex < static_cast<int>(state.history.size()) - 1;
+        bool canGoForward = !state.history.empty() && state.historyIndex < (int)state.history.size() - 1;
         bool canGoUp = currentDirectory != kFileHomePage && currentDirectory.size() > 3;
 
         BackButton().IsEnabled(canGoBack);
@@ -480,7 +494,7 @@ namespace winrt::StarlightGUI::implementation
             auto xamlRoot = XamlRoot();
             auto files = selectedFiles;
             bool important = hasImportantFile;
-            if (dangerous_confirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+            if (dangerousConfirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
             for (const auto& item : files) {
@@ -499,7 +513,7 @@ namespace winrt::StarlightGUI::implementation
             auto xamlRoot = XamlRoot();
             auto files = selectedFiles;
             bool important = hasImportantFile;
-            if (dangerous_confirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+            if (dangerousConfirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
             for (const auto& item : files) {
@@ -518,7 +532,7 @@ namespace winrt::StarlightGUI::implementation
             auto xamlRoot = XamlRoot();
             auto files = selectedFiles;
             bool important = hasImportantFile;
-            if (dangerous_confirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+            if (dangerousConfirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
             for (const auto& item : files) {
@@ -537,7 +551,7 @@ namespace winrt::StarlightGUI::implementation
             auto xamlRoot = XamlRoot();
             auto files = selectedFiles;
             bool important = hasImportantFile;
-            if (dangerous_confirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+            if (dangerousConfirm && important && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
             for (const auto& item : files) {
@@ -840,7 +854,7 @@ namespace winrt::StarlightGUI::implementation
         auto tabId = GetCurrentTabId();
         if (!tabId.empty()) {
             auto stateIt = m_tabStates.find(tabId);
-            if (stateIt != m_tabStates.end() && stateIt->second.historyIndex >= 0 && stateIt->second.historyIndex < static_cast<int>(stateIt->second.history.size())) {
+            if (stateIt != m_tabStates.end() && stateIt->second.historyIndex >= 0 && stateIt->second.historyIndex < (int)stateIt->second.history.size()) {
                 stateIt->second.history[stateIt->second.historyIndex] = path;
                 stateIt->second.title = BuildTabTitle(path);
                 tabSearchText = stateIt->second.searchText;
@@ -966,8 +980,8 @@ namespace winrt::StarlightGUI::implementation
 
         std::wstring searchPath = directoryPath + L"\\*";
         WIN32_FIND_DATAW data{};
-        HANDLE hFind = FindFirstFileExW(searchPath.c_str(), FindExInfoBasic, &data, FindExSearchNameMatch, nullptr, FIND_FIRST_EX_LARGE_FETCH);
-        if (hFind == INVALID_HANDLE_VALUE) {
+        HANDLE findHandle = FindFirstFileExW(searchPath.c_str(), FindExInfoBasic, &data, FindExSearchNameMatch, nullptr, FIND_FIRST_EX_LARGE_FETCH);
+        if (findHandle == INVALID_HANDLE_VALUE) {
             for (auto const& file : m_allFiles) {
                 file.Path(FixBackSplash(file.Path()));
                 fillUnknownMeta(file);
@@ -985,9 +999,9 @@ namespace winrt::StarlightGUI::implementation
         do {
             if (wcscmp(data.cFileName, L".") == 0 || wcscmp(data.cFileName, L"..") == 0) continue;
             metaMap[normalize(data.cFileName)] = data;
-        } while (FindNextFileW(hFind, &data));
+        } while (FindNextFileW(findHandle, &data));
 
-        FindClose(hFind);
+        FindClose(findHandle);
 
         for (auto const& file : m_allFiles) {
             file.Path(FixBackSplash(file.Path()));
@@ -1385,7 +1399,7 @@ namespace winrt::StarlightGUI::implementation
         if (stateIt == m_tabStates.end()) return;
         auto& state = stateIt->second;
 
-        if (state.historyIndex >= static_cast<int>(state.history.size()) - 1) return;
+        if (state.historyIndex >= (int)state.history.size() - 1) return;
         state.historyIndex++;
         currentDirectory = hstring(state.history[state.historyIndex]);
         SyncCurrentTabUI();

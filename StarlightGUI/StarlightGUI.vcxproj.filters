@@ -185,6 +185,9 @@
     <ClInclude Include="Utils\Config.h">
       <Filter>Utils</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\Coroutine.h">
+      <Filter>Utils</Filter>
+    </ClInclude>
     <ClInclude Include="Utils\CppUtils.h">
       <Filter>Utils</Filter>
     </ClInclude>

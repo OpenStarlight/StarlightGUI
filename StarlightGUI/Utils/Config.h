@@ -1,110 +1,47 @@
-﻿#pragma once
+#pragma once
 
-#include <pch.h>
 #include <nlohmann/json.hpp>
-#include <fstream>
-#include <filesystem>
 #include <string>
-#include <locale>
-#include <codecvt>
 
 using json = nlohmann::json;
-namespace fs = std::filesystem;
+
+extern int enumFileMode, backgroundType, micaType, acrylicType, navigationStyle, imageStretch;
+extern std::string backgroundImage, language, theme;
+extern bool enumStrengthen, functionShowDeprecated, functionShowUnknown, functionUseDocumentName, pdhFirst, elevatedRun, dangerousConfirm, checkUpdate, taskAutoRefresh, trayBackgroundRun, autoStopDriver, autoStart, replaceTaskManager;
+extern bool hypervisorMode;
+extern int imageOpacity, disasmCount;
 
 namespace winrt::StarlightGUI::implementation {
     void InitializeConfig();
+    json LoadConfigSnapshot();
+    void SaveConfigSnapshot(const json& config);
+    void WriteConfigValue(const std::string& key, const json& value);
 
     template<typename T>
-    void SaveConfig(std::string key, T s_value) {
-        try
-        {
-            auto userFolder = fs::path(GetInstalledLocationPath());
-            auto configFilePath = userFolder / "StarlightGUI.json";
-            json configData = json::object();
-
-            if (fs::exists(configFilePath))
-            {
-                try {
-                    std::ifstream configFile(configFilePath);
-                    configFile >> configData;
-                    if (!configData.is_object()) configData = json::object();
-                }
-                catch (...) {
-                    configData = json::object();
-                }
-            }
-
-            configData[key] = s_value;
-
-            std::ofstream configFile(configFilePath);
-            configFile << configData.dump(4);
+    void SaveConfig(const std::string& key, const T& value) {
+        try {
+            WriteConfigValue(key, value);
         }
-        catch (...)
-        {
+        catch (...) {
         }
-        InitializeConfig();
     }
 
     template<typename T>
-    T ReadConfig(std::string key, T defaultValue) {
-        try
-        {
-            auto userFolder = fs::path(GetInstalledLocationPath());
-            auto configFilePath = userFolder / "StarlightGUI.json";
-            json configData = json::object();
-            bool needWriteBack = false;
-
-            if (fs::exists(configFilePath))
-            {
+    T ReadConfig(const std::string& key, const T& defaultValue) {
+        try {
+            json config = LoadConfigSnapshot();
+            if (config.contains(key)) {
                 try {
-                    std::ifstream configFile(configFilePath);
-                    configFile >> configData;
-                    if (!configData.is_object()) {
-                        configData = json::object();
-                        needWriteBack = true;
-                    }
-                }
-                catch (...) {
-                    configData = json::object();
-                    needWriteBack = true;
-                }
-            }
-            else
-            {
-                needWriteBack = true;
-            }
-
-            if (configData.contains(key))
-            {
-                try {
-                    return configData[key].get<T>();
-                }
-                catch (...) {
-                    configData[key] = defaultValue;
-                    needWriteBack = true;
-                }
-            }
-            else
-            {
-                configData[key] = defaultValue;
-                needWriteBack = true;
-            }
-
-            if (needWriteBack)
-            {
-                try {
-                    std::ofstream configFile(configFilePath);
-                    configFile << configData.dump(4);
+                    return config[key].get<T>();
                 }
                 catch (...) {
                 }
             }
 
-            return defaultValue;
+            WriteConfigValue(key, defaultValue);
         }
-        catch (...)
-        {
-            return defaultValue;
+        catch (...) {
         }
+        return defaultValue;
     }
 }

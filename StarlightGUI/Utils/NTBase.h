@@ -1,8 +1,9 @@
 ﻿#pragma once
 
-#include "pch.h"
+#include <Windows.h>
 
-// NT 相关定义
+#pragma comment(lib, "ntdll.lib")
+
 typedef struct _UNICODE_STRING {
 	USHORT Length;
 	USHORT MaximumLength;
@@ -30,12 +31,29 @@ typedef struct _IO_STATUS_BLOCK {
 } IO_STATUS_BLOCK, * PIO_STATUS_BLOCK;
 
 EXTERN_C VOID NTAPI RtlInitUnicodeString(PUNICODE_STRING DestinationString, PCWSTR SourceString);
+EXTERN_C LONG NTAPI NtQuerySystemInformation(
+	ULONG systemInformationClass,
+	PVOID systemInformation,
+	ULONG systemInformationLength,
+	PULONG returnLength);
 EXTERN_C LONG NTAPI NtQueryObject(
-	HANDLE Handle,
-	ULONG ObjectInformationClass,
-	PVOID ObjectInformation,
-	ULONG ObjectInformationLength,
-	PULONG ReturnLength);
+	HANDLE handle,
+	ULONG objectInformationClass,
+	PVOID objectInformation,
+	ULONG objectInformationLength,
+	PULONG returnLength);
+EXTERN_C LONG NTAPI NtQueryDirectoryObject(
+	HANDLE directoryHandle,
+	PVOID buffer,
+	ULONG length,
+	BOOLEAN returnSingleEntry,
+	BOOLEAN restartScan,
+	PULONG context,
+	PULONG returnLength);
+EXTERN_C LONG NTAPI NtQuerySymbolicLinkObject(
+	HANDLE linkHandle,
+	PUNICODE_STRING linkTarget,
+	PULONG returnedLength);
 
 #define InitializeObjectAttributes( p, n, a, r, s ) { \
     (p)->Length = sizeof( OBJECT_ATTRIBUTES );          \
@@ -47,30 +65,6 @@ EXTERN_C LONG NTAPI NtQueryObject(
     }
 #define OBJ_PERMANENT                       0x00000010L
 #define OBJ_CASE_INSENSITIVE                0x00000040L
-
-typedef LONG(*NtQueryDirectoryObject_t)(
-	HANDLE DirectoryHandle,
-	PVOID Buffer,
-	ULONG Length,
-	BOOLEAN ReturnSingleEntry,
-	BOOLEAN RestartScan,
-	PULONG Context,
-	PULONG ReturnLength
-	);
-
-typedef LONG(*NtQueryObject_t)(
-	HANDLE Handle,
-	ULONG ObjectInformationClass,
-	PVOID ObjectInformation,
-	ULONG ObjectInformationLength,
-	PULONG ReturnLength
-	);
-
-typedef LONG(*NtQuerySymbolicLinkObject_t)(
-	HANDLE LinkHandle,
-	PUNICODE_STRING LinkTarget,
-	PULONG ReturnedLength
-	);
 
 typedef enum _EVENT_TYPE
 {
@@ -89,13 +83,12 @@ typedef enum _EVENT_INFORMATION_CLASS
 	EventBasicInformation
 } EVENT_INFORMATION_CLASS;
 
-typedef LONG(*NtQueryEvent_t)(
-	HANDLE EventHandle,
-	EVENT_INFORMATION_CLASS EventInformationClass,
-	PVOID EventInformation,
-	ULONG EventInformationLength,
-	PULONG ReturnLength
-	);
+EXTERN_C LONG NTAPI NtQueryEvent(
+	HANDLE eventHandle,
+	EVENT_INFORMATION_CLASS eventInformationClass,
+	PVOID eventInformation,
+	ULONG eventInformationLength,
+	PULONG returnLength);
 
 typedef enum _MUTANT_INFORMATION_CLASS
 {
@@ -109,13 +102,12 @@ typedef struct _MUTANT_BASIC_INFORMATION
 	BOOLEAN AbandonedState;
 } MUTANT_BASIC_INFORMATION, *PMUTANT_BASIC_INFORMATION;
 
-typedef LONG(*NtQueryMutant_t)(
-	HANDLE MutantHandle,
-	MUTANT_INFORMATION_CLASS MutantInformationClass,
-	PVOID MutantInformation,
-	ULONG MutantInformationLength,
-	PULONG ReturnLength
-	);
+EXTERN_C LONG NTAPI NtQueryMutant(
+	HANDLE mutantHandle,
+	MUTANT_INFORMATION_CLASS mutantInformationClass,
+	PVOID mutantInformation,
+	ULONG mutantInformationLength,
+	PULONG returnLength);
 
 typedef enum _SEMAPHORE_INFORMATION_CLASS
 {
@@ -128,13 +120,12 @@ typedef struct _SEMAPHORE_BASIC_INFORMATION
 	LONG MaximumCount;
 } SEMAPHORE_BASIC_INFORMATION, *PSEMAPHORE_BASIC_INFORMATION;
 
-typedef LONG(*NtQuerySemaphore_t)(
-	HANDLE SemaphoreHandle,
-	SEMAPHORE_INFORMATION_CLASS SemaphoreInformationClass,
-	PVOID SemaphoreInformation,
-	ULONG SemaphoreInformationLength,
-	PULONG ReturnLength
-	);
+EXTERN_C LONG NTAPI NtQuerySemaphore(
+	HANDLE semaphoreHandle,
+	SEMAPHORE_INFORMATION_CLASS semaphoreInformationClass,
+	PVOID semaphoreInformation,
+	ULONG semaphoreInformationLength,
+	PULONG returnLength);
 
 typedef enum _SECTION_INFORMATION_CLASS
 {
@@ -148,13 +139,12 @@ typedef struct _SECTIONBASICINFO {
 	LARGE_INTEGER MaximumSize;
 } SECTION_BASIC_INFORMATION, *PSECTION_BASIC_INFORMATION;
 
-typedef LONG(*NtQuerySection_t)(
-	HANDLE SectionHandle,
-	SECTION_INFORMATION_CLASS SectionInformationClass,
-	PVOID SectionInformation,
-	ULONG SectionInformationLength,
-	PULONG ReturnLength
-	);
+EXTERN_C LONG NTAPI NtQuerySection(
+	HANDLE sectionHandle,
+	SECTION_INFORMATION_CLASS sectionInformationClass,
+	PVOID sectionInformation,
+	ULONG sectionInformationLength,
+	PULONG returnLength);
 
 typedef enum _TIMER_INFORMATION_CLASS
 {
@@ -167,13 +157,12 @@ typedef struct _TIMER_BASIC_INFORMATION
 	BOOLEAN TimerState;
 } TIMER_BASIC_INFORMATION, *PTIMER_BASIC_INFORMATION;
 
-typedef LONG(*NtQueryTimer_t)(
-	HANDLE TimerHandle,
-	TIMER_INFORMATION_CLASS TimerInformationClass,
-	PVOID TimerInformation,
-	ULONG TimerInformationLength,
-	PULONG ReturnLength
-	);
+EXTERN_C LONG NTAPI NtQueryTimer(
+	HANDLE timerHandle,
+	TIMER_INFORMATION_CLASS timerInformationClass,
+	PVOID timerInformation,
+	ULONG timerInformationLength,
+	PULONG returnLength);
 
 typedef enum _IO_COMPLETION_INFORMATION_CLASS
 {
@@ -185,94 +174,67 @@ typedef struct _IO_COMPLETION_BASIC_INFORMATION
 	LONG Depth;
 } IO_COMPLETION_BASIC_INFORMATION, *PIO_COMPLETION_BASIC_INFORMATION;
 
-typedef LONG(*NtQueryIoCompletion_t)(
-	HANDLE IoCompletionHandle,
-	IO_COMPLETION_INFORMATION_CLASS IoCompletionInformationClass,
-	PVOID IoCompletionInformation,
-	ULONG IoCompletionInformationLength,
-	PULONG ReturnLength
-	);
-
-typedef LONG(*NtOpenDirectoryObject_t)(
-	PHANDLE DirectoryHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenSymbolicLinkObject_t)(
-	PHANDLE LinkHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenEvent_t)(
-	PHANDLE EventHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenMutant_t)(
-	PHANDLE MutantHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenSemaphore_t)(
-	PHANDLE SemaphoreHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenSection_t)(
-	PHANDLE SectionHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenTimer_t)(
-	PHANDLE TimerHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenFile_t)(
-	PHANDLE FileHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes,
-	PVOID IoStatusBlock,
-	ULONG ShareAccess,
-	ULONG OpenOptions
-	);
-
-typedef LONG(*NtOpenSession_t)(
-	PHANDLE SessionHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenCpuPartition_t)(
-	PHANDLE CpuPartitionHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenJobObject_t)(
-	PHANDLE JobHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenIoCompletion_t)(
-	PHANDLE IoCompletionHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
-
-typedef LONG(*NtOpenPartition_t)(
-	PHANDLE PartitionHandle,
-	ACCESS_MASK DesiredAccess,
-	PVOID ObjectAttributes
-	);
+EXTERN_C LONG NTAPI NtQueryIoCompletion(
+	HANDLE ioCompletionHandle,
+	IO_COMPLETION_INFORMATION_CLASS ioCompletionInformationClass,
+	PVOID ioCompletionInformation,
+	ULONG ioCompletionInformationLength,
+	PULONG returnLength);
+EXTERN_C LONG NTAPI NtOpenDirectoryObject(
+	PHANDLE directoryHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenSymbolicLinkObject(
+	PHANDLE linkHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenEvent(
+	PHANDLE eventHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenMutant(
+	PHANDLE mutantHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenSemaphore(
+	PHANDLE semaphoreHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenSection(
+	PHANDLE sectionHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenTimer(
+	PHANDLE timerHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenFile(
+	PHANDLE fileHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes,
+	PIO_STATUS_BLOCK ioStatusBlock,
+	ULONG shareAccess,
+	ULONG openOptions);
+EXTERN_C LONG NTAPI NtOpenSession(
+	PHANDLE sessionHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenCpuPartition(
+	PHANDLE cpuPartitionHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenJobObject(
+	PHANDLE jobHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenIoCompletion(
+	PHANDLE ioCompletionHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
+EXTERN_C LONG NTAPI NtOpenPartition(
+	PHANDLE partitionHandle,
+	ACCESS_MASK desiredAccess,
+	POBJECT_ATTRIBUTES objectAttributes);
 
 typedef struct _OBJECT_DIRECTORY_INFORMATION {
 	UNICODE_STRING Name;
@@ -339,4 +301,4 @@ typedef struct _WINDOWCOMPOSITIONATTRIBDATA {
 	SIZE_T cbData;
 } WINDOWCOMPOSITIONATTRIBDATA, *PWINDOWCOMPOSITIONATTRIBDATA;
 
-typedef BOOL(*SetWindowCompositionAttribute_t)(HWND hWnd, PWINDOWCOMPOSITIONATTRIBDATA data);
+typedef BOOL(*SetWindowCompositionAttribute_t)(HWND windowHandle, PWINDOWCOMPOSITIONATTRIBDATA data);

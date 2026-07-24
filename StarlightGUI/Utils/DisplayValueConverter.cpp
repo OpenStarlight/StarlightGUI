@@ -37,7 +37,7 @@ namespace winrt::StarlightGUI::implementation
 		if (format == L"FileSize") {
 			auto file = value.try_as<winrt::StarlightGUI::FileInfo>();
 			if (!file || file.Directory()) return box_value(hstring{});
-			return box_value(hstring(FormatMemorySize(static_cast<double>(file.Size()))));
+			return box_value(hstring(FormatMemorySize((double)file.Size())));
 		}
 		if (format == L"FileModifyTime") {
 			auto file = value.try_as<winrt::StarlightGUI::FileInfo>();
@@ -49,7 +49,7 @@ namespace winrt::StarlightGUI::implementation
 			if (!entry) return box_value(t(L"Common.Unknown"));
 
 			auto column = format.c_str()[14] - L'0';
-			auto type = static_cast<CallbackType>(entry.ULong1());
+			auto type = (CallbackType)entry.ULong1();
 			auto hex64 = [](uint64_t number) {
 				return hstring(ULongToHexString(number));
 			};
@@ -65,7 +65,7 @@ namespace winrt::StarlightGUI::implementation
 				if (column == 3) return box_value(hexCompact(entry.ULong3()));
 			}
 			else if (type == CallbackType::Object && column == 4) {
-				switch (static_cast<ObCallbackType>(entry.ULong3())) {
+				switch ((ObCallbackType)entry.ULong3()) {
 				case ObCallbackType::Process: return box_value(hstring(L"Process"));
 				case ObCallbackType::Thread: return box_value(hstring(L"Thread"));
 				case ObCallbackType::Desktop: return box_value(hstring(L"Desktop"));
@@ -99,9 +99,9 @@ namespace winrt::StarlightGUI::implementation
 			case winrt::Windows::Foundation::PropertyType::UInt16: return property.GetUInt16();
 			case winrt::Windows::Foundation::PropertyType::UInt32: return property.GetUInt32();
 			case winrt::Windows::Foundation::PropertyType::UInt64: return property.GetUInt64();
-			case winrt::Windows::Foundation::PropertyType::Int16: return static_cast<uint64_t>(property.GetInt16());
-			case winrt::Windows::Foundation::PropertyType::Int32: return static_cast<uint32_t>(property.GetInt32());
-			case winrt::Windows::Foundation::PropertyType::Int64: return static_cast<uint64_t>(property.GetInt64());
+			case winrt::Windows::Foundation::PropertyType::Int16: return (uint64_t)property.GetInt16();
+			case winrt::Windows::Foundation::PropertyType::Int32: return (uint32_t)property.GetInt32();
+			case winrt::Windows::Foundation::PropertyType::Int64: return (uint64_t)property.GetInt64();
 			default: return 0;
 			}
 		};
@@ -110,7 +110,7 @@ namespace winrt::StarlightGUI::implementation
 			case winrt::Windows::Foundation::PropertyType::UInt8: return property.GetUInt8();
 			case winrt::Windows::Foundation::PropertyType::UInt16: return property.GetUInt16();
 			case winrt::Windows::Foundation::PropertyType::UInt32: return property.GetUInt32();
-			case winrt::Windows::Foundation::PropertyType::UInt64: return static_cast<int64_t>(property.GetUInt64());
+			case winrt::Windows::Foundation::PropertyType::UInt64: return (int64_t)property.GetUInt64();
 			case winrt::Windows::Foundation::PropertyType::Int16: return property.GetInt16();
 			case winrt::Windows::Foundation::PropertyType::Int32: return property.GetInt32();
 			case winrt::Windows::Foundation::PropertyType::Int64: return property.GetInt64();
@@ -127,7 +127,7 @@ namespace winrt::StarlightGUI::implementation
 			return box_value(hstring(ULongToHexString(getUnsigned(), 8, true, true)));
 		}
 		if (format == L"HexHandle") {
-			return box_value(hstring(ULongToHexString(static_cast<uint32_t>(getUnsigned()), 8, true, true)));
+			return box_value(hstring(ULongToHexString((uint32_t)getUnsigned(), 8, true, true)));
 		}
 		if (format == L"HexCompact") {
 			return box_value(hstring(ULongToHexString(getUnsigned(), 0, true, true)));
@@ -135,7 +135,7 @@ namespace winrt::StarlightGUI::implementation
 		if (format == L"MemorySize" || format == L"MemorySizeOrUnknown") {
 			auto number = getUnsigned();
 			if (format == L"MemorySizeOrUnknown" && number == 0) return box_value(t(L"Common.Unknown"));
-			return box_value(hstring(FormatMemorySize(static_cast<double>(number))));
+			return box_value(hstring(FormatMemorySize((double)number)));
 		}
 		if (format == L"FileTime") {
 			return formatFileTime(getUnsigned());
@@ -143,7 +143,7 @@ namespace winrt::StarlightGUI::implementation
 		if (format == L"CpuUsage") {
 			double usage = type == winrt::Windows::Foundation::PropertyType::Double
 				? property.GetDouble()
-				: static_cast<double>(getSigned());
+				: (double)getSigned();
 			if (usage < 0) return box_value(t(L"Common.Unknown"));
 
 			wchar_t text[32]{};

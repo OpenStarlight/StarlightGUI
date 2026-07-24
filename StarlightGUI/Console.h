@@ -138,9 +138,9 @@ private:
     std::atomic<bool> m_shutdown{ false };
     std::atomic<LogLevel> m_minLogLevel{ LogLevel::INFO };
 
-    HANDLE m_hConsoleOutput{ INVALID_HANDLE_VALUE };
-    HANDLE m_hConsoleInput{ INVALID_HANDLE_VALUE };
-    HWND m_hConsoleWnd{ nullptr };
+    HANDLE m_consoleOutput{ INVALID_HANDLE_VALUE };
+    HANDLE m_consoleInput{ INVALID_HANDLE_VALUE };
+    HWND m_consoleWindow{ nullptr };
 
     std::mutex m_queueMutex;
     std::condition_variable m_queueCV;

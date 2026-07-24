@@ -1,11 +1,18 @@
 ﻿#include "pch.h"
 #include "UtilityPage.xaml.h"
+#include <winrt/Microsoft.UI.Dispatching.h>
+#include <winrt/Windows.Storage.h>
+#include <wil/cppwinrt_helpers.h>
 #if __has_include("UtilityPage.g.cpp")
 #include "UtilityPage.g.cpp"
 #endif
 
 #include "LoadDriverDialog.xaml.h"
 #include "MainWindow.xaml.h"
+#include "Utils/KernelBase.h"
+#include "Utils/Config.h"
+#include "Utils/Utils.h"
+#include <string>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -53,7 +60,7 @@ namespace winrt::StarlightGUI::implementation {
 		auto button = sender.as<Button>();
 		std::wstring tag = button.Tag().as<winrt::hstring>().c_str();
 
-		if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), XamlRoot()))) {
+		if (dangerousConfirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), XamlRoot()))) {
 			co_return;
 		}
 
@@ -63,12 +70,12 @@ namespace winrt::StarlightGUI::implementation {
 
 		if (tag == L"ENABLE_HYPERVISOR") {
 			result = KernelInstance::EnableHypervisor();
-			hypervisor_mode = result;
+			hypervisorMode = result;
 		}
 		else if (tag == L"DISABLE_HYPERVISOR") {
 			result = KernelInstance::DisableHypervisor();
 			if (result) {
-				hypervisor_mode = false;
+				hypervisorMode = false;
 			}
 		}
 		else if (tag == L"ENABLE_CREATE_PROCESS") {

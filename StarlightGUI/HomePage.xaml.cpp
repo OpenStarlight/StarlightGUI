@@ -16,9 +16,14 @@
 #include <winrt/Microsoft.UI.h>
 #include <winrt/Microsoft.UI.Windowing.h>
 #include <winrt/Microsoft.UI.Dispatching.h>
+#include <winrt/Microsoft.UI.Text.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
+#include <winrt/WinUI3Package.h>
+#include <wil/cppwinrt_helpers.h>
 #include <random>
+#include <sstream>
+#include <thread>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
@@ -27,7 +32,11 @@
 #include <cstring>
 #include <iphlpapi.h>
 #include <pdhmsg.h>
+#include <winioctl.h>
 #include "MainWindow.xaml.h"
+#include "Utils/Config.h"
+#include "Utils/CppUtils.h"
+#include "Utils/Utils.h"
 
 using namespace winrt;
 using namespace Windows::Web::Http;
@@ -93,7 +102,7 @@ namespace winrt::StarlightGUI::implementation
             auto brush = theme == winrt::Microsoft::UI::Xaml::ElementTheme::Light
                 ? winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Windows::UI::Color{ 0xFF, 0x5E, 0x5E, 0x5E })
                 : winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Windows::UI::Color{ 0xFF, 0xB9, 0xB9, 0xB9 });
-            for (auto& [index, card] : disk_card_map) {
+            for (auto& [index, card] : diskCardMap) {
                 if (card.read) card.read.Foreground(brush);
                 if (card.write) card.write.Foreground(brush);
                 if (card.trans) card.trans.Foreground(brush);
@@ -143,7 +152,7 @@ namespace winrt::StarlightGUI::implementation
 
     slg::coroutine HomePage::SetUserProfile()
     {
-        auto weak_this = get_weak();
+        auto weakThis = get_weak();
         auto dispatcher = DispatcherQueue();
         bool shouldLoadProfile = username.empty() || !avatar;
 
@@ -253,7 +262,7 @@ namespace winrt::StarlightGUI::implementation
         }
 
 
-        if (auto strong_this = weak_this.get()) {
+        if (auto strongThis = weakThis.get()) {
             co_await wil::resume_foreground(dispatcher);
             if (!IsLoaded()) co_return;
 
@@ -276,7 +285,7 @@ namespace winrt::StarlightGUI::implementation
 
     slg::coroutine HomePage::FetchHitokoto()
     {
-        auto weak_this = get_weak();
+        auto weakThis = get_weak();
         auto dispatcher = DispatcherQueue();
 
         try {
@@ -309,9 +318,9 @@ namespace winrt::StarlightGUI::implementation
             hitokoto = t(L"Msg.FetchFailed");
         }
 
-        if (auto strong_this = weak_this.get()) {
+        if (auto strongThis = weakThis.get()) {
             co_await wil::resume_foreground(dispatcher);
-            strong_this->HitokotoText().Text(hitokoto);
+            strongThis->HitokotoText().Text(hitokoto);
         }
     }
 
@@ -352,7 +361,7 @@ namespace winrt::StarlightGUI::implementation
     */
     slg::coroutine HomePage::UpdateGauges() {
         if (!IsLoaded()) co_return;
-        auto weak_this = get_weak();
+        auto weakThis = get_weak();
 
         co_await winrt::resume_background();
 
@@ -365,23 +374,23 @@ namespace winrt::StarlightGUI::implementation
             }
 
             bool counterReady = true;
-            counterReady &= AddPdhCounter(query, L"\\Processor(_Total)\\% Processor Time", counter_cpu_time);
-            counterReady &= AddPdhCounter(query, L"\\Processor Information(_Total)\\Actual Frequency", counter_cpu_freq);
-            counterReady &= AddPdhCounter(query, L"\\System\\Processes", counter_cpu_process);
-            counterReady &= AddPdhCounter(query, L"\\System\\Threads", counter_cpu_thread);
-            counterReady &= AddPdhCounter(query, L"\\System\\System Calls/sec", counter_cpu_syscall);
-            counterReady &= AddPdhCounter(query, L"\\Memory\\Cache Bytes", counter_mem_cached);
-            counterReady &= AddPdhCounter(query, L"\\Memory\\Committed Bytes", counter_mem_committed);
-            counterReady &= AddPdhCounter(query, L"\\Memory\\Page Reads/sec", counter_mem_read);
-            counterReady &= AddPdhCounter(query, L"\\Memory\\Page Writes/sec", counter_mem_write);
-            counterReady &= AddPdhCounter(query, L"\\Memory\\Pages Input/sec", counter_mem_input);
-            counterReady &= AddPdhCounter(query, L"\\Memory\\Pages Output/sec", counter_mem_output);
-            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\% Disk Time", counter_disk_time);
-            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Disk Transfers/sec", counter_disk_trans);
-            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Disk Read Bytes/sec", counter_disk_read);
-            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Disk Write Bytes/sec", counter_disk_write);
-            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Split IO/Sec", counter_disk_io);
-            counterReady &= AddPdhCounter(query, L"\\GPU Engine(*)\\Utilization Percentage", counter_gpu_time);
+            counterReady &= AddPdhCounter(query, L"\\Processor(_Total)\\% Processor Time", cpuTimeCounter);
+            counterReady &= AddPdhCounter(query, L"\\Processor Information(_Total)\\Actual Frequency", cpuFrequencyCounter);
+            counterReady &= AddPdhCounter(query, L"\\System\\Processes", processCounter);
+            counterReady &= AddPdhCounter(query, L"\\System\\Threads", threadCounter);
+            counterReady &= AddPdhCounter(query, L"\\System\\System Calls/sec", systemCallCounter);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Cache Bytes", cachedMemoryCounter);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Committed Bytes", committedMemoryCounter);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Page Reads/sec", memoryReadCounter);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Page Writes/sec", memoryWriteCounter);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Pages Input/sec", memoryInputCounter);
+            counterReady &= AddPdhCounter(query, L"\\Memory\\Pages Output/sec", memoryOutputCounter);
+            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\% Disk Time", diskTimeCounter);
+            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Disk Transfers/sec", diskTransferCounter);
+            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Disk Read Bytes/sec", diskReadCounter);
+            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Disk Write Bytes/sec", diskWriteCounter);
+            counterReady &= AddPdhCounter(query, L"\\PhysicalDisk(*)\\Split IO/Sec", diskIoCounter);
+            counterReady &= AddPdhCounter(query, L"\\GPU Engine(*)\\Utilization Percentage", gpuTimeCounter);
 
             if (!counterReady) {
                 LOG_ERROR(L"MonitorInstance", L"One or multiple PDH counters failed to add!");
@@ -391,26 +400,26 @@ namespace winrt::StarlightGUI::implementation
 
             // 获取 CPU 型号
             int cpuInfo[4] = { 0 };
-            char cpu_name[49] = { 0 };
+            char cpuName[49] = { 0 };
             __cpuid(cpuInfo, 0x80000002);
-            memcpy(cpu_name, cpuInfo, sizeof(cpuInfo));
+            memcpy(cpuName, cpuInfo, sizeof(cpuInfo));
             __cpuid(cpuInfo, 0x80000003);
-            memcpy(cpu_name + 16, cpuInfo, sizeof(cpuInfo));
+            memcpy(cpuName + 16, cpuInfo, sizeof(cpuInfo));
             __cpuid(cpuInfo, 0x80000004);
-            memcpy(cpu_name + 32, cpuInfo, sizeof(cpuInfo));
-            cpu_manufacture = to_hstring(cpu_name);
+            memcpy(cpuName + 32, cpuInfo, sizeof(cpuInfo));
+            cpuManufacture = to_hstring(cpuName);
 
             // 获取 L1/L2/L3 缓存
             DWORD bufferSize = 0;
             if (!GetLogicalProcessorInformation(NULL, &bufferSize) && GetLastError() == ERROR_INSUFFICIENT_BUFFER && bufferSize > 0) {
                 std::vector<BYTE> buffer(bufferSize);
-                auto slpi = reinterpret_cast<PSYSTEM_LOGICAL_PROCESSOR_INFORMATION>(buffer.data());
+                auto slpi = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)buffer.data();
                 if (GetLogicalProcessorInformation(slpi, &bufferSize)) {
                     for (size_t i = 0; i < bufferSize / sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION); ++i) {
                         if (slpi[i].Relationship == RelationCache) {
-                            if (slpi[i].Cache.Level == 1) cache_l1 += slpi[i].Cache.Size / 1024.0;
-                            else if (slpi[i].Cache.Level == 2) cache_l2 += slpi[i].Cache.Size / (1024.0 * 1024.0);
-                            else if (slpi[i].Cache.Level == 3) cache_l3 += slpi[i].Cache.Size / (1024.0 * 1024.0);
+                            if (slpi[i].Cache.Level == 1) cacheL1 += slpi[i].Cache.Size / 1024.0;
+                            else if (slpi[i].Cache.Level == 2) cacheL2 += slpi[i].Cache.Size / (1024.0 * 1024.0);
+                            else if (slpi[i].Cache.Level == 3) cacheL3 += slpi[i].Cache.Size / (1024.0 * 1024.0);
                         }
                     }
                 }
@@ -420,9 +429,9 @@ namespace winrt::StarlightGUI::implementation
 
             // 获取 GPU 型号
             try {
-                HMODULE hNvml = LoadLibraryW(L"nvml.dll");
-                if (hNvml) {
-                    FreeLibrary(hNvml);
+                HMODULE nvmlModule = LoadLibraryW(L"nvml.dll");
+                if (nvmlModule) {
+                    FreeLibrary(nvmlModule);
                     if (nvmlInit_v2() == NVML_SUCCESS) {
                         UINT deviceCount = 0;
                         nvmlDeviceGetCount_v2(&deviceCount);
@@ -432,7 +441,7 @@ namespace winrt::StarlightGUI::implementation
 
                             char name[NVML_DEVICE_NAME_BUFFER_SIZE];
                             nvmlDeviceGetName(device, name, NVML_DEVICE_NAME_BUFFER_SIZE);
-                            gpu_manufacture = StringToWideString(name);
+                            gpuManufacture = StringToWideString(name);
 
                             LOG_INFO(L"MonitorInstance", L"Initialized NVML.");
                         }
@@ -456,7 +465,7 @@ namespace winrt::StarlightGUI::implementation
                 dd.cb = sizeof(dd);
                 for (DWORD i = 0; EnumDisplayDevicesW(nullptr, i, &dd, 0); i++) {
                     if (dd.StateFlags & DISPLAY_DEVICE_ACTIVE) {
-                        gpu_manufacture = dd.DeviceString;
+                        gpuManufacture = dd.DeviceString;
                         break;
                     }
                 }
@@ -494,18 +503,18 @@ namespace winrt::StarlightGUI::implementation
         // GPU
         nvmlUtilization_t gpu_utilization{};
         nvmlMemory_t gpu_memory{};
-        UINT gpu_temp = 0, gpu_clock_graphics = 0, gpu_clock_mem = 0;
+        UINT gpuTemperature = 0, gpuGraphicsClock = 0, gpuMemoryClock = 0;
         bool gpuInfoReady = false;
         if (isNvidia) {
             gpuInfoReady =
                 nvmlDeviceGetUtilizationRates(device, &gpu_utilization) == NVML_SUCCESS &&
                 nvmlDeviceGetMemoryInfo(device, &gpu_memory) == NVML_SUCCESS &&
-                nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &gpu_temp) == NVML_SUCCESS &&
-                nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &gpu_clock_graphics) == NVML_SUCCESS &&
-                nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &gpu_clock_mem) == NVML_SUCCESS;
+                nvmlDeviceGetTemperature(device, NVML_TEMPERATURE_GPU, &gpuTemperature) == NVML_SUCCESS &&
+                nvmlDeviceGetClockInfo(device, NVML_CLOCK_GRAPHICS, &gpuGraphicsClock) == NVML_SUCCESS &&
+                nvmlDeviceGetClockInfo(device, NVML_CLOCK_MEM, &gpuMemoryClock) == NVML_SUCCESS;
         }
 
-        if (auto strong_this = weak_this.get()) {
+        if (auto strongThis = weakThis.get()) {
             co_await wil::resume_foreground(DispatcherQueue());
             if (!IsLoaded()) co_return;
             InitializeDiskCards();
@@ -513,43 +522,44 @@ namespace winrt::StarlightGUI::implementation
             graphX += 1;
 
             std::wstringstream ss;
-            CpuGauge().Value(GetValueFromCounter(counter_cpu_time));
-            ss << std::fixed << std::setprecision(1) << GetValueFromCounter(counter_cpu_time) << "%";
+            double cpuUsage = GetValueFromCounter(cpuTimeCounter);
+            CpuGauge().Value(cpuUsage);
+            ss << std::fixed << std::setprecision(1) << cpuUsage << "%";
             CpuPercent().Text(ss.str());
-            CpuManufacture().Text(to_hstring(cpu_manufacture));
+            CpuManufacture().Text(to_hstring(cpuManufacture));
             ss = std::wstringstream{};
-            ss << std::fixed << std::setprecision(2) << GetValueFromCounter(counter_cpu_freq) / 1024.0 << " GHz";
+            ss << std::fixed << std::setprecision(2) << GetValueFromCounter(cpuFrequencyCounter) / 1024.0 << " GHz";
             CpuFrequency().Text(ss.str());
-            CpuProcess().Text(to_hstring(GetValueFromCounter(counter_cpu_process)));
-            CpuThread().Text(to_hstring(GetValueFromCounter(counter_cpu_thread)));
+            CpuProcess().Text(to_hstring(GetValueFromCounter(processCounter)));
+            CpuThread().Text(to_hstring(GetValueFromCounter(threadCounter)));
             ss = std::wstringstream{};
-            ss << std::fixed << std::setprecision(1) << GetValueFromCounter(counter_cpu_syscall) << "/s";
+            ss << std::fixed << std::setprecision(1) << GetValueFromCounter(systemCallCounter) << "/s";
             CpuSyscall().Text(ss.str());
             CpuRunTime().Text(timebuffer);
             CpuCore().Text(to_hstring(std::thread::hardware_concurrency()));
-            CpuCacheL1().Text(to_hstring(cache_l1) + L" KB");
-            CpuCacheL2().Text(to_hstring(cache_l2) + L" MB");
-            CpuCacheL3().Text(to_hstring(cache_l3) + L" MB");
-            TotalLineGraph().AddDataPoint(L"CPU", graphX, GetValueFromCounter(counter_cpu_time));
+            CpuCacheL1().Text(to_hstring(cacheL1) + L" KB");
+            CpuCacheL2().Text(to_hstring(cacheL2) + L" MB");
+            CpuCacheL3().Text(to_hstring(cacheL3) + L" MB");
+            TotalLineGraph().AddDataPoint(L"CPU", graphX, cpuUsage);
 
             MemGauge().Value(memInfo.dwMemoryLoad);
             MemPercent().Text(to_hstring((int)memInfo.dwMemoryLoad) + L"%");
             MemSize().Text(FormatMemorySize(memInfo.ullTotalPhys));
             MemUsing().Text(FormatMemorySize(memInfo.ullTotalPhys - memInfo.ullAvailPhys));
             MemUsable().Text(FormatMemorySize(memInfo.ullAvailPhys));
-            MemCached().Text(FormatMemorySize(GetValueFromCounter(counter_mem_cached)));
-            MemCommitted().Text(FormatMemorySize(GetValueFromCounter(counter_mem_committed)));
-            MemPageRead().Text(FormatMemorySize(GetValueFromCounter(counter_mem_read)) + L"/s");
-            MemPageWrite().Text(FormatMemorySize(GetValueFromCounter(counter_mem_write)) + L"/s");
-            MemPageInput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_input)) + L"/s");
-            MemPageOutput().Text(FormatMemorySize(GetValueFromCounter(counter_mem_output)) + L"/s");
+            MemCached().Text(FormatMemorySize(GetValueFromCounter(cachedMemoryCounter)));
+            MemCommitted().Text(FormatMemorySize(GetValueFromCounter(committedMemoryCounter)));
+            MemPageRead().Text(FormatMemorySize(GetValueFromCounter(memoryReadCounter)) + L"/s");
+            MemPageWrite().Text(FormatMemorySize(GetValueFromCounter(memoryWriteCounter)) + L"/s");
+            MemPageInput().Text(FormatMemorySize(GetValueFromCounter(memoryInputCounter)) + L"/s");
+            MemPageOutput().Text(FormatMemorySize(GetValueFromCounter(memoryOutputCounter)) + L"/s");
             TotalLineGraph().AddDataPoint(t(L"Common.Memory"), graphX, memInfo.dwMemoryLoad);
 
-            auto diskTimeMap = GetDiskCounterMap(counter_disk_time);
-            auto diskReadMap = GetDiskCounterMap(counter_disk_read);
-            auto diskWriteMap = GetDiskCounterMap(counter_disk_write);
-            auto diskTransMap = GetDiskCounterMap(counter_disk_trans);
-            auto diskIoMap = GetDiskCounterMap(counter_disk_io);
+            auto diskTimeMap = GetDiskCounterMap(diskTimeCounter);
+            auto diskReadMap = GetDiskCounterMap(diskReadCounter);
+            auto diskWriteMap = GetDiskCounterMap(diskWriteCounter);
+            auto diskTransMap = GetDiskCounterMap(diskTransferCounter);
+            auto diskIoMap = GetDiskCounterMap(diskIoCounter);
 
             double totalDiskUsage = 0.0;
             size_t totalDiskCount = 0;
@@ -558,7 +568,7 @@ namespace winrt::StarlightGUI::implementation
                 ? winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Windows::UI::Color{ 0xFF, 0x5E, 0x5E, 0x5E })
                 : winrt::Microsoft::UI::Xaml::Media::SolidColorBrush(winrt::Windows::UI::Color{ 0xFF, 0xB9, 0xB9, 0xB9 });
 
-            for (auto& [index, card] : disk_card_map) {
+            for (auto& [index, card] : diskCardMap) {
                 double timeValue = diskTimeMap[index];
                 double readValue = diskReadMap[index];
                 double writeValue = diskWriteMap[index];
@@ -589,41 +599,41 @@ namespace winrt::StarlightGUI::implementation
                 totalDiskCount++;
             }
 
-            if (totalDiskCount > 0) totalDiskUsage /= static_cast<double>(totalDiskCount);
+            if (totalDiskCount > 0) totalDiskUsage /= (double)totalDiskCount;
             TotalLineGraph().AddDataPoint(t(L"Common.Disk"), graphX, totalDiskUsage);
 
-            double gpu_time = 0.0;
+            double gpuTime = 0.0;
             if (isNvidia && gpuInfoReady) {
-                if (pdh_first) {
-                    gpu_time = GetValueFromCounterArray(counter_gpu_time);
+                if (pdhFirst) {
+                    gpuTime = GetValueFromCounterArray(gpuTimeCounter);
                 }
                 else {
-                    gpu_time = gpu_utilization.gpu;
+                    gpuTime = gpu_utilization.gpu;
                 }
                 ss = std::wstringstream{};
                 ss << std::fixed << std::setprecision(1) << FormatMemorySize(gpu_memory.used) << "/" << FormatMemorySize(gpu_memory.total);
                 GpuMem().Text(ss.str());
-                GpuTemp().Text(to_hstring(gpu_temp) + L" ℃");
+                GpuTemp().Text(to_hstring(gpuTemperature) + L" ℃");
                 ss = std::wstringstream{};
-                ss << std::fixed << std::setprecision(2) << gpu_clock_graphics / 1024.0 << " GHz";
+                ss << std::fixed << std::setprecision(2) << gpuGraphicsClock / 1024.0 << " GHz";
                 GpuClockGraphics().Text(ss.str());
                 ss = std::wstringstream{};
-                ss << std::fixed << std::setprecision(2) << gpu_clock_mem / 1024.0 << " GHz";
+                ss << std::fixed << std::setprecision(2) << gpuMemoryClock / 1024.0 << " GHz";
                 GpuClockMem().Text(ss.str());
             }
             else {
-                gpu_time = GetValueFromCounterArray(counter_gpu_time);
+                gpuTime = GetValueFromCounterArray(gpuTimeCounter);
                 GpuMem().Text(L"NaN");
                 GpuTemp().Text(L"NaN");
                 GpuClockGraphics().Text(L"NaN");
                 GpuClockMem().Text(L"NaN");
             }
-            GpuGauge().Value(gpu_time);
+            GpuGauge().Value(gpuTime);
             ss = std::wstringstream{};
-            ss << std::fixed << std::setprecision(1) << gpu_time << "%";
+            ss << std::fixed << std::setprecision(1) << gpuTime << "%";
             GpuPercent().Text(ss.str());
-            GpuManufacture().Text(gpu_manufacture);
-            TotalLineGraph().AddDataPoint(L"GPU", graphX, gpu_time);
+            GpuManufacture().Text(gpuManufacture);
+            TotalLineGraph().AddDataPoint(L"GPU", graphX, gpuTime);
 
             double receiveBytesPerSec = 0.0, sendBytesPerSec = 0.0, receivePacketsPerSec = 0.0, sendPacketsPerSec = 0.0;
             if (!GetActiveNetworkSpeed(receiveBytesPerSec, sendBytesPerSec, receivePacketsPerSec, sendPacketsPerSec)) {
@@ -638,7 +648,7 @@ namespace winrt::StarlightGUI::implementation
                 NetGauge().Value(receiveBytesPerSec / (1024 * 1024));
                 NetGauge().ValueStringFormat(L"↓ {0} MB/s");
             }
-            NetManufacture().Text(netadpt_manufacture.empty() ? t(L"Home.Overview.NoActiveAdapter") : netadpt_manufacture);
+            NetManufacture().Text(networkAdapterManufacture.empty() ? t(L"Home.Overview.NoActiveAdapter") : networkAdapterManufacture);
             NetReceive().Text(FormatMemorySize(receiveBytesPerSec) + L"/s");
             NetSend().Text(FormatMemorySize(sendBytesPerSec) + L"/s");
             ss = std::wstringstream{};
@@ -710,7 +720,7 @@ namespace winrt::StarlightGUI::implementation
         if (GetAdaptersInfo(NULL, &bufferSize) != ERROR_BUFFER_OVERFLOW || bufferSize == 0) return false;
 
         std::vector<BYTE> buffer(bufferSize);
-        auto adapters = reinterpret_cast<PIP_ADAPTER_INFO>(buffer.data());
+        auto adapters = (PIP_ADAPTER_INFO)buffer.data();
         if (GetAdaptersInfo(adapters, &bufferSize) != ERROR_SUCCESS) return false;
 
         PIP_ADAPTER_INFO selected = nullptr;
@@ -736,25 +746,25 @@ namespace winrt::StarlightGUI::implementation
 
         if (!selected) selected = fallback;
         if (!selected) {
-            net_selected = false;
-            netadpt_manufacture = L"";
+            networkSelected = false;
+            networkAdapterManufacture = L"";
             return false;
         }
 
-        active_net_if_index = selected->Index;
+        activeNetworkInterfaceIndex = selected->Index;
         std::wstring adapterName = StringToWideString(selected->Description ? selected->Description : "");
         if (adapterName.empty()) adapterName = StringToWideString(selected->AdapterName ? selected->AdapterName : "");
-        netadpt_manufacture = adapterName.empty() ? t(L"Home.Overview.UnknownAdapter") : hstring(adapterName);
-        net_selected = true;
+        networkAdapterManufacture = adapterName.empty() ? t(L"Home.Overview.UnknownAdapter") : hstring(adapterName);
+        networkSelected = true;
 
         MIB_IFROW row{};
-        row.dwIndex = active_net_if_index;
+        row.dwIndex = activeNetworkInterfaceIndex;
         if (GetIfEntry(&row) == NO_ERROR) {
-            last_in_octets = row.dwInOctets;
-            last_out_octets = row.dwOutOctets;
-            last_in_packets = row.dwInUcastPkts + row.dwInNUcastPkts;
-            last_out_packets = row.dwOutUcastPkts + row.dwOutNUcastPkts;
-            last_net_tick = GetTickCount64();
+            lastInOctets = row.dwInOctets;
+            lastOutOctets = row.dwOutOctets;
+            lastInPackets = row.dwInUcastPkts + row.dwInNUcastPkts;
+            lastOutPackets = row.dwOutUcastPkts + row.dwOutNUcastPkts;
+            lastNetworkTick = GetTickCount64();
         }
 
         return true;
@@ -767,26 +777,26 @@ namespace winrt::StarlightGUI::implementation
         receivePacketsPerSec = 0.0;
         sendPacketsPerSec = 0.0;
 
-        if (!net_selected && !TrySelectActiveNetworkAdapter()) return false;
+        if (!networkSelected && !TrySelectActiveNetworkAdapter()) return false;
 
         MIB_IFROW row{};
-        row.dwIndex = active_net_if_index;
+        row.dwIndex = activeNetworkInterfaceIndex;
         if (GetIfEntry(&row) != NO_ERROR || row.dwOperStatus != IF_OPER_STATUS_OPERATIONAL) {
-            net_selected = false;
+            networkSelected = false;
             return false;
         }
 
         auto nowTick = GetTickCount64();
-        if (last_net_tick == 0 || nowTick <= last_net_tick) {
-            last_in_octets = row.dwInOctets;
-            last_out_octets = row.dwOutOctets;
-            last_in_packets = row.dwInUcastPkts + row.dwInNUcastPkts;
-            last_out_packets = row.dwOutUcastPkts + row.dwOutNUcastPkts;
-            last_net_tick = nowTick;
+        if (lastNetworkTick == 0 || nowTick <= lastNetworkTick) {
+            lastInOctets = row.dwInOctets;
+            lastOutOctets = row.dwOutOctets;
+            lastInPackets = row.dwInUcastPkts + row.dwInNUcastPkts;
+            lastOutPackets = row.dwOutUcastPkts + row.dwOutNUcastPkts;
+            lastNetworkTick = nowTick;
             return true;
         }
 
-        double seconds = (nowTick - last_net_tick) / 1000.0;
+        double seconds = (nowTick - lastNetworkTick) / 1000.0;
         if (seconds <= 0.0) seconds = 1.0;
 
         UINT64 inOctets = row.dwInOctets;
@@ -794,21 +804,21 @@ namespace winrt::StarlightGUI::implementation
         UINT64 inPackets = row.dwInUcastPkts + row.dwInNUcastPkts;
         UINT64 outPackets = row.dwOutUcastPkts + row.dwOutNUcastPkts;
 
-        UINT64 inOctetsDelta = ComputeCounterDelta32(inOctets, last_in_octets);
-        UINT64 outOctetsDelta = ComputeCounterDelta32(outOctets, last_out_octets);
-        UINT64 inPacketsDelta = ComputeCounterDelta32(inPackets, last_in_packets);
-        UINT64 outPacketsDelta = ComputeCounterDelta32(outPackets, last_out_packets);
+        UINT64 inOctetsDelta = ComputeCounterDelta32(inOctets, lastInOctets);
+        UINT64 outOctetsDelta = ComputeCounterDelta32(outOctets, lastOutOctets);
+        UINT64 inPacketsDelta = ComputeCounterDelta32(inPackets, lastInPackets);
+        UINT64 outPacketsDelta = ComputeCounterDelta32(outPackets, lastOutPackets);
 
-        receiveBytesPerSec = static_cast<double>(inOctetsDelta) / seconds;
-        sendBytesPerSec = static_cast<double>(outOctetsDelta) / seconds;
-        receivePacketsPerSec = static_cast<double>(inPacketsDelta) / seconds;
-        sendPacketsPerSec = static_cast<double>(outPacketsDelta) / seconds;
+        receiveBytesPerSec = (double)inOctetsDelta / seconds;
+        sendBytesPerSec = (double)outOctetsDelta / seconds;
+        receivePacketsPerSec = (double)inPacketsDelta / seconds;
+        sendPacketsPerSec = (double)outPacketsDelta / seconds;
 
-        last_in_octets = inOctets;
-        last_out_octets = outOctets;
-        last_in_packets = inPackets;
-        last_out_packets = outPackets;
-        last_net_tick = nowTick;
+        lastInOctets = inOctets;
+        lastOutOctets = outOctets;
+        lastInPackets = inPackets;
+        lastOutPackets = outPackets;
+        lastNetworkTick = nowTick;
         return true;
     }
 
@@ -842,7 +852,7 @@ namespace winrt::StarlightGUI::implementation
         if (status != PDH_MORE_DATA || bufferSize == 0 || itemCount == 0) return result;
 
         std::vector<BYTE> buffer(bufferSize);
-        auto items = reinterpret_cast<PPDH_FMT_COUNTERVALUE_ITEM_W>(buffer.data());
+        auto items = (PPDH_FMT_COUNTERVALUE_ITEM_W)buffer.data();
         status = PdhGetFormattedCounterArrayW(counter, PDH_FMT_DOUBLE, &bufferSize, &itemCount, items);
         if (status != ERROR_SUCCESS) return result;
 
@@ -883,8 +893,8 @@ namespace winrt::StarlightGUI::implementation
     hstring HomePage::QueryDiskManufacture(int diskIndex)
     {
         std::wstring path = L"\\\\.\\PhysicalDrive" + std::to_wstring(diskIndex);
-        HANDLE hDevice = CreateFileW(path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
-        if (hDevice == INVALID_HANDLE_VALUE) {
+        HANDLE deviceHandle = CreateFileW(path.c_str(), 0, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL);
+        if (deviceHandle == INVALID_HANDLE_VALUE) {
             LOG_ERROR(L"MonitorInstance", L"Failed to open %s.", path.c_str());
             return t(L"Home.Overview.UnknownModel");
         }
@@ -897,12 +907,12 @@ namespace winrt::StarlightGUI::implementation
         DWORD bytesReturned = 0;
         hstring manufacture = t(L"Home.Overview.UnknownModel");
 
-        if (DeviceIoControl(hDevice, IOCTL_STORAGE_QUERY_PROPERTY, &spq, sizeof(spq), buffer.data(), static_cast<DWORD>(buffer.size()), &bytesReturned, NULL))
+        if (DeviceIoControl(deviceHandle, IOCTL_STORAGE_QUERY_PROPERTY, &spq, sizeof(spq), buffer.data(), (DWORD)buffer.size(), &bytesReturned, NULL))
         {
-            auto sdd = reinterpret_cast<PSTORAGE_DEVICE_DESCRIPTOR>(buffer.data());
+            auto sdd = (PSTORAGE_DEVICE_DESCRIPTOR)buffer.data();
             if (sdd->ProductIdOffset != 0 && sdd->ProductIdOffset < bytesReturned) {
-                LPCSTR productId = reinterpret_cast<LPCSTR>(buffer.data() + sdd->ProductIdOffset);
-                size_t maxLen = static_cast<size_t>(bytesReturned - sdd->ProductIdOffset);
+                LPCSTR productId = (LPCSTR)(buffer.data() + sdd->ProductIdOffset);
+                size_t maxLen = (size_t)(bytesReturned - sdd->ProductIdOffset);
                 size_t len = strnlen_s(productId, maxLen);
                 if (len > 0) {
                     std::string product(productId, len);
@@ -919,7 +929,7 @@ namespace winrt::StarlightGUI::implementation
             LOG_ERROR(L"MonitorInstance", L"Failed to query disk info with %s.", path.c_str());
         }
 
-        CloseHandle(hDevice);
+        CloseHandle(deviceHandle);
         return manufacture;
     }
 
@@ -1043,12 +1053,12 @@ namespace winrt::StarlightGUI::implementation
         card.trans = transValue;
         card.io = ioValue;
         card.percent = percent;
-        disk_card_map[diskIndex] = card;
+        diskCardMap[diskIndex] = card;
     }
 
     void HomePage::InitializeDiskCards()
     {
-        if (!disk_card_map.empty()) return;
+        if (!diskCardMap.empty()) return;
 
         auto indexes = EnumerateDiskIndexes();
         if (indexes.empty()) {
@@ -1101,6 +1111,3 @@ namespace winrt::StarlightGUI::implementation
         HomeChangeModeUid().Content(tbox(L"Home.Overview.ChangeMode"));
     }
 }
-
-
-

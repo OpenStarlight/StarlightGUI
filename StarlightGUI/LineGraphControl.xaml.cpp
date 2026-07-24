@@ -14,6 +14,7 @@
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
+using namespace Microsoft::UI::Xaml::Controls;
 using namespace Microsoft::UI::Xaml::Media;
 using namespace Microsoft::UI::Xaml::Shapes;
 using namespace Windows::UI;
@@ -101,12 +102,12 @@ namespace winrt::StarlightGUI::implementation
 
         if (it != m_series.end())
         {
-            it->second.Points.push_back(winrt::StarlightGUI::DataPoint{ x,y });
+            it->second.points.push_back(winrt::StarlightGUI::DataPoint{ x,y });
 
             // 超过最大数量就清空
-            if (it->second.Points.size() > MAX_POINTS)
+            if (it->second.points.size() > MAX_POINTS)
             {
-                it->second.Points.erase(it->second.Points.begin());
+                it->second.points.erase(it->second.points.begin());
             }
 
             CalculateBounds();
@@ -121,7 +122,7 @@ namespace winrt::StarlightGUI::implementation
 
         if (it != m_series.end())
         {
-            it->second.Points.clear();
+            it->second.points.clear();
             CalculateBounds();
             UpdateChart();
         }
@@ -140,7 +141,7 @@ namespace winrt::StarlightGUI::implementation
 
         if (it != m_series.end())
         {
-            it->second.Color = color;
+            it->second.color = color;
             UpdateChart();
         }
     }
@@ -152,7 +153,7 @@ namespace winrt::StarlightGUI::implementation
 
         if (it != m_series.end())
         {
-            it->second.Visible = visible;
+            it->second.visible = visible;
             UpdateChart();
         }
     }
@@ -164,7 +165,7 @@ namespace winrt::StarlightGUI::implementation
 
         if (it != m_series.end())
         {
-            it->second.LineThickness = thickness;
+            it->second.lineThickness = thickness;
             UpdateChart();
         }
     }
@@ -214,12 +215,12 @@ namespace winrt::StarlightGUI::implementation
 
         for (const auto& [name, series] : m_series)
         {
-            if (!series.Visible || series.Points.empty())
+            if (!series.visible || series.points.empty())
                 continue;
 
             hasVisibleData = true;
 
-            for (const auto& point : series.Points)
+            for (const auto& point : series.points)
             {
                 m_xMin = std::min(m_xMin, point.X);
                 m_xMax = std::max(m_xMax, point.X);
@@ -414,12 +415,12 @@ namespace winrt::StarlightGUI::implementation
 
         for (auto& [name, series] : m_series)
         {
-            if (!series.Visible || series.Points.size() < 2)
+            if (!series.visible || series.points.size() < 2)
                 continue;
 
-            if (series.Color.A == 0)
+            if (series.color.A == 0)
             {
-                series.Color = m_defaultColors[colorIndex % m_defaultColors.size()];
+                series.color = m_defaultColors[colorIndex % m_defaultColors.size()];
                 colorIndex++;
             }
 
@@ -427,7 +428,7 @@ namespace winrt::StarlightGUI::implementation
             auto polyline = Microsoft::UI::Xaml::Shapes::Polyline();
             PointCollection points;
 
-            for (const auto& point : series.Points)
+            for (const auto& point : series.points)
             {
                 double screenX = DataToScreenX(point.X);
                 double screenY = DataToScreenY(point.Y);
@@ -435,16 +436,16 @@ namespace winrt::StarlightGUI::implementation
             }
 
             polyline.Points(points);
-            polyline.Stroke(SolidColorBrush(series.Color));
-            polyline.StrokeThickness(series.LineThickness);
+            polyline.Stroke(SolidColorBrush(series.color));
+            polyline.StrokeThickness(series.lineThickness);
             polyline.StrokeLineJoin(PenLineJoin::Round);
 
             m_dataCanvas.Children().Append(polyline);
 
             // 数据点标记
-            if (series.Points.size() <= 100) // 点数较少时才显示点，保证性能
+            if (series.points.size() <= 100)
             {
-                for (const auto& point : series.Points)
+                for (const auto& point : series.points)
                 {
                     double screenX = DataToScreenX(point.X);
                     double screenY = DataToScreenY(point.Y);
@@ -452,7 +453,7 @@ namespace winrt::StarlightGUI::implementation
                     auto ellipse = Microsoft::UI::Xaml::Shapes::Ellipse();
                     ellipse.Width(6);
                     ellipse.Height(6);
-                    ellipse.Fill(SolidColorBrush(series.Color));
+                    ellipse.Fill(SolidColorBrush(series.color));
 
                     auto transform = TranslateTransform();
                     transform.X(screenX - 3);
@@ -477,7 +478,7 @@ namespace winrt::StarlightGUI::implementation
 
         for (const auto& [name, series] : m_series)
         {
-            if (!series.Visible)
+            if (!series.visible)
                 continue;
 
             auto legendItem = StackPanel();
@@ -487,7 +488,7 @@ namespace winrt::StarlightGUI::implementation
             auto colorRect = Microsoft::UI::Xaml::Shapes::Rectangle();
             colorRect.Width(12);
             colorRect.Height(2);
-            colorRect.Fill(SolidColorBrush(series.Color));
+            colorRect.Fill(SolidColorBrush(series.color));
             colorRect.Margin(ThicknessHelper::FromLengths(0, 0, 4, 0));
 
             auto nameText = TextBlock();
@@ -551,15 +552,15 @@ namespace winrt::StarlightGUI::implementation
         // 查找最近的数据点
         for (const auto& [name, series] : m_series)
         {
-            if (!series.Visible || series.Points.empty())
+            if (!series.visible || series.points.empty())
                 continue;
 
-            auto closest = std::min_element(series.Points.begin(), series.Points.end(),
+            auto closest = std::min_element(series.points.begin(), series.points.end(),
                 [&dataPoint](const winrt::StarlightGUI::DataPoint& a, const winrt::StarlightGUI::DataPoint& b) {
                     return std::abs(a.X - dataPoint.X) < std::abs(b.X - dataPoint.X);
                 });
 
-            if (closest != series.Points.end())
+            if (closest != series.points.end())
             {
                 double xRange = m_xMax - m_xMin;
                 double yRange = m_yMax - m_yMin;
@@ -573,7 +574,7 @@ namespace winrt::StarlightGUI::implementation
                     auto dot = Microsoft::UI::Xaml::Shapes::Ellipse();
                     dot.Width(6);
                     dot.Height(6);
-                    dot.Fill(SolidColorBrush(series.Color));
+                    dot.Fill(SolidColorBrush(series.color));
                     dot.Margin(ThicknessHelper::FromLengths(0, 0, 4, 0));
 
                     std::wstringstream yss;

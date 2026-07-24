@@ -1,9 +1,15 @@
 ﻿#include "pch.h"
 #include "LoadDriverDialog.xaml.h"
+#include <winrt/Microsoft.UI.h>
+#include <winrt/Microsoft.UI.Interop.h>
+#include <winrt/Microsoft.Windows.Storage.Pickers.h>
+#include <winrt/Windows.Storage.h>
 #if __has_include("LoadDriverDialog.g.cpp")
 #include "LoadDriverDialog.g.cpp"
 #endif
 #include "MainWindow.xaml.h"
+#include "Utils/Utils.h"
+#include <string>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -48,9 +54,9 @@ namespace winrt::StarlightGUI::implementation
 
     slg::coroutine LoadDriverDialog::ExploreButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
-        HWND hWnd = g_mainWindowInstance->GetWindowHandle();
+        HWND windowHandle = g_mainWindowInstance->GetWindowHandle();
 
-        FileOpenPicker picker = FileOpenPicker(winrt::Microsoft::UI::GetWindowIdFromWindow(hWnd));
+        FileOpenPicker picker = FileOpenPicker(winrt::Microsoft::UI::GetWindowIdFromWindow(windowHandle));
 
         picker.SuggestedStartLocation(PickerLocationId::ComputerFolder);
         picker.FileTypeFilter().Append(L".sys");
@@ -74,6 +80,3 @@ namespace winrt::StarlightGUI::implementation
         }
     }
 }
-
-
-

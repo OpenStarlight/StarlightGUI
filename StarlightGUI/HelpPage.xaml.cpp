@@ -8,6 +8,7 @@
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/Windows.Data.Json.h>
 #include "MainWindow.xaml.h"
+#include "Utils/Utils.h"
 
 using namespace winrt;
 using namespace Windows::System;
@@ -22,11 +23,11 @@ namespace winrt::StarlightGUI::implementation
         InitializeComponent();
 
         this->Loaded([this](auto&&, auto&&) -> winrt::Windows::Foundation::IAsyncAction {
-            auto weak_this = get_weak();
+            auto weakThis = get_weak();
             if (sponsorList.empty()) {
                 co_await GetSponsorListFromCloud();
             }
-            if (auto strong_this = weak_this.get()) {
+            if (auto strongThis = weakThis.get()) {
                 SetSponsorList();
             }
             });
@@ -99,9 +100,9 @@ namespace winrt::StarlightGUI::implementation
 
     winrt::Windows::Foundation::IAsyncAction HelpPage::GetSponsorListFromCloud() {
         try {
-            auto weak_this = get_weak();
+            auto weakThis = get_weak();
 
-            if (auto strong_this = weak_this.get()) {
+            if (auto strongThis = weakThis.get()) {
                 co_await winrt::resume_background();
 
                 HttpClient client;
@@ -156,6 +157,4 @@ namespace winrt::StarlightGUI::implementation
         SponsorListText().Text(t(L"Msg.Loading"));
     }
 }
-
-
 

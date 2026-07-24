@@ -3,11 +3,20 @@
 #if __has_include("MonitorPage.g.cpp")
 #include "MonitorPage.g.cpp"
 #endif
+#include <algorithm>
 #include <array>
 #include <string_view>
 #include <utility>
 #include <winrt/XamlToolkit.WinUI.Controls.h>
+#include <winrt/Microsoft.UI.Dispatching.h>
+#include <winrt/WinUI3Package.h>
+#include <wil/cppwinrt_helpers.h>
 #include <unordered_set>
+#include "Utils/Config.h"
+#include "Utils/CppUtils.h"
+#include "Utils/KernelBase.h"
+#include "Utils/TaskUtils.h"
+#include "Utils/Utils.h"
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -180,8 +189,8 @@ namespace winrt::StarlightGUI::implementation
 
 		LOG_INFO(__WFUNCTION__, L"Loading general list...");
 
-		if (m_callbackType < 0 || m_callbackType > static_cast<int>(CallbackType::Nmi) || (CallbackType)m_callbackType == CallbackType::ImageVerification) {
-			m_callbackType = static_cast<int>(CallbackType::CreateProcess);
+		if (m_callbackType < 0 || m_callbackType > (int)CallbackType::Nmi || (CallbackType)m_callbackType == CallbackType::ImageVerification) {
+			m_callbackType = (int)CallbackType::CreateProcess;
 			UpdateCallbackColumns();
 		}
 
@@ -198,13 +207,13 @@ namespace winrt::StarlightGUI::implementation
 		std::vector<winrt::StarlightGUI::GeneralEntry> entries;
 		std::vector<winrt::StarlightGUI::GeneralEntry> const* entriesSource = &entries;
 
-		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, static_cast<size_t>(CallbackType::Nmi) + 1> callbackCache;
+		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, (size_t)CallbackType::Nmi + 1> callbackCache;
 		static std::array<std::vector<winrt::StarlightGUI::GeneralEntry>, HALTableNames.size()> halCache;
 		static std::vector<winrt::StarlightGUI::GeneralEntry> minifilterCache, ssdtCache, sssdtCache, ioTimerCache, DPCTimerCache, resourceCache, idtCache, gdtCache, piddbCache;
 
 		switch (requestedIndex) {
 		case 1:
-			if (requestedCallbackType < 0 || requestedCallbackType >= static_cast<int>(callbackCache.size()) || (CallbackType)requestedCallbackType == CallbackType::ImageVerification) {
+			if (requestedCallbackType < 0 || requestedCallbackType >= (int)callbackCache.size() || (CallbackType)requestedCallbackType == CallbackType::ImageVerification) {
 				requestedCallbackType = 0;
 			}
 			if (force || callbackCache[requestedCallbackType].empty()) {
@@ -338,7 +347,7 @@ namespace winrt::StarlightGUI::implementation
 			break;
 		case 11:
 			if (requestedHALTableType < 0 ||
-				requestedHALTableType >= static_cast<int>(halCache.size())) {
+				requestedHALTableType >= (int)halCache.size()) {
 				requestedHALTableType = 0;
 			}
 			if (force || halCache[requestedHALTableType].empty()) {
@@ -578,7 +587,7 @@ namespace winrt::StarlightGUI::implementation
 			auto xamlRoot = XamlRoot();
 			auto target = item;
 			target.ULong1(m_callbackType);
-			if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+			if (dangerousConfirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
 				co_return;
 			}
 			if (KernelInstance::RemoveCallback(target)) {
@@ -600,7 +609,7 @@ namespace winrt::StarlightGUI::implementation
 		};
 		std::array<Button, 4> callbackHeaderButtons = { CallbackEntryHeaderButton(), CallbackHandleHeaderButton(), CallbackAddress3HeaderButton(), CallbackAddress4HeaderButton() };
 		auto callbackValue = [&item](uint32_t column) -> hstring {
-			auto type = static_cast<CallbackType>(item.ULong1());
+			auto type = (CallbackType)item.ULong1();
 			if (column == 0) return hstring(ULongToHexString(item.ULongLong1()));
 			if (type == CallbackType::CreateProcess || type == CallbackType::CreateThread ||
 				type == CallbackType::LoadImage || type == CallbackType::LogonSessionTerminated ||
@@ -609,7 +618,7 @@ namespace winrt::StarlightGUI::implementation
 				if (column == 2) return hstring(ULongToHexString(item.ULong3(), 0, true, true));
 			}
 			else if (type == CallbackType::Object && column == 3) {
-				switch (static_cast<ObCallbackType>(item.ULong3())) {
+				switch ((ObCallbackType)item.ULong3()) {
 				case ObCallbackType::Process: return L"Process";
 				case ObCallbackType::Thread: return L"Thread";
 				case ObCallbackType::Desktop: return L"Desktop";
@@ -687,7 +696,7 @@ namespace winrt::StarlightGUI::implementation
 			auto lifetime = get_strong();
 			auto xamlRoot = XamlRoot();
 			auto target = item;
-			if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+			if (dangerousConfirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
 				co_return;
 			}
 			if (KernelInstance::RemoveMiniFilter(target)) {
@@ -816,7 +825,7 @@ namespace winrt::StarlightGUI::implementation
 			auto lifetime = get_strong();
 			auto xamlRoot = XamlRoot();
 			auto target = item;
-			if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+			if (dangerousConfirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
 				co_return;
 			}
 			if (KernelInstance::RemovePiDDBCache(target)) {
@@ -946,8 +955,8 @@ namespace winrt::StarlightGUI::implementation
 		for (auto const& option : CallbackTypeOptions) {
 			ToggleMenuFlyoutItem item;
 			item.Text(hstring(option.second));
-			item.Tag(box_value(static_cast<int32_t>(option.first)));
-			item.IsChecked(static_cast<int>(option.first) == m_callbackType);
+			item.Tag(box_value((int32_t)option.first));
+			item.IsChecked((int)option.first == m_callbackType);
 			item.Click({ this, &MonitorPage::CallbackTypeMenuItem_Click });
 			flyout.Items().Append(item);
 		}
@@ -958,8 +967,8 @@ namespace winrt::StarlightGUI::implementation
 		for (uint32_t i = 0; i < HALTableNames.size(); ++i) {
 			ToggleMenuFlyoutItem item;
 			item.Text(hstring(HALTableNames[i]));
-			item.Tag(box_value(static_cast<int32_t>(i)));
-			item.IsChecked(static_cast<int>(i) == m_halTableType);
+			item.Tag(box_value((int32_t)i));
+			item.IsChecked((int)i == m_halTableType);
 			item.Click({ this, &MonitorPage::HALTableMenuItem_Click });
 #ifndef STARLIGHT_PREMIUM
 			if (i > 1) {
@@ -1060,7 +1069,7 @@ namespace winrt::StarlightGUI::implementation
 
 		std::wstring_view callbackTypeName = CallbackTypeOptions[0].second;
 		for (auto const& option : CallbackTypeOptions) {
-			if (static_cast<int>(option.first) == m_callbackType) {
+			if ((int)option.first == m_callbackType) {
 				callbackTypeName = option.second;
 				break;
 			}
@@ -1089,7 +1098,7 @@ namespace winrt::StarlightGUI::implementation
 		int selectedIndex = unbox_value<int32_t>(item.Tag());
 		bool validCallbackType = false;
 		for (auto const& option : CallbackTypeOptions) {
-			if (static_cast<int>(option.first) == selectedIndex) {
+			if ((int)option.first == selectedIndex) {
 				validCallbackType = true;
 				break;
 			}
@@ -1119,7 +1128,7 @@ namespace winrt::StarlightGUI::implementation
 		if (!item) return;
 
 		int selectedIndex = unbox_value<int32_t>(item.Tag());
-		if (selectedIndex < 0 || selectedIndex >= static_cast<int>(HALTableNames.size())) return;
+		if (selectedIndex < 0 || selectedIndex >= (int)HALTableNames.size()) return;
 
 		bool reload = false;
 		if (!m_isLoading && selectedIndex != m_halTableType) {
@@ -1263,7 +1272,7 @@ namespace winrt::StarlightGUI::implementation
 
 		LoadingRing().IsActive(true);
 
-		auto weak_this = get_weak();
+		auto weakThis = get_weak();
 		int32_t previousObjectIndex = ObjectTreeView().SelectedIndex();
 		if (auto listView = GetGeneralListView(segmentedIndex)) {
 			listView.ItemsSource(nullptr);
@@ -1303,7 +1312,7 @@ namespace winrt::StarlightGUI::implementation
 			}
 			co_await LoadItemList();
 			if (m_itemList.Size() > 0) {
-				int32_t safeIndex = previousObjectIndex >= 0 && previousObjectIndex < static_cast<int32_t>(m_itemList.Size()) ? previousObjectIndex : 0;
+				int32_t safeIndex = previousObjectIndex >= 0 && previousObjectIndex < (int32_t)m_itemList.Size() ? previousObjectIndex : 0;
 				ObjectTreeView().SelectedIndex(safeIndex);
 				co_await LoadObjectList();
 			}
@@ -1379,7 +1388,7 @@ namespace winrt::StarlightGUI::implementation
 		}
 		}
 
-		if (auto strong_this = weak_this.get()) {
+		if (auto strongThis = weakThis.get()) {
 			LoadingRing().IsActive(false);
 		}
 		co_return;
@@ -1460,7 +1469,7 @@ namespace winrt::StarlightGUI::implementation
 			for (auto const& child : headerGrid.Children()) {
 				auto splitter = child.try_as<GridSplitter>();
 				if (!splitter) continue;
-				if (Grid::GetColumn(splitter) != static_cast<int>(column)) continue;
+				if (Grid::GetColumn(splitter) != (int)column) continue;
 				exists = true;
 				break;
 			}
@@ -1566,7 +1575,7 @@ namespace winrt::StarlightGUI::implementation
 		AttachColumnSyncToSection(HALTableGrid(), 0);
 
 		for (auto const& binding : m_columnSyncBindings) {
-			slg::SyncListViewColumnWidths(binding.HeaderGrid, binding.BodyGrid, binding.ListView, binding.RowOffset);
+			slg::SyncListViewColumnWidths(binding.headerGrid, binding.bodyGrid, binding.listView, binding.rowOffset);
 		}
 	}
 }

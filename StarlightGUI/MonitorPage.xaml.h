@@ -1,6 +1,10 @@
 ﻿#pragma once
 
 #include "MonitorPage.g.h"
+#include "Utils/Coroutine.h"
+#include "Utils/GeneralEntry.h"
+#include "Utils/ObjectEntry.h"
+#include <string>
 #include <vector>
 
 namespace winrt::StarlightGUI::implementation
@@ -23,7 +27,7 @@ namespace winrt::StarlightGUI::implementation
 		void PiDDBListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
 		void HALTableListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
 
-        slg::coroutine RefreshButton_Click(IInspectable const&, RoutedEventArgs const&);
+        slg::coroutine RefreshButton_Click(IInspectable const&, winrt::Microsoft::UI::Xaml::RoutedEventArgs const&);
 
         winrt::Windows::Foundation::IAsyncAction LoadItemList();
         winrt::Windows::Foundation::IAsyncAction LoadPartitionList(std::wstring path, bool reportError = true);
@@ -57,10 +61,10 @@ namespace winrt::StarlightGUI::implementation
 
         struct ColumnSyncBinding
         {
-            winrt::Microsoft::UI::Xaml::Controls::Grid HeaderGrid{ nullptr };
-            winrt::Microsoft::UI::Xaml::Controls::Grid BodyGrid{ nullptr };
-            winrt::Microsoft::UI::Xaml::Controls::ListView ListView{ nullptr };
-            uint32_t RowOffset = 0;
+            winrt::Microsoft::UI::Xaml::Controls::Grid headerGrid{ nullptr };
+            winrt::Microsoft::UI::Xaml::Controls::Grid bodyGrid{ nullptr };
+            winrt::Microsoft::UI::Xaml::Controls::ListView listView{ nullptr };
+            uint32_t rowOffset = 0;
         };
 
         void InitializeColumnSyncBindings();

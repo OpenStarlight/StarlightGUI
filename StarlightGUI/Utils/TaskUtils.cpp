@@ -3,24 +3,21 @@
 #include "TlHelp32.h"
 #include "shellapi.h"
 #include "Psapi.h"
+#include <algorithm>
+#include <vector>
 
-typedef BOOL(*EndTask_t)(HWND hwnd, BOOL fShutdown, BOOL fForce);
-typedef LONG(*NtQuerySystemInformation_t)(ULONG SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
+typedef BOOL(*EndTask_t)(HWND windowHandle, BOOL shutdown, BOOL force);
 
-EndTask_t EndTask = NULL;
-NtQuerySystemInformation_t NtQuerySystemInformation = NULL;
+static EndTask_t endTask = NULL;
 
 namespace winrt::StarlightGUI::implementation {
 
-	/*
-	* 开启进程效能模式
-	*/
-	bool TaskUtils::EnableProcessPerformanceMode(StarlightGUI::ProcessInfo pi) {
-		int pid = pi.Id();
+	bool TaskUtils::EnableProcessPerformanceMode(StarlightGUI::ProcessInfo process) {
+		int pid = process.Id();
 		if (pid != 0) {
-			HANDLE hProc = OpenProcess(PROCESS_SET_INFORMATION, FALSE, pid);
+			HANDLE processHandle = OpenProcess(PROCESS_SET_INFORMATION, FALSE, pid);
 
-			if (hProc) {
+			if (processHandle) {
 				PROCESS_POWER_THROTTLING_STATE throttling;
 				ZeroMemory(&throttling, sizeof(throttling));
 
@@ -28,8 +25,8 @@ namespace winrt::StarlightGUI::implementation {
 				throttling.ControlMask = PROCESS_POWER_THROTTLING_EXECUTION_SPEED;
 				throttling.StateMask = PROCESS_POWER_THROTTLING_EXECUTION_SPEED;
 
-				BOOL result = SetProcessInformation(hProc, ProcessPowerThrottling, &throttling, sizeof(throttling));
-				CloseHandle(hProc);
+				BOOL result = SetProcessInformation(processHandle, ProcessPowerThrottling, &throttling, sizeof(throttling));
+				CloseHandle(processHandle);
 
 				return result;
 			}
@@ -37,23 +34,13 @@ namespace winrt::StarlightGUI::implementation {
 		return false;
 	}
 
-	/*
-	 * 获取进程CPU占用
-	 */
 	bool TaskUtils::FetchProcessCpuUsage(ProcessCpuSnapshot const& previousSnapshot,
 		ProcessCpuSnapshot& currentSnapshot, std::map<DWORD, double>& processCpuTable) {
-		if (!NtQuerySystemInformation) {
-			HMODULE hNtdll = GetModuleHandleW(L"ntdll.dll");
-			if (!hNtdll) return false;
-			NtQuerySystemInformation = (NtQuerySystemInformation_t)GetProcAddress(hNtdll, "NtQuerySystemInformation");
-		}
-		if (!NtQuerySystemInformation) return false;
-
 		ULONG length = 0;
 		std::vector<BYTE> buffer(0x10000);
 		LONG status = NtQuerySystemInformation(5, buffer.data(), (ULONG)buffer.size(), &length);
 		while (status < 0 && length > buffer.size()) {
-			buffer.resize(static_cast<size_t>(length) + 0x10000);
+			buffer.resize((size_t)length + 0x10000);
 			status = NtQuerySystemInformation(5, buffer.data(), (ULONG)buffer.size(), &length);
 		}
 		if (status < 0) return false;
@@ -67,8 +54,8 @@ namespace winrt::StarlightGUI::implementation {
 		user.LowPart = userTime.dwLowDateTime;
 		user.HighPart = userTime.dwHighDateTime;
 
-		currentSnapshot.Processes.clear();
-		currentSnapshot.TotalTime = kernel.QuadPart + user.QuadPart;
+		currentSnapshot.processes.clear();
+		currentSnapshot.totalTime = kernel.QuadPart + user.QuadPart;
 		processCpuTable.clear();
 
 		PSYSTEM_PROCESS_INFORMATION process = (PSYSTEM_PROCESS_INFORMATION)buffer.data();
@@ -78,17 +65,17 @@ namespace winrt::StarlightGUI::implementation {
 				process->UserTime.QuadPart + process->KernelTime.QuadPart,
 				process->CreateTime.QuadPart
 			};
-			currentSnapshot.Processes[pid] = sample;
+			currentSnapshot.processes[pid] = sample;
 
 			double usage = 0.0;
-			auto previous = previousSnapshot.Processes.find(pid);
-			if (previous != previousSnapshot.Processes.end() &&
-				previous->second.CreateTime == sample.CreateTime &&
-				sample.ProcessTime >= previous->second.ProcessTime &&
-				currentSnapshot.TotalTime > previousSnapshot.TotalTime) {
-				ULONGLONG processDelta = static_cast<ULONGLONG>(sample.ProcessTime - previous->second.ProcessTime);
-				ULONGLONG totalDelta = currentSnapshot.TotalTime - previousSnapshot.TotalTime;
-				usage = static_cast<double>(processDelta) * 100.0 / static_cast<double>(totalDelta);
+			auto previous = previousSnapshot.processes.find(pid);
+			if (previous != previousSnapshot.processes.end() &&
+				previous->second.createTime == sample.createTime &&
+				sample.processTime >= previous->second.processTime &&
+				currentSnapshot.totalTime > previousSnapshot.totalTime) {
+				ULONGLONG processDelta = (ULONGLONG)(sample.processTime - previous->second.processTime);
+				ULONGLONG totalDelta = currentSnapshot.totalTime - previousSnapshot.totalTime;
+				usage = (double)processDelta * 100.0 / (double)totalDelta;
 			}
 			processCpuTable[pid] = std::min(100.0, std::max(0.0, usage));
 
@@ -99,17 +86,12 @@ namespace winrt::StarlightGUI::implementation {
 		return true;
 	}
 
-	/*
-	 * 复制至剪贴板
-	 */
 	bool TaskUtils::CopyToClipboard(std::wstring str) {
-		if (str.empty()) {
+		if (str.empty())
 			return false;
-		}
 
-		if (!OpenClipboard(nullptr)) {
+		if (!OpenClipboard(nullptr))
 			return false;
-		}
 
 		if (!EmptyClipboard()) {
 			CloseClipboard();
@@ -117,23 +99,23 @@ namespace winrt::StarlightGUI::implementation {
 		}
 
 		size_t sizeInBytes = (str.size() + 1) * sizeof(wchar_t);
-		HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE, sizeInBytes);
-		if (!hGlobal) {
+		HGLOBAL globalMemory = GlobalAlloc(GMEM_MOVEABLE, sizeInBytes);
+		if (!globalMemory) {
 			CloseClipboard();
 			return false;
 		}
 
-		void* pGlobal = GlobalLock(hGlobal);
-		if (!pGlobal) {
-			GlobalFree(hGlobal);
+		void* globalBuffer = GlobalLock(globalMemory);
+		if (!globalBuffer) {
+			GlobalFree(globalMemory);
 			CloseClipboard();
 			return false;
 		}
-		memcpy(pGlobal, str.c_str(), sizeInBytes);
-		GlobalUnlock(hGlobal);
+		memcpy(globalBuffer, str.c_str(), sizeInBytes);
+		GlobalUnlock(globalMemory);
 
-		if (!SetClipboardData(CF_UNICODETEXT, hGlobal)) {
-			GlobalFree(hGlobal);
+		if (!SetClipboardData(CF_UNICODETEXT, globalMemory)) {
+			GlobalFree(globalMemory);
 			CloseClipboard();
 			return false;
 		}
@@ -141,53 +123,45 @@ namespace winrt::StarlightGUI::implementation {
 		CloseClipboard();
 		return true;
 	}
-	/*
-	 * 打开文件所在位置并选中文件
-	 */
 	bool TaskUtils::OpenFolderAndSelectFile(std::wstring filePath) {
 		DWORD attrs = GetFileAttributesW(filePath.c_str());
-		if (attrs == INVALID_FILE_ATTRIBUTES) {
+		if (attrs == INVALID_FILE_ATTRIBUTES)
 			return false;
-		}
 
-		std::wstring cmd = L"explorer.exe";
-		std::wstring args = L"/select,\"" + filePath + L"\"";
+		std::wstring command = L"explorer.exe";
+		std::wstring arguments = L"/select,\"" + filePath + L"\"";
 
-		SHELLEXECUTEINFOW sei = { sizeof(sei) };
-		sei.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
-		sei.lpVerb = L"open";
-		sei.lpFile = cmd.c_str();
-		sei.lpParameters = args.c_str();
-		sei.nShow = SW_SHOWNORMAL;
+		SHELLEXECUTEINFOW shellExecuteInfo{ sizeof(shellExecuteInfo) };
+		shellExecuteInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
+		shellExecuteInfo.lpVerb = L"open";
+		shellExecuteInfo.lpFile = command.c_str();
+		shellExecuteInfo.lpParameters = arguments.c_str();
+		shellExecuteInfo.nShow = SW_SHOWNORMAL;
 
-		BOOL result = ShellExecuteExW(&sei);
+		BOOL result = ShellExecuteExW(&shellExecuteInfo);
 
-		if (sei.hProcess) {
-			CloseHandle(sei.hProcess);
-		}
+		if (shellExecuteInfo.hProcess)
+			CloseHandle(shellExecuteInfo.hProcess);
 
 		return result;
 	}
 
-	/*
-	 * 打开文件属性
-	 */
 	bool TaskUtils::OpenFileProperties(std::wstring filePath) {
-		SHELLEXECUTEINFOW sei = { 0 };
-		sei.cbSize = sizeof(sei);
-		sei.fMask = SEE_MASK_INVOKEIDLIST;
-		sei.hwnd = NULL;
-		sei.lpVerb = L"properties";
-		sei.lpFile = filePath.c_str();
-		sei.nShow = SW_SHOW;
+		SHELLEXECUTEINFOW shellExecuteInfo{};
+		shellExecuteInfo.cbSize = sizeof(shellExecuteInfo);
+		shellExecuteInfo.fMask = SEE_MASK_INVOKEIDLIST;
+		shellExecuteInfo.hwnd = NULL;
+		shellExecuteInfo.lpVerb = L"properties";
+		shellExecuteInfo.lpFile = filePath.c_str();
+		shellExecuteInfo.nShow = SW_SHOW;
 
-		return ShellExecuteExW(&sei) != FALSE;
+		return ShellExecuteExW(&shellExecuteInfo) != FALSE;
 	}
 
-	bool TaskUtils::EndTaskByWindow(HWND hwnd) {
-		if (!EndTask) EndTask = (EndTask_t)GetProcAddress(GetModuleHandleW(L"user32.dll"), "EndTask");
-		if (!EndTask) return FALSE;
+	bool TaskUtils::EndTaskByWindow(HWND windowHandle) {
+		if (!endTask) endTask = (EndTask_t)GetProcAddress(GetModuleHandleW(L"user32.dll"), "EndTask");
+		if (!endTask) return FALSE;
 
-		return EndTask(hwnd, FALSE, TRUE);
+		return endTask(windowHandle, FALSE, TRUE);
 	}
 }

@@ -1,5 +1,8 @@
 ﻿#include "pch.h"
 #include "Utils.h"
+#include "Config.h"
+#include "MainWindow.xaml.h"
+#include "InfoWindow.xaml.h"
 #include <winrt/XamlToolkit.WinUI.Controls.h>
 #include <winrt/Microsoft.UI.Composition.SystemBackdrops.h>
 #include <unordered_map>
@@ -14,6 +17,7 @@ using namespace Microsoft::UI::Xaml::Input;
 using namespace Microsoft::UI::Xaml::Media;
 using namespace Microsoft::UI::Xaml::Controls;
 using namespace Microsoft::UI::Composition::SystemBackdrops;
+using namespace winrt::StarlightGUI::implementation;
 
 namespace slg {
     std::unordered_map<std::wstring, ImageSource>& GetShellIconCacheStore()
@@ -321,7 +325,7 @@ namespace slg {
     ElementTheme GetConfiguredElementTheme()
     {
         std::string themeValue = theme;
-        std::transform(themeValue.begin(), themeValue.end(), themeValue.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+        std::transform(themeValue.begin(), themeValue.end(), themeValue.begin(), [](unsigned char c) { return (char)std::tolower(c); });
 
         if (themeValue == "light") {
             return ElementTheme::Light;
@@ -355,13 +359,13 @@ namespace slg {
         }
     }
 
-    ImageSource CreateImageSourceFromHIcon(HICON hIcon, int iconSize, bool destroyIcon)
+    ImageSource CreateImageSourceFromHIcon(HICON iconHandle, int iconSize, bool destroyIcon)
     {
-        if (!hIcon || iconSize <= 0) return nullptr;
+        if (!iconHandle || iconSize <= 0) return nullptr;
 
         HDC screenDc = GetDC(nullptr);
         if (!screenDc) {
-            if (destroyIcon) DestroyIcon(hIcon);
+            if (destroyIcon) DestroyIcon(iconHandle);
             return nullptr;
         }
 
@@ -374,34 +378,34 @@ namespace slg {
         bmi.bmiHeader.biCompression = BI_RGB;
 
         void* bits = nullptr;
-        HBITMAP hBitmap = CreateDIBSection(screenDc, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
-        if (!hBitmap || !bits) {
+        HBITMAP bitmapHandle = CreateDIBSection(screenDc, &bmi, DIB_RGB_COLORS, &bits, nullptr, 0);
+        if (!bitmapHandle || !bits) {
             ReleaseDC(nullptr, screenDc);
-            if (destroyIcon) DestroyIcon(hIcon);
+            if (destroyIcon) DestroyIcon(iconHandle);
             return nullptr;
         }
 
         HDC memDc = CreateCompatibleDC(screenDc);
         if (!memDc) {
-            DeleteObject(hBitmap);
+            DeleteObject(bitmapHandle);
             ReleaseDC(nullptr, screenDc);
-            if (destroyIcon) DestroyIcon(hIcon);
+            if (destroyIcon) DestroyIcon(iconHandle);
             return nullptr;
         }
 
-        auto oldBitmap = SelectObject(memDc, hBitmap);
+        auto oldBitmap = SelectObject(memDc, bitmapHandle);
         std::memset(bits, 0, iconSize * iconSize * 4);
-        DrawIconEx(memDc, 0, 0, hIcon, iconSize, iconSize, 0, nullptr, DI_NORMAL);
+        DrawIconEx(memDc, 0, 0, iconHandle, iconSize, iconSize, 0, nullptr, DI_NORMAL);
 
         Imaging::WriteableBitmap bitmap(iconSize, iconSize);
         std::memcpy(bitmap.PixelBuffer().data(), bits, iconSize * iconSize * 4);
 
         SelectObject(memDc, oldBitmap);
         DeleteDC(memDc);
-        DeleteObject(hBitmap);
+        DeleteObject(bitmapHandle);
         ReleaseDC(nullptr, screenDc);
 
-        if (destroyIcon) DestroyIcon(hIcon);
+        if (destroyIcon) DestroyIcon(iconHandle);
         return bitmap.as<ImageSource>();
     }
 
@@ -420,24 +424,24 @@ namespace slg {
         auto cacheIt = cache.find(key);
         if (cacheIt != cache.end()) return cacheIt->second;
 
-        SHFILEINFO shfi{};
+        SHFILEINFO shellFileInfo{};
         UINT flags = SHGFI_ICON | SHGFI_SMALLICON;
         DWORD attrs = isDirectory ? FILE_ATTRIBUTE_DIRECTORY : FILE_ATTRIBUTE_NORMAL;
 
         bool status = false;
         if (useFileAttributes) {
-            status = SHGetFileInfoW(path.c_str(), attrs, &shfi, sizeof(shfi), flags | SHGFI_USEFILEATTRIBUTES) != 0;
-            if (!status) status = SHGetFileInfoW(L".", FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(shfi), flags | SHGFI_USEFILEATTRIBUTES) != 0;
+            status = SHGetFileInfoW(path.c_str(), attrs, &shellFileInfo, sizeof(shellFileInfo), flags | SHGFI_USEFILEATTRIBUTES) != 0;
+            if (!status) status = SHGetFileInfoW(L".", FILE_ATTRIBUTE_NORMAL, &shellFileInfo, sizeof(shellFileInfo), flags | SHGFI_USEFILEATTRIBUTES) != 0;
         }
         else {
-            status = SHGetFileInfoW(path.c_str(), 0, &shfi, sizeof(shfi), flags) != 0;
-            if (!status) status = SHGetFileInfoW(path.c_str(), attrs, &shfi, sizeof(shfi), flags | SHGFI_USEFILEATTRIBUTES) != 0;
-            if (!status) status = SHGetFileInfoW(L".", FILE_ATTRIBUTE_NORMAL, &shfi, sizeof(shfi), flags | SHGFI_USEFILEATTRIBUTES) != 0;
+            status = SHGetFileInfoW(path.c_str(), 0, &shellFileInfo, sizeof(shellFileInfo), flags) != 0;
+            if (!status) status = SHGetFileInfoW(path.c_str(), attrs, &shellFileInfo, sizeof(shellFileInfo), flags | SHGFI_USEFILEATTRIBUTES) != 0;
+            if (!status) status = SHGetFileInfoW(L".", FILE_ATTRIBUTE_NORMAL, &shellFileInfo, sizeof(shellFileInfo), flags | SHGFI_USEFILEATTRIBUTES) != 0;
         }
 
-        if (!status || !shfi.hIcon) return nullptr;
+        if (!status || !shellFileInfo.hIcon) return nullptr;
 
-        auto source = CreateImageSourceFromHIcon(shfi.hIcon, iconSize, true);
+        auto source = CreateImageSourceFromHIcon(shellFileInfo.hIcon, iconSize, true);
         if (source) cache.insert_or_assign(key, source);
         return source;
     }
@@ -490,7 +494,7 @@ namespace slg {
         if (headerColumns.Size() == 0 || bodyColumns.Size() < headerColumns.Size()) return;
 
         static std::unordered_map<uint64_t, std::vector<double>> cachedHeaderWidths;
-        uint64_t key = reinterpret_cast<uint64_t>(get_abi(headerGrid));
+        uint64_t key = (uint64_t)get_abi(headerGrid);
         auto& lastWidths = cachedHeaderWidths[key];
         if (lastWidths.size() != headerColumns.Size()) {
             lastWidths.assign(headerColumns.Size(), -1.0);

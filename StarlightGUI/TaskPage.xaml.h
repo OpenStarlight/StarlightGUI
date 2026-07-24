@@ -1,7 +1,12 @@
 ﻿#pragma once
 
 #include "TaskPage.g.h"
+#include "Utils/Coroutine.h"
+#include "Utils/ProcessInfo.h"
+#include "Utils/TaskUtils.h"
 #include <map>
+#include <string>
+#include <vector>
 #include <winrt/Windows.Foundation.Collections.h>
 
 namespace winrt::StarlightGUI::implementation

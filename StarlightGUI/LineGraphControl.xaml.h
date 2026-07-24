@@ -6,25 +6,24 @@
 #include <string>
 #include <limits>
 #include <algorithm>
+#include <winrt/Windows.UI.h>
 
 namespace winrt::StarlightGUI::implementation
 {
-    // 数据系列
     struct DataSeries
     {
-        std::wstring Name;
-        winrt::Windows::UI::Color Color = winrt::Windows::UI::Colors::Red();
-        std::vector<winrt::StarlightGUI::DataPoint> Points;
-        bool Visible = true;
-        double LineThickness = 2.0;
+        std::wstring name;
+        winrt::Windows::UI::Color color = winrt::Windows::UI::Colors::Red();
+        std::vector<winrt::StarlightGUI::DataPoint> points;
+        bool visible = true;
+        double lineThickness = 2.0;
 
         DataSeries() = default;
         DataSeries(std::wstring_view name, winrt::Windows::UI::Color color)
-            : Name(name), Color(color) {
+            : name(name), color(color) {
         }
     };
 
-    // 主控件
     struct LineGraphControl : LineGraphControlT<LineGraphControl>
     {
         LineGraphControl();
@@ -59,7 +58,6 @@ namespace winrt::StarlightGUI::implementation
         void OnPointerExited(winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e);
         void OnPointerWheelChanged(winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const&);
 
-        // 不知道为什么还要一个参数的，留空即可
         void OnPointerMoved(winrt::Windows::Foundation::IInspectable const& sender,
             winrt::Microsoft::UI::Xaml::Input::PointerRoutedEventArgs const& e);
         void OnPointerExited(winrt::Windows::Foundation::IInspectable const& sender,

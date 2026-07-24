@@ -4,6 +4,8 @@
 #include <sstream>
 #include <iomanip>
 #include <iostream>
+#include <chrono>
+#include <filesystem>
 #include <string>
 #include <random>
 #include <limits>
@@ -11,15 +13,18 @@
 #include <cwctype>
 #include <fstream>
 #include <algorithm>
+#include <TlHelp32.h>
 
 namespace winrt::StarlightGUI::implementation {
+    namespace fs = std::filesystem;
+
     const static uint64_t KB = 1024;
     const static uint64_t MB = KB * 1024;
     const static uint64_t GB = MB * 1024;
 
     static wchar_t ToLowerChar(wchar_t c)
     {
-        return static_cast<wchar_t>(std::towlower(static_cast<wint_t>(c)));
+        return (wchar_t)std::towlower((wint_t)c);
     }
 
     std::wstring GenerateRandomString(size_t length) {
@@ -31,9 +36,8 @@ namespace winrt::StarlightGUI::implementation {
         std::wstring result;
         result.reserve(length);
 
-        for (size_t i = 0; i < length; ++i) {
-            result += charset[GenerateRandomNumber(0, static_cast<int>(charset.size() - 1))];
-        }
+        for (size_t i = 0; i < length; ++i)
+            result += charset[GenerateRandomNumber(0, (int)charset.size() - 1)];
         return result;
     }
 
@@ -44,7 +48,7 @@ namespace winrt::StarlightGUI::implementation {
             std::seed_seq seed{ rd(), rd(), rd(), rd(), rd(), rd(), rd(), rd() };
             return std::mt19937(seed);
             }());
-        std::uniform_int_distribution<int> dist(static_cast<int>(from), static_cast<int>(to));
+        std::uniform_int_distribution<int> dist((int)from, (int)to);
         return dist(gen);
     }
 
@@ -66,19 +70,16 @@ namespace winrt::StarlightGUI::implementation {
     std::wstring FixBackSplash(const hstring& hstr) {
         std::wstring str = hstr.c_str();
         size_t pos = 0;
-        while ((pos = str.find(L"\\\\")) != std::wstring::npos) {
+        while ((pos = str.find(L"\\\\")) != std::wstring::npos)
             str.replace(pos, 2, L"\\");
-        }
         return str;
     }
 
     std::wstring RemoveFromString(const hstring& hstr, const hstring& removeHstr) {
         std::wstring str = hstr.c_str();
-        std::wstring removeStr = removeHstr.c_str();
         size_t pos = 0;
-        while ((pos = str.find(removeHstr)) != std::wstring::npos) {
+        while ((pos = str.find(removeHstr)) != std::wstring::npos)
             str.replace(pos, removeHstr.size(), L"");
-        }
         return str;
     }
 
@@ -93,10 +94,10 @@ namespace winrt::StarlightGUI::implementation {
     std::string WideStringToString(const std::wstring& wstr)
     {
         const wchar_t* cstr = wstr.c_str();
-        int size_needed = WideCharToMultiByte(CP_UTF8, 0, cstr, -1, nullptr, 0, nullptr, nullptr);
+        int requiredSize = WideCharToMultiByte(CP_UTF8, 0, cstr, -1, nullptr, 0, nullptr, nullptr);
 
-        std::string str(size_needed, 0);
-        WideCharToMultiByte(CP_UTF8, 0, cstr, -1, &str[0], size_needed, nullptr, nullptr);
+        std::string str(requiredSize, 0);
+        WideCharToMultiByte(CP_UTF8, 0, cstr, -1, &str[0], requiredSize, nullptr, nullptr);
 
         str.erase(std::find(str.begin(), str.end(), '\0'), str.end());
 
@@ -106,10 +107,10 @@ namespace winrt::StarlightGUI::implementation {
     std::wstring StringToWideString(const std::string& str)
     {
         const char* cstr = str.c_str();
-        int size_needed = MultiByteToWideChar(CP_UTF8, 0, cstr, -1, nullptr, 0);
+        int requiredSize = MultiByteToWideChar(CP_UTF8, 0, cstr, -1, nullptr, 0);
 
-        std::wstring widestr(size_needed, 0);
-        MultiByteToWideChar(CP_UTF8, 0, cstr, -1, &widestr[0], size_needed);
+        std::wstring widestr(requiredSize, 0);
+        MultiByteToWideChar(CP_UTF8, 0, cstr, -1, &widestr[0], requiredSize);
 
         widestr.erase(std::find(widestr.begin(), widestr.end(), L'\0'), widestr.end());
 
@@ -154,9 +155,8 @@ namespace winrt::StarlightGUI::implementation {
 
         for (; i < end; ++i) {
             wchar_t c = input[i];
-            if (!iswxdigit(c)) {
+            if (!iswxdigit(c))
                 return false;
-            }
 
             hasDigit = true;
 
@@ -168,9 +168,8 @@ namespace winrt::StarlightGUI::implementation {
             }
 
             // 溢出检测
-            if (value > (0xFFFFFFFFFFFFFFFFULL - (ULONG64)digit) / 16ULL) {
+            if (value > (0xFFFFFFFFFFFFFFFFULL - (ULONG64)digit) / 16ULL)
                 return false;
-            }
 
             value = value * 16ULL + (ULONG64)digit;
         }
@@ -207,9 +206,8 @@ namespace winrt::StarlightGUI::implementation {
 
         for (; i < end; ++i) {
             wchar_t c = input[i];
-            if (!iswdigit(c)) {
+            if (!iswdigit(c))
                 return false;
-            }
 
             hasDigit = true;
             int digit = c - L'0';
@@ -237,18 +235,16 @@ namespace winrt::StarlightGUI::implementation {
 
         size_t i = begin;
 
-        if (input[i] == L'-') {
+        if (input[i] == L'-')
             return false;
-        }
 
         ULONG64 value = 0;
         bool hasDigit = false;
 
         for (; i < end; ++i) {
             wchar_t c = input[i];
-            if (!iswdigit(c)) {
+            if (!iswdigit(c))
                 return false;
-            }
 
             hasDigit = true;
             int digit = c - L'0';
@@ -273,10 +269,10 @@ namespace winrt::StarlightGUI::implementation {
 
     int CompareIgnoreCase(std::wstring_view left, std::wstring_view right)
     {
-        if (left.size() <= static_cast<size_t>(INT_MAX) && right.size() <= static_cast<size_t>(INT_MAX)) {
+        if (left.size() <= (size_t)INT_MAX && right.size() <= (size_t)INT_MAX) {
             int compareResult = CompareStringOrdinal(
-                left.data(), static_cast<int>(left.size()),
-                right.data(), static_cast<int>(right.size()),
+                left.data(), (int)left.size(),
+                right.data(), (int)right.size(),
                 TRUE);
             if (compareResult != 0) {
                 if (compareResult == CSTR_LESS_THAN) return -1;
@@ -315,9 +311,8 @@ namespace winrt::StarlightGUI::implementation {
             if (ToLowerChar(text[i]) != first) continue;
 
             size_t j = 1;
-            while (j < lowerQuery.size() && ToLowerChar(text[i + j]) == lowerQuery[j]) {
+            while (j < lowerQuery.size() && ToLowerChar(text[i + j]) == lowerQuery[j])
                 ++j;
-            }
             if (j == lowerQuery.size()) return true;
         }
 
@@ -336,9 +331,8 @@ namespace winrt::StarlightGUI::implementation {
             if (ToLowerChar(text[i]) != first) continue;
 
             size_t j = 1;
-            while (j < query.size() && ToLowerChar(text[i + j]) == ToLowerChar(query[j])) {
+            while (j < query.size() && ToLowerChar(text[i + j]) == ToLowerChar(query[j]))
                 ++j;
-            }
             if (j == query.size()) return true;
         }
 
@@ -350,18 +344,14 @@ namespace winrt::StarlightGUI::implementation {
         std::wstringstream ss;
         ss << std::fixed << std::setprecision(1);
 
-        if (bytes >= GB) {
+        if (bytes >= GB)
             ss << bytes / GB << " GB";
-        }
-        else if (bytes >= MB) {
-            ss << bytes/ MB << " MB";
-        }
-        else if (bytes >= KB) {
+        else if (bytes >= MB)
+            ss << bytes / MB << " MB";
+        else if (bytes >= KB)
             ss << bytes / KB << " KB";
-        }
-        else {
+        else
             ss << bytes << " B";
-        }
 
         return ss.str();
     }
@@ -369,19 +359,16 @@ namespace winrt::StarlightGUI::implementation {
     std::wstring ExtractFunctionName(const std::string& old) {
         std::wstring pretty(old.begin(), old.end());
         size_t firstNS = pretty.find(L"::");
-        if (firstNS == std::string::npos) {
+        if (firstNS == std::string::npos)
             return pretty;
-        }
 
         size_t lastScope = pretty.rfind(L"::");
-        if (lastScope == firstNS) {
+        if (lastScope == firstNS)
             return pretty.substr(firstNS + 2);
-        }
 
         size_t lastSecScope = pretty.rfind(L"::", lastScope - 2);
-        if (lastSecScope != std::string::npos) {
+        if (lastSecScope != std::string::npos)
             return pretty.substr(lastSecScope + 2);
-        }
 
         return pretty;
     }
@@ -410,31 +397,29 @@ namespace winrt::StarlightGUI::implementation {
     std::wstring GetSystemToolPath(const wchar_t* toolName)
     {
         wchar_t systemDir[MAX_PATH] = {};
-        if (GetSystemDirectoryW(systemDir, MAX_PATH) > 0) {
+        if (GetSystemDirectoryW(systemDir, MAX_PATH) > 0)
             return std::wstring(systemDir) + L"\\" + toolName;
-        }
         return std::wstring(L"C:\\Windows\\System32\\") + toolName;
     }
 
     int RunCommandHidden(std::wstring commandLine)
     {
-        STARTUPINFOW si{};
-        PROCESS_INFORMATION pi{};
-        si.cb = sizeof(STARTUPINFOW);
-        si.dwFlags = STARTF_USESHOWWINDOW;
-        si.wShowWindow = SW_HIDE;
+        STARTUPINFOW startupInfo{};
+        PROCESS_INFORMATION processInfo{};
+        startupInfo.cb = sizeof(STARTUPINFOW);
+        startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+        startupInfo.wShowWindow = SW_HIDE;
 
-        if (!CreateProcessW(nullptr, commandLine.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi)) {
+        if (!CreateProcessW(nullptr, commandLine.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, nullptr, &startupInfo, &processInfo))
             return -1;
-        }
 
-        WaitForSingleObject(pi.hProcess, INFINITE);
+        WaitForSingleObject(processInfo.hProcess, INFINITE);
 
         DWORD exitCode = 1;
-        GetExitCodeProcess(pi.hProcess, &exitCode);
+        GetExitCodeProcess(processInfo.hProcess, &exitCode);
 
-        CloseHandle(pi.hThread);
-        CloseHandle(pi.hProcess);
+        CloseHandle(processInfo.hThread);
+        CloseHandle(processInfo.hProcess);
 
         return (int)exitCode;
     }
@@ -465,18 +450,16 @@ namespace winrt::StarlightGUI::implementation {
         std::vector<PVOID> stack(length);
         WORD frames = RtlCaptureStackBackTrace(0, length, stack.data(), nullptr);
         std::wstringstream ss;
-        for (WORD i = 0; i < frames; ++i) {
+        for (WORD i = 0; i < frames; ++i)
             ss << stack[i] << L" ";
-        }
         return ss.str();
     }
 
     double GetValueFromCounter(PDH_HCOUNTER& counter) {
         PDH_FMT_COUNTERVALUE value;
 
-        if (PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, NULL, &value) == ERROR_SUCCESS) {
+        if (PdhGetFormattedCounterValue(counter, PDH_FMT_DOUBLE, NULL, &value) == ERROR_SUCCESS)
             return value.doubleValue;
-        }
 
         return 0.0;
     }
@@ -489,13 +472,12 @@ namespace winrt::StarlightGUI::implementation {
 
         std::vector<BYTE> buffer(bufferSize);
         PPDH_FMT_COUNTERVALUE_ITEM_W items =
-            reinterpret_cast<PPDH_FMT_COUNTERVALUE_ITEM_W>(buffer.data());
+            (PPDH_FMT_COUNTERVALUE_ITEM_W)buffer.data();
 
         status = PdhGetFormattedCounterArrayW(counter, PDH_FMT_DOUBLE, &bufferSize, &itemCount, items);
 
-        if (status != ERROR_SUCCESS) {
+        if (status != ERROR_SUCCESS)
             return 0.0;
-        }
 
         for (DWORD i = 0; i < itemCount; i++) {
             double value = items[i].FmtValue.doubleValue;
@@ -506,11 +488,11 @@ namespace winrt::StarlightGUI::implementation {
     }
 
     bool EnablePrivilege(LPCTSTR privilege) {
-        HANDLE hToken;
+        HANDLE tokenHandle;
         TOKEN_PRIVILEGES tkp{};
 
         if (!OpenProcessToken(GetCurrentProcess(),
-            TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &hToken)) {
+            TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, &tokenHandle)) {
             return false;
         }
 
@@ -519,28 +501,28 @@ namespace winrt::StarlightGUI::implementation {
         tkp.PrivilegeCount = 1;
         tkp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
 
-        BOOL result = AdjustTokenPrivileges(hToken, FALSE, &tkp, 0, NULL, 0);
-        CloseHandle(hToken);
+        BOOL result = AdjustTokenPrivileges(tokenHandle, FALSE, &tkp, 0, NULL, 0);
+        CloseHandle(tokenHandle);
 
         return result != FALSE;
     }
 
     DWORD FindProcessId(const wchar_t* processName) {
-        HANDLE hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
-        if (hSnapshot == INVALID_HANDLE_VALUE) return 0;
+        HANDLE snapshotHandle = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (snapshotHandle == INVALID_HANDLE_VALUE) return 0;
 
         PROCESSENTRY32W pe = { sizeof(pe) };
 
-        if (Process32FirstW(hSnapshot, &pe)) {
+        if (Process32FirstW(snapshotHandle, &pe)) {
             do {
                 if (_wcsicmp(pe.szExeFile, processName) == 0) {
-                    CloseHandle(hSnapshot);
+                    CloseHandle(snapshotHandle);
                     return pe.th32ProcessID;
                 }
-            } while (Process32NextW(hSnapshot, &pe));
+            } while (Process32NextW(snapshotHandle, &pe));
         }
 
-        CloseHandle(hSnapshot);
+        CloseHandle(snapshotHandle);
         return 0;
     }
 

@@ -1,5 +1,9 @@
 ﻿#include "pch.h"
 #include "SettingsPage.xaml.h"
+#include <winrt/Microsoft.UI.h>
+#include <winrt/Microsoft.UI.Interop.h>
+#include <winrt/Microsoft.Windows.Storage.Pickers.h>
+#include <winrt/Windows.Storage.h>
 #if __has_include("SettingsPage.g.cpp")
 #include "SettingsPage.g.cpp"
 #endif
@@ -8,6 +12,11 @@
 #include "MainWindow.xaml.h"
 #include <algorithm>
 #include <cwctype>
+#include <filesystem>
+#include <string>
+#include "Utils/CppUtils.h"
+#include "Utils/KernelBase.h"
+#include "Utils/Utils.h"
 
 using namespace winrt;
 using namespace Windows::Storage;
@@ -100,16 +109,16 @@ namespace winrt::StarlightGUI::implementation
 
     static bool IsTaskManagerReplaced()
     {
-        HKEY hKey = NULL;
-        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, replaceTaskManagerRegPath.c_str(), 0, KEY_READ, &hKey) != ERROR_SUCCESS) {
+        HKEY keyHandle = NULL;
+        if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, replaceTaskManagerRegPath.c_str(), 0, KEY_READ, &keyHandle) != ERROR_SUCCESS) {
             return false;
         }
 
         wchar_t value[2048] = {};
         DWORD type = REG_SZ;
         DWORD size = sizeof(value);
-        auto result = RegQueryValueExW(hKey, L"Debugger", nullptr, &type, (LPBYTE)value, &size);
-        RegCloseKey(hKey);
+        auto result = RegQueryValueExW(keyHandle, L"Debugger", nullptr, &type, (LPBYTE)value, &size);
+        RegCloseKey(keyHandle);
 
         if (result != ERROR_SUCCESS || type != REG_SZ) return false;
 
@@ -121,8 +130,8 @@ namespace winrt::StarlightGUI::implementation
 
     static bool SetTaskManagerReplaceState(bool enabled)
     {
-        HKEY hKey = NULL;
-        if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, replaceTaskManagerRegPath.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_SET_VALUE | KEY_QUERY_VALUE, nullptr, &hKey, nullptr) != ERROR_SUCCESS) {
+        HKEY keyHandle = NULL;
+        if (RegCreateKeyExW(HKEY_LOCAL_MACHINE, replaceTaskManagerRegPath.c_str(), 0, nullptr, REG_OPTION_NON_VOLATILE, KEY_SET_VALUE | KEY_QUERY_VALUE, nullptr, &keyHandle, nullptr) != ERROR_SUCCESS) {
             return false;
         }
 
@@ -130,16 +139,16 @@ namespace winrt::StarlightGUI::implementation
         if (enabled) {
             if (CreateReplaceTaskManagerTask() && EnsureReplaceTaskManagerScript()) {
                 auto command = GetReplaceTaskManagerCommand();
-                success = RegSetValueExW(hKey, L"Debugger", 0, REG_SZ, (const BYTE*)command.c_str(), (DWORD)((command.size() + 1) * sizeof(wchar_t))) == ERROR_SUCCESS;
+                success = RegSetValueExW(keyHandle, L"Debugger", 0, REG_SZ, (const BYTE*)command.c_str(), (DWORD)((command.size() + 1) * sizeof(wchar_t))) == ERROR_SUCCESS;
             }
         }
         else {
-            auto result = RegDeleteValueW(hKey, L"Debugger");
+            auto result = RegDeleteValueW(keyHandle, L"Debugger");
             success = (result == ERROR_SUCCESS || result == ERROR_FILE_NOT_FOUND);
             success = success && DeleteReplaceTaskManagerScript() && DeleteReplaceTaskManagerTask();
         }
 
-        RegCloseKey(hKey);
+        RegCloseKey(keyHandle);
         return success;
     }
 
@@ -151,37 +160,37 @@ namespace winrt::StarlightGUI::implementation
     }
 
     void SettingsPage::InitializeOptions() {
-        EnumFileModeComboBox().SelectedIndex(enum_file_mode);
-        BackgroundComboBox().SelectedIndex(background_type);
-        NavigationComboBox().SelectedIndex(navigation_style);
-        MicaTypeComboBox().SelectedIndex(mica_type);
-        AcrylicTypeComboBox().SelectedIndex(acrylic_type);
-        ImageStretchComboBox().SelectedIndex(image_stretch);
+        EnumFileModeComboBox().SelectedIndex(enumFileMode);
+        BackgroundComboBox().SelectedIndex(backgroundType);
+        NavigationComboBox().SelectedIndex(navigationStyle);
+        MicaTypeComboBox().SelectedIndex(micaType);
+        AcrylicTypeComboBox().SelectedIndex(acrylicType);
+        ImageStretchComboBox().SelectedIndex(imageStretch);
 
-        EnumStrengthenButton().IsOn(enum_strengthen);
-        FunctionShowDeprecatedButton().IsChecked(box_value(function_show_deprecated).as<winrt::Windows::Foundation::IReference<bool>>());
-        FunctionShowUnknownButton().IsChecked(box_value(function_show_unknown).as<winrt::Windows::Foundation::IReference<bool>>());
-        FunctionUseDocumentNameButton().IsChecked(box_value(function_use_document_name).as<winrt::Windows::Foundation::IReference<bool>>());
-        PDHFirstButton().IsOn(pdh_first);
-		ElevatedRunButton().IsOn(elevated_run);
-        DangerousConfirmButton().IsOn(dangerous_confirm);
-        CheckUpdateButton().IsOn(check_update);
-        TaskAutoRefreshButton().IsOn(task_auto_refresh);
-        TrayBackgroundRunButton().IsOn(tray_background_run);
-        AutoStopDriverButton().IsOn(auto_stop_driver);
+        EnumStrengthenButton().IsOn(enumStrengthen);
+        FunctionShowDeprecatedButton().IsChecked(box_value(functionShowDeprecated).as<winrt::Windows::Foundation::IReference<bool>>());
+        FunctionShowUnknownButton().IsChecked(box_value(functionShowUnknown).as<winrt::Windows::Foundation::IReference<bool>>());
+        FunctionUseDocumentNameButton().IsChecked(box_value(functionUseDocumentName).as<winrt::Windows::Foundation::IReference<bool>>());
+        PDHFirstButton().IsOn(pdhFirst);
+		ElevatedRunButton().IsOn(elevatedRun);
+        DangerousConfirmButton().IsOn(dangerousConfirm);
+        CheckUpdateButton().IsOn(checkUpdate);
+        TaskAutoRefreshButton().IsOn(taskAutoRefresh);
+        TrayBackgroundRunButton().IsOn(trayBackgroundRun);
+        AutoStopDriverButton().IsOn(autoStopDriver);
 
-        auto_start = QueryTaskExists(autoStartTaskName);
-        SaveConfig("auto_start", auto_start);
-        AutoStartButton().IsOn(auto_start);
+        autoStart = QueryTaskExists(autoStartTaskName);
+        SaveConfig("auto_start", autoStart);
+        AutoStartButton().IsOn(autoStart);
 
-        replace_taskmgr = IsTaskManagerReplaced();
-        if (replace_taskmgr) EnsureReplaceTaskManagerScript();
-        SaveConfig("replace_taskmgr", replace_taskmgr);
-        ReplaceTaskManagerButton().IsOn(replace_taskmgr);
+        replaceTaskManager = IsTaskManagerReplaced();
+        if (replaceTaskManager) EnsureReplaceTaskManagerScript();
+        SaveConfig("replace_taskmgr", replaceTaskManager);
+        ReplaceTaskManagerButton().IsOn(replaceTaskManager);
 
-        ImagePathText().Text(to_hstring(background_image));
-        ImageOpacitySlider().Value(image_opacity);
-		DisasmCountSlider().Value(disasm_count);
+        ImagePathText().Text(to_hstring(backgroundImage));
+        ImageOpacitySlider().Value(imageOpacity);
+		DisasmCountSlider().Value(disasmCount);
         ThemeComboBox().SelectedIndex((theme == "light") ? 1 : (theme == "dark") ? 2 : 0);
         LanguageComboBox().SelectedIndex((language == "zh-CN") ? 1 : (language == "en-US") ? 2 : 0);
     }
@@ -191,31 +200,31 @@ namespace winrt::StarlightGUI::implementation
         if (!IsLoaded()) return;
         if (slg::CheckIllegalComboBoxAction(sender, e)) return;
 
-        enum_file_mode = (int)EnumFileModeComboBox().SelectedIndex();
+        enumFileMode = (int)EnumFileModeComboBox().SelectedIndex();
         SaveConfig("enum_file_mode", (int)EnumFileModeComboBox().SelectedIndex());
     }
 
     void SettingsPage::EnumStrengthenButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         if (!IsLoaded()) return;
-		enum_strengthen = EnumStrengthenButton().IsOn();
-        SaveConfig("enum_strengthen", enum_strengthen);
+		enumStrengthen = EnumStrengthenButton().IsOn();
+        SaveConfig("enum_strengthen", enumStrengthen);
     }
 
     void SettingsPage::FunctionDisplayButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         if (!IsLoaded()) return;
 
-        function_show_deprecated = FunctionShowDeprecatedButton().IsChecked().GetBoolean();
-        function_show_unknown = FunctionShowUnknownButton().IsChecked().GetBoolean();
-        function_use_document_name = FunctionUseDocumentNameButton().IsChecked().GetBoolean();
-        SaveConfig("function_show_deprecated", function_show_deprecated);
-        SaveConfig("function_show_unknown", function_show_unknown);
-        SaveConfig("function_use_document_name", function_use_document_name);
+        functionShowDeprecated = FunctionShowDeprecatedButton().IsChecked().GetBoolean();
+        functionShowUnknown = FunctionShowUnknownButton().IsChecked().GetBoolean();
+        functionUseDocumentName = FunctionUseDocumentNameButton().IsChecked().GetBoolean();
+        SaveConfig("function_show_deprecated", functionShowDeprecated);
+        SaveConfig("function_show_unknown", functionShowUnknown);
+        SaveConfig("function_use_document_name", functionUseDocumentName);
     }
 
     void SettingsPage::PDHFirstButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         if (!IsLoaded()) return;
-        pdh_first = PDHFirstButton().IsOn();
-        SaveConfig("pdh_first", pdh_first);
+        pdhFirst = PDHFirstButton().IsOn();
+        SaveConfig("pdh_first", pdhFirst);
     }
 
     void SettingsPage::BackgroundComboBox_SelectionChanged(IInspectable const& sender, SelectionChangedEventArgs const& e)
@@ -223,7 +232,7 @@ namespace winrt::StarlightGUI::implementation
         if (!IsLoaded()) return;
         if (slg::CheckIllegalComboBoxAction(sender, e)) return;
 
-        background_type = (int)BackgroundComboBox().SelectedIndex();
+        backgroundType = (int)BackgroundComboBox().SelectedIndex();
         SaveConfig("background_type", (int)BackgroundComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackdrop();
@@ -235,7 +244,7 @@ namespace winrt::StarlightGUI::implementation
         if (!IsLoaded()) return;
         if (slg::CheckIllegalComboBoxAction(sender, e)) return;
 
-        mica_type = (int)MicaTypeComboBox().SelectedIndex();
+        micaType = (int)MicaTypeComboBox().SelectedIndex();
 
         SaveConfig("mica_type", (int)MicaTypeComboBox().SelectedIndex());
 
@@ -248,7 +257,7 @@ namespace winrt::StarlightGUI::implementation
         if (!IsLoaded()) return;
         if (slg::CheckIllegalComboBoxAction(sender, e)) return;
 
-        acrylic_type = (int)AcrylicTypeComboBox().SelectedIndex();
+        acrylicType = (int)AcrylicTypeComboBox().SelectedIndex();
 
         SaveConfig("acrylic_type", (int)AcrylicTypeComboBox().SelectedIndex());
 
@@ -261,7 +270,7 @@ namespace winrt::StarlightGUI::implementation
         if (!IsLoaded()) return;
         if (slg::CheckIllegalComboBoxAction(sender, e)) return;
 
-        navigation_style = (int)NavigationComboBox().SelectedIndex();
+        navigationStyle = (int)NavigationComboBox().SelectedIndex();
         SaveConfig("navigation_style", (int)NavigationComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadNavigation();
@@ -271,45 +280,45 @@ namespace winrt::StarlightGUI::implementation
     {
         if (!IsLoaded()) return;
         slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"Msg.RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
-        elevated_run = ElevatedRunButton().IsOn();
-        SaveConfig("elevated_run", elevated_run);
+        elevatedRun = ElevatedRunButton().IsOn();
+        SaveConfig("elevated_run", elevatedRun);
     }
 
     void SettingsPage::DangerousConfirmButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-        dangerous_confirm = DangerousConfirmButton().IsOn();
-        SaveConfig("dangerous_confirm", dangerous_confirm);
+        dangerousConfirm = DangerousConfirmButton().IsOn();
+        SaveConfig("dangerous_confirm", dangerousConfirm);
     }
 
     void SettingsPage::CheckUpdateButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         if (!IsLoaded()) return;
 		slg::CreateInfoBarAndDisplay(t(L"Common.Info"), t(L"Msg.RestartRequired").c_str(), InfoBarSeverity::Informational, g_mainWindowInstance);
-        check_update = CheckUpdateButton().IsOn();
-        SaveConfig("check_update", check_update);
+        checkUpdate = CheckUpdateButton().IsOn();
+        SaveConfig("check_update", checkUpdate);
     }
 
     void SettingsPage::TaskAutoRefreshButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-        task_auto_refresh = TaskAutoRefreshButton().IsOn();
-        SaveConfig("task_auto_refresh", task_auto_refresh);
+        taskAutoRefresh = TaskAutoRefreshButton().IsOn();
+        SaveConfig("task_auto_refresh", taskAutoRefresh);
     }
 
     void SettingsPage::TrayBackgroundRunButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-        tray_background_run = TrayBackgroundRunButton().IsOn();
-        SaveConfig("tray_background_run", tray_background_run);
-        g_mainWindowInstance->SetTrayBackgroundRun(tray_background_run);
+        trayBackgroundRun = TrayBackgroundRunButton().IsOn();
+        SaveConfig("tray_background_run", trayBackgroundRun);
+        g_mainWindowInstance->SetTrayBackgroundRun(trayBackgroundRun);
     }
 
     void SettingsPage::AutoStopDriverButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-        auto_stop_driver = AutoStopDriverButton().IsOn();
-        SaveConfig("auto_stop_driver", auto_stop_driver);
+        autoStopDriver = AutoStopDriverButton().IsOn();
+        SaveConfig("auto_stop_driver", autoStopDriver);
     }
 
     void SettingsPage::AutoStartButton_Toggled(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
@@ -321,7 +330,7 @@ namespace winrt::StarlightGUI::implementation
 
         if (enabled) {
             if (UpdateAutoStartTask(true)) {
-                auto_start = true;
+                autoStart = true;
                 SaveConfig("auto_start", true);
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
@@ -330,14 +339,14 @@ namespace winrt::StarlightGUI::implementation
                 AutoStartButton().IsOn(false);
                 autoStartChanging = false;
 
-                auto_start = false;
+                autoStart = false;
                 SaveConfig("auto_start", false);
                 slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance, 2500);
             }
         }
         else {
             if (UpdateAutoStartTask(false)) {
-                auto_start = false;
+                autoStart = false;
                 SaveConfig("auto_start", false);
                 slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
             }
@@ -346,7 +355,7 @@ namespace winrt::StarlightGUI::implementation
                 AutoStartButton().IsOn(true);
                 autoStartChanging = false;
 
-                auto_start = true;
+                autoStart = true;
                 SaveConfig("auto_start", true);
                 slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance);
             }
@@ -360,8 +369,8 @@ namespace winrt::StarlightGUI::implementation
 
         bool enabled = ReplaceTaskManagerButton().IsOn();
         if (SetTaskManagerReplaceState(enabled)) {
-            replace_taskmgr = enabled;
-            SaveConfig("replace_taskmgr", replace_taskmgr);
+            replaceTaskManager = enabled;
+            SaveConfig("replace_taskmgr", replaceTaskManager);
             auto msg = enabled ? t(L"Settings.Msg.ReplaceTaskMgrEnabled") : t(L"Settings.Msg.ReplaceTaskMgrDisabled");
             slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance, 2500);
         }
@@ -370,14 +379,15 @@ namespace winrt::StarlightGUI::implementation
             ReplaceTaskManagerButton().IsOn(!enabled);
             replaceTaskManagerChanging = false;
 
-            replace_taskmgr = !enabled;
-            SaveConfig("replace_taskmgr", replace_taskmgr);
+            replaceTaskManager = !enabled;
+            SaveConfig("replace_taskmgr", replaceTaskManager);
             slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.Failed", GetLastError()), InfoBarSeverity::Error, g_mainWindowInstance, 2500);
         }
     }
 
     void SettingsPage::ClearImageButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         if (!IsLoaded()) return;
+        backgroundImage.clear();
         SaveConfig("background_image", "");
         ImagePathText().Text(L"");
 
@@ -386,9 +396,9 @@ namespace winrt::StarlightGUI::implementation
 
     slg::coroutine SettingsPage::SetImageButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         if (!IsLoaded()) co_return;
-        HWND hWnd = g_mainWindowInstance->GetWindowHandle();
+        HWND windowHandle = g_mainWindowInstance->GetWindowHandle();
 
-        FileOpenPicker picker = FileOpenPicker(winrt::Microsoft::UI::GetWindowIdFromWindow(hWnd));
+        FileOpenPicker picker = FileOpenPicker(winrt::Microsoft::UI::GetWindowIdFromWindow(windowHandle));
 
         picker.SuggestedStartLocation(PickerLocationId::ComputerFolder);
         picker.FileTypeFilter().Append(L".png");
@@ -405,8 +415,9 @@ namespace winrt::StarlightGUI::implementation
 
             if (file && file.IsAvailable() && (file.FileType() == L".png" || file.FileType() == L".jpg" || file.FileType() == L".bmp" || file.FileType() == L".jpeg")) {
                 std::string path = WideStringToString(file.Path().c_str());
+                backgroundImage = path;
                 SaveConfig("background_image", path);
-                ImagePathText().Text(to_hstring(background_image));
+                ImagePathText().Text(to_hstring(backgroundImage));
 
                 g_mainWindowInstance->LoadBackground();
             }
@@ -427,7 +438,7 @@ namespace winrt::StarlightGUI::implementation
         if (!IsLoaded()) return;
         if (slg::CheckIllegalComboBoxAction(sender, e)) return;
 
-        image_stretch = (int)ImageStretchComboBox().SelectedIndex();
+        imageStretch = (int)ImageStretchComboBox().SelectedIndex();
         SaveConfig("image_stretch", (int)ImageStretchComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackground();
@@ -449,13 +460,15 @@ namespace winrt::StarlightGUI::implementation
     void SettingsPage::ImageOpacitySlider_ValueChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::Primitives::RangeBaseValueChangedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-        SaveConfig("image_opacity", ImageOpacitySlider().Value());
+        imageOpacity = (int)ImageOpacitySlider().Value();
+        SaveConfig("image_opacity", imageOpacity);
     }
 
     void SettingsPage::DisasmCountSlider_ValueChanged(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Controls::Primitives::RangeBaseValueChangedEventArgs const& e)
     {
         if (!IsLoaded()) return;
-        SaveConfig("disasm_count", DisasmCountSlider().Value());
+        disasmCount = (int)DisasmCountSlider().Value();
+        SaveConfig("disasm_count", disasmCount);
     }
 
     void SettingsPage::ThemeComboBox_SelectionChanged(IInspectable const& sender, SelectionChangedEventArgs const& e)

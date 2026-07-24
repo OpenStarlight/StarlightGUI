@@ -15,11 +15,22 @@
 #include <winrt/Windows.Web.Http.Headers.h>
 #include <winrt/Windows.Data.Json.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
+#include <winrt/Microsoft.UI.Xaml.Navigation.h>
+#include <winrt/Windows.Storage.h>
+#include <winrt/Windows.Storage.Streams.h>
+#include <winrt/WinUI3Package.h>
+#include <wil/cppwinrt_helpers.h>
+#include <microsoft.ui.xaml.window.h>
 #include <commctrl.h>
 #include <shellapi.h>
+#include <string>
 #include "resource.h"
 #include "UpdateDialog.xaml.h"
 #include "FilePage.xaml.h"
+#include "Utils/CppUtils.h"
+#include "Utils/Config.h"
+#include "Utils/KernelBase.h"
+#include "Utils/Utils.h"
 
 using namespace winrt;
 using namespace WinUI3Package;
@@ -50,24 +61,24 @@ namespace winrt::StarlightGUI::implementation
         SetupLocalization();
 
         auto windowNative{ this->try_as<::IWindowNative>() };
-        HWND hWnd{ 0 };
-        windowNative->get_WindowHandle(&hWnd);
-        globalHWND = hWnd;
+        HWND windowHandle{ 0 };
+        windowNative->get_WindowHandle(&windowHandle);
+        globalWindowHandle = windowHandle;
 
         LOG_INFO(L"MainWindow", L"Initializing AppWindow interface...");
         ExtendsContentIntoTitleBar(true);
         SetTitleBar(AppTitleBar());
         AppWindow().TitleBar().PreferredHeightOption(winrt::Microsoft::UI::Windowing::TitleBarHeightOption::Tall);
         AppWindow().SetIcon(GetInstalledLocationPath() + L"\\Assets\\Starlight.ico");
-        SetWindowSubclass(hWnd, &MainWindowProc, 1, reinterpret_cast<DWORD_PTR>(this));
+        SetWindowSubclass(windowHandle, &MainWindowProc, 1, (DWORD_PTR)this);
 
 		// 允许拖放和复制数据到窗口
         CHANGEFILTERSTRUCT cfs{};
         cfs.cbSize = sizeof(cfs);
-        ChangeWindowMessageFilterEx(hWnd, WM_DROPFILES, MSGFLT_ALLOW, &cfs);
-        ChangeWindowMessageFilterEx(hWnd, WM_COPYDATA, MSGFLT_ALLOW, &cfs);
-        ChangeWindowMessageFilterEx(hWnd, 0x0049 /* WM_COPYGLOBALDATA */, MSGFLT_ALLOW, &cfs);
-        DragAcceptFiles(hWnd, TRUE);
+        ChangeWindowMessageFilterEx(windowHandle, WM_DROPFILES, MSGFLT_ALLOW, &cfs);
+        ChangeWindowMessageFilterEx(windowHandle, WM_COPYDATA, MSGFLT_ALLOW, &cfs);
+        ChangeWindowMessageFilterEx(windowHandle, 0x0049, MSGFLT_ALLOW, &cfs);
+        DragAcceptFiles(windowHandle, TRUE);
 
         // 恢复窗口大小
         int32_t width = ReadConfig("window_width", 1200);
@@ -80,7 +91,7 @@ namespace winrt::StarlightGUI::implementation
         LoadNavigation();
 
         // 显示托盘图标
-        if (tray_background_run) {
+        if (trayBackgroundRun) {
             InitializeTrayIcon();
         }
 
@@ -110,7 +121,7 @@ namespace winrt::StarlightGUI::implementation
             SaveConfig("window_height", height);
 
             LOG_INFO(L"MainWindow", L"Saved window size.");
-            if (auto_stop_driver) {
+            if (autoStopDriver) {
                 if (DriverUtils::StopKernelDriver()) {
                     LOG_INFO(L"Driver", L"%s", L"Sirius service stopped automatically.");
                 }
@@ -137,7 +148,7 @@ namespace winrt::StarlightGUI::implementation
 
     void MainWindow::SetTrayBackgroundRun(bool enabled)
     {
-        tray_background_run = enabled;
+        trayBackgroundRun = enabled;
         if (enabled) {
             InitializeTrayIcon();
         }
@@ -149,15 +160,15 @@ namespace winrt::StarlightGUI::implementation
 
     void MainWindow::InitializeTrayIcon()
     {
-        if (m_trayIconAdded || !globalHWND) return;
+        if (m_trayIconAdded || !globalWindowHandle) return;
 
         m_notifyIconData = {};
         m_notifyIconData.cbSize = sizeof(NOTIFYICONDATAW);
-        m_notifyIconData.hWnd = globalHWND;
+        m_notifyIconData.hWnd = globalWindowHandle;
         m_notifyIconData.uID = TRAY_ID;
         m_notifyIconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
         m_notifyIconData.uCallbackMessage = WM_TRAYICON;
-        m_notifyIconData.hIcon = static_cast<HICON>(LoadImageW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR | LR_SHARED));
+        m_notifyIconData.hIcon = (HICON)LoadImageW(GetModuleHandleW(nullptr), MAKEINTRESOURCEW(IDI_ICON1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR | LR_SHARED);
 
         if (!m_notifyIconData.hIcon) {
             m_notifyIconData.hIcon = LoadIconW(nullptr, IDI_APPLICATION);
@@ -185,33 +196,33 @@ namespace winrt::StarlightGUI::implementation
         if (!m_trayIconAdded) {
             InitializeTrayIcon();
         }
-        ShowWindow(globalHWND, SW_HIDE);
+        ShowWindow(globalWindowHandle, SW_HIDE);
     }
 
     void MainWindow::RestoreWindowFromTray()
     {
-        ShowWindow(globalHWND, SW_SHOW);
-        ShowWindow(globalHWND, SW_RESTORE);
+        ShowWindow(globalWindowHandle, SW_SHOW);
+        ShowWindow(globalWindowHandle, SW_RESTORE);
         Activate();
-        SetForegroundWindow(globalHWND);
+        SetForegroundWindow(globalWindowHandle);
     }
 
     void MainWindow::ShowTrayMenu()
     {
-        HMENU hMenu = CreatePopupMenu();
-        if (!hMenu) return;
+        HMENU menuHandle = CreatePopupMenu();
+        if (!menuHandle) return;
 
-        AppendMenuW(hMenu, MF_STRING, TRAY_CMD_RESTORE, t(L"MainWindow.Tray.Open").c_str());
-        AppendMenuW(hMenu, MF_SEPARATOR, 0, nullptr);
-        AppendMenuW(hMenu, MF_STRING, TRAY_CMD_EXIT, t(L"Common.Exit").c_str());
+        AppendMenuW(menuHandle, MF_STRING, TRAY_CMD_RESTORE, t(L"MainWindow.Tray.Open").c_str());
+        AppendMenuW(menuHandle, MF_SEPARATOR, 0, nullptr);
+        AppendMenuW(menuHandle, MF_STRING, TRAY_CMD_EXIT, t(L"Common.Exit").c_str());
 
         POINT point{};
         GetCursorPos(&point);
-        SetForegroundWindow(globalHWND);
+        SetForegroundWindow(globalWindowHandle);
 
-        auto command = TrackPopupMenu(hMenu, TPM_LEFTALIGN | TPM_BOTTOMALIGN | TPM_RETURNCMD, point.x, point.y, 0, globalHWND, nullptr);
+        auto command = TrackPopupMenu(menuHandle, TPM_LEFTALIGN | TPM_BOTTOMALIGN | TPM_RETURNCMD, point.x, point.y, 0, globalWindowHandle, nullptr);
 
-        DestroyMenu(hMenu);
+        DestroyMenu(menuHandle);
 
         if (command == TRAY_CMD_RESTORE) {
             RestoreWindowFromTray();
@@ -220,7 +231,7 @@ namespace winrt::StarlightGUI::implementation
 
         if (command == TRAY_CMD_EXIT) {
             m_allowClose = true;
-            PostMessageW(globalHWND, WM_CLOSE, 0, 0);
+            PostMessageW(globalWindowHandle, WM_CLOSE, 0, 0);
         }
     }
 
@@ -293,12 +304,12 @@ namespace winrt::StarlightGUI::implementation
     {
         int option = -1;
 
-        if (background_type == 1) {
+        if (backgroundType == 1) {
             static MicaBackdrop micaBackdrop = MicaBackdrop();
 
             this->SystemBackdrop(micaBackdrop);
 
-            option = mica_type;
+            option = micaType;
             if (option == 0) {
                 micaBackdrop.Kind(MicaKind::Base);
             }
@@ -308,13 +319,13 @@ namespace winrt::StarlightGUI::implementation
 
             MainWindowGrid().Background(nullptr);
         }
-        else if (background_type == 2) {
+        else if (backgroundType == 2) {
             static CustomAcrylicBackdrop acrylicBackdrop = CustomAcrylicBackdrop();
 
             this->SystemBackdrop(acrylicBackdrop);
 
             acrylicBackdrop.RequestedTheme(slg::GetConfiguredElementTheme());
-            option = acrylic_type;
+            option = acrylicType;
             if (option == 1) {
                 acrylicBackdrop.Kind(DesktopAcrylicKind::Base);
             }
@@ -329,31 +340,31 @@ namespace winrt::StarlightGUI::implementation
         else
         {
             this->SystemBackdrop(nullptr);
-            if (background_image.empty()) {
+            if (backgroundImage.empty()) {
                 MainWindowGrid().Background(SolidColorBrush(slg::GetConfiguredElementTheme() == ElementTheme::Dark ? Color{ 255,32,32,32 } : Color{ 255,243,243,243 }));
             }
         }
 
-        LOG_INFO(L"MainWindow", L"Loaded backdrop async with options: [%d, %d]", background_type, option);
+        LOG_INFO(L"MainWindow", L"Loaded backdrop async with options: [%d, %d]", backgroundType, option);
         co_return;
     }
 
     slg::coroutine MainWindow::LoadBackground()
     {
-        if (background_image.empty()) {
+        if (backgroundImage.empty()) {
             // 先清空然后重新加载一次背景色，防止纯色背景被覆盖
             MainWindowGrid().Background(nullptr);
             LoadBackdrop();
             co_return;
         }
 
-        HANDLE hFile = CreateFileA(background_image.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        HANDLE fileHandle = CreateFileA(backgroundImage.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-        if (hFile != INVALID_HANDLE_VALUE) {
-            CloseHandle(hFile);
+        if (fileHandle != INVALID_HANDLE_VALUE) {
+            CloseHandle(fileHandle);
 
             try {
-                StorageFile file = co_await StorageFile::GetFileFromPathAsync(to_hstring(background_image));
+                StorageFile file = co_await StorageFile::GetFileFromPathAsync(to_hstring(backgroundImage));
 
                 if (file && file.IsAvailable() && (file.FileType() == L".png" || file.FileType() == L".jpg" || file.FileType() == L".bmp" || file.FileType() == L".jpeg")) {
                     ImageBrush brush;
@@ -362,12 +373,12 @@ namespace winrt::StarlightGUI::implementation
                     bitmapImage.SetSource(stream);
                     brush.ImageSource(bitmapImage);
 
-                    brush.Stretch(image_stretch == 0 ? Stretch::None : image_stretch == 2 ? Stretch::Uniform : image_stretch == 1 ? Stretch::Fill : Stretch::UniformToFill);
-                    brush.Opacity(image_opacity / 100.0);
+                    brush.Stretch(imageStretch == 0 ? Stretch::None : imageStretch == 2 ? Stretch::Uniform : imageStretch == 1 ? Stretch::Fill : Stretch::UniformToFill);
+                    brush.Opacity(imageOpacity / 100.0);
 
                     MainWindowGrid().Background(brush);
 
-                    LOG_INFO(L"MainWindow", L"Loaded background async with options: [%s, %d, %d]", to_hstring(background_image).c_str(), image_opacity, image_stretch);
+                    LOG_INFO(L"MainWindow", L"Loaded background async with options: [%s, %d, %d]", to_hstring(backgroundImage).c_str(), imageOpacity, imageStretch);
                 }
             }
             catch (hresult_error) {
@@ -379,7 +390,8 @@ namespace winrt::StarlightGUI::implementation
         }
         else {
             // 保存一次空的，后面不再检查
-            SaveConfig("background_image", ""); 
+            backgroundImage.clear();
+            SaveConfig("background_image", "");
             // 先清空然后重新加载一次背景色，防止纯色背景被覆盖
             MainWindowGrid().Background(nullptr);
             LoadBackdrop();
@@ -392,10 +404,10 @@ namespace winrt::StarlightGUI::implementation
     {
         AppTitleBar().IsPaneToggleButtonVisible(true);
 
-        if (navigation_style == 1) {
+        if (navigationStyle == 1) {
             RootNavigation().PaneDisplayMode(NavigationViewPaneDisplayMode::Left);
         }
-        else if (navigation_style == 2) {
+        else if (navigationStyle == 2) {
             RootNavigation().PaneDisplayMode(NavigationViewPaneDisplayMode::Top);
             RootNavigation().IsPaneOpen(false);
         }
@@ -404,7 +416,7 @@ namespace winrt::StarlightGUI::implementation
             RootNavigation().PaneDisplayMode(NavigationViewPaneDisplayMode::LeftCompact);
         }
 
-        LOG_INFO(L"MainWindow", L"Loaded navigation async with options: [%d]", navigation_style);
+        LOG_INFO(L"MainWindow", L"Loaded navigation async with options: [%d]", navigationStyle);
         co_return;
     }
 
@@ -433,7 +445,7 @@ namespace winrt::StarlightGUI::implementation
             LOG_INFO(L"Updater", L"Update response received! Payload length: %zu.", result.size());
 
             auto json = Windows::Data::Json::JsonObject::Parse(result);
-            latestBuildNumber = static_cast<int>(json.GetNamedNumber(L"build_number"));
+            latestBuildNumber = (int)json.GetNamedNumber(L"build_number");
             LOG_INFO(L"Updater", L"Update response parsed successfully!");
 
             co_await wil::resume_foreground(dispatcher);
@@ -522,18 +534,18 @@ namespace winrt::StarlightGUI::implementation
 
     HWND MainWindow::GetWindowHandle()
     {
-        return globalHWND;
+        return globalWindowHandle;
     }
 
-    LRESULT CALLBACK MainWindow::MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData)
+    LRESULT CALLBACK MainWindow::MainWindowProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR subclassId, DWORD_PTR referenceData)
     {
-        auto instance = reinterpret_cast<MainWindow*>(dwRefData);
+        auto instance = (MainWindow*)referenceData;
 
-        switch (uMsg)
+        switch (message)
         {
         case WM_CLOSE:
         {
-            if (instance && tray_background_run && !instance->m_allowClose) {
+            if (instance && trayBackgroundRun && !instance->m_allowClose) {
                 instance->HideWindowToTray();
                 if (instance->m_trayIconAdded) return 0;
             }
@@ -561,23 +573,23 @@ namespace winrt::StarlightGUI::implementation
 
         case WM_DROPFILES:
         {
-            auto hDrop = reinterpret_cast<HDROP>(wParam);
-            if (!hDrop) return 0;
+            auto dropHandle = (HDROP)wParam;
+            if (!dropHandle) return 0;
 
-            UINT fileCount = DragQueryFileW(hDrop, 0xFFFFFFFF, nullptr, 0);
+            UINT fileCount = DragQueryFileW(dropHandle, 0xFFFFFFFF, nullptr, 0);
             std::vector<std::wstring> paths;
             paths.reserve(fileCount);
 
             for (UINT i = 0; i < fileCount; ++i) {
-                UINT len = DragQueryFileW(hDrop, i, nullptr, 0);
+                UINT len = DragQueryFileW(dropHandle, i, nullptr, 0);
                 if (len == 0) continue;
                 std::wstring path(len + 1, L'\0');
-                DragQueryFileW(hDrop, i, path.data(), len + 1);
+                DragQueryFileW(dropHandle, i, path.data(), len + 1);
                 path.resize(len);
                 paths.push_back(path);
             }
 
-            DragFinish(hDrop);
+            DragFinish(dropHandle);
 
             if (!paths.empty() && g_filePageInstance) {
                 g_filePageInstance->HandleExternalDropFiles(paths);
@@ -588,9 +600,9 @@ namespace winrt::StarlightGUI::implementation
 
         case WM_GETMINMAXINFO:
         {
-            MINMAXINFO* pMinMaxInfo = reinterpret_cast<MINMAXINFO*>(lParam);
-            pMinMaxInfo->ptMinTrackSize.x = 800;
-            pMinMaxInfo->ptMinTrackSize.y = 600;
+            MINMAXINFO* minMaxInfo = (MINMAXINFO*)lParam;
+            minMaxInfo->ptMinTrackSize.x = 800;
+            minMaxInfo->ptMinTrackSize.y = 600;
             return 0;
         };
 
@@ -599,12 +611,12 @@ namespace winrt::StarlightGUI::implementation
             if (instance) {
                 instance->RemoveTrayIcon();
             }
-            RemoveWindowSubclass(hWnd, &MainWindowProc, uIdSubclass);
+            RemoveWindowSubclass(windowHandle, &MainWindowProc, subclassId);
             LOGGER_SHUTDOWN();
             break;
         }
         }
-        return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+        return DefSubclassProc(windowHandle, message, wParam, lParam);
     }
 
     void MainWindow::SetupLocalization() {

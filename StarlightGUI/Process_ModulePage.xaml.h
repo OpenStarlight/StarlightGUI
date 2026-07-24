@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Process_ModulePage.g.h"
+#include "Utils/MokuaiInfo.h"
 #include <map>
 #include <TlHelp32.h>
 #include <winrt/Windows.Foundation.Collections.h>

@@ -259,6 +259,7 @@
     </ClInclude>
     <ClInclude Include="Utils\GeneralEntry.h" />
     <ClInclude Include="Utils\Config.h" />
+    <ClInclude Include="Utils\Coroutine.h" />
     <ClInclude Include="Utils\CppUtils.h" />
     <ClInclude Include="Utils\DisplayValueConverter.h" />
     <ClInclude Include="Utils\Diagnostics.h" />

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Process_KCTPage.g.h"
+#include "Utils/KCTInfo.h"
 #include <map>
 #include <TlHelp32.h>
 #include <winrt/Windows.Foundation.Collections.h>

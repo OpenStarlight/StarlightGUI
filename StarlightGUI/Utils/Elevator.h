@@ -1,43 +1,36 @@
-﻿#pragma once
-#include <windows.h>
+#pragma once
+
+#include <Windows.h>
 #include <string>
-#include <tlhelp32.h>
 #include <vector>
-#include <Utils/Utils.h>
+#include "CppUtils.h"
 
 using namespace winrt;
 using namespace StarlightGUI::implementation;
 
-inline bool EnableAllPrivileges(HANDLE hToken) {
-    DWORD dwSize;
-    if (!GetTokenInformation(hToken, TokenPrivileges, nullptr, 0, &dwSize)) {
-        if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
-            return false;
-        }
-    }
-
-    std::vector<BYTE> buffer(dwSize);
-    PTOKEN_PRIVILEGES pTokenPrivileges = reinterpret_cast<PTOKEN_PRIVILEGES>(buffer.data());
-
-    if (!GetTokenInformation(hToken, TokenPrivileges, pTokenPrivileges, dwSize, &dwSize)) {
+inline bool EnableAllPrivileges(HANDLE tokenHandle) {
+    DWORD bufferSize = 0;
+    if (!GetTokenInformation(tokenHandle, TokenPrivileges, nullptr, 0, &bufferSize) &&
+        GetLastError() != ERROR_INSUFFICIENT_BUFFER)
         return false;
-    }
 
-    for (DWORD i = 0; i < pTokenPrivileges->PrivilegeCount; i++) {
-        pTokenPrivileges->Privileges[i].Attributes |= SE_PRIVILEGE_ENABLED;
-    }
-
-    if (!AdjustTokenPrivileges(hToken, FALSE, pTokenPrivileges, dwSize, nullptr, nullptr)) {
+    std::vector<BYTE> buffer(bufferSize);
+    PTOKEN_PRIVILEGES tokenPrivileges = (PTOKEN_PRIVILEGES)buffer.data();
+    if (!GetTokenInformation(tokenHandle, TokenPrivileges, tokenPrivileges, bufferSize, &bufferSize))
         return false;
-    }
+
+    for (DWORD i = 0; i < tokenPrivileges->PrivilegeCount; i++)
+        tokenPrivileges->Privileges[i].Attributes |= SE_PRIVILEGE_ENABLED;
+
+    if (!AdjustTokenPrivileges(tokenHandle, FALSE, tokenPrivileges, bufferSize, nullptr, nullptr))
+        return false;
 
     return GetLastError() == ERROR_SUCCESS;
 }
 
 inline bool CreateProcessElevated(std::wstring processName, bool fullPrivileges, std::wstring extraArgs = L"") {
-
     if (!EnablePrivilege(SE_DEBUG_NAME)) {
-        LOG_ERROR(L"Elevator", L"Failed to obtain ES_DEBUG_PRIVILEGE.");
+        LOG_ERROR(L"Elevator", L"Failed to obtain SE_DEBUG_PRIVILEGE.");
         return false;
     }
 
@@ -46,232 +39,179 @@ inline bool CreateProcessElevated(std::wstring processName, bool fullPrivileges,
         return false;
     }
 
-    HANDLE hSystemToken = nullptr;
-    HANDLE hImpersonationToken = nullptr;
-    HANDLE hTrustedInstallerProcessToken = nullptr;
-    HANDLE hTrustedInstallerToken = nullptr;
+    HANDLE systemToken = NULL;
+    HANDLE impersonationToken = NULL;
+    HANDLE trustedInstallerProcessToken = NULL;
+    HANDLE trustedInstallerToken = NULL;
+    HANDLE processHandle = NULL;
+    HANDLE processToken = NULL;
+    bool impersonating = false;
+
+    auto cleanup = [&]() {
+        if (trustedInstallerToken) CloseHandle(trustedInstallerToken);
+        if (trustedInstallerProcessToken) CloseHandle(trustedInstallerProcessToken);
+        if (processToken) CloseHandle(processToken);
+        if (processHandle) CloseHandle(processHandle);
+        if (systemToken) CloseHandle(systemToken);
+        if (impersonationToken) CloseHandle(impersonationToken);
+        if (impersonating) RevertToSelf();
+    };
 
     DWORD winlogonPid = FindProcessId(L"winlogon.exe");
-    if (winlogonPid == 0) {
-        LOG_ERROR(L"Elevator", L"Failed to find Winlogon.exe.");
+    if (!winlogonPid) {
+        LOG_ERROR(L"Elevator", L"Failed to find winlogon.exe.");
         return false;
     }
 
-    HANDLE hWinlogon = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, winlogonPid);
-    if (!hWinlogon) {
-        LOG_ERROR(L"Elevator", L"Failed to open Winlogon.exe.");
+    processHandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, winlogonPid);
+    if (!processHandle) {
+        LOG_ERROR(L"Elevator", L"Failed to open winlogon.exe.");
         return false;
     }
 
-    HANDLE hWinlogonToken = nullptr;
-    if (!OpenProcessToken(hWinlogon, TOKEN_DUPLICATE | TOKEN_QUERY, &hWinlogonToken)) {
-        CloseHandle(hWinlogon);
-        LOG_ERROR(L"Elevator", L"Failed to get Winlogon.exe token.");
-        return false;
-    }
-    CloseHandle(hWinlogon);
-
-    if (!DuplicateTokenEx(hWinlogonToken, MAXIMUM_ALLOWED, nullptr,
-        SecurityImpersonation, TokenPrimary, &hSystemToken)) {
-        CloseHandle(hWinlogonToken);
-        LOG_ERROR(L"Elevator", L"Failed to duplicate Winlogon.exe token, step 1.");
+    if (!OpenProcessToken(processHandle, TOKEN_DUPLICATE | TOKEN_QUERY, &processToken)) {
+        LOG_ERROR(L"Elevator", L"Failed to get winlogon.exe token.");
+        cleanup();
         return false;
     }
 
-    if (!DuplicateTokenEx(hWinlogonToken, MAXIMUM_ALLOWED, nullptr,
-        SecurityImpersonation, TokenImpersonation, &hImpersonationToken)) {
-        CloseHandle(hWinlogonToken);
-        CloseHandle(hSystemToken);
-        LOG_ERROR(L"Elevator", L"Failed to duplicate Winlogon.exe token, step 2.");
-        return false;
-    }
-    CloseHandle(hWinlogonToken);
+    CloseHandle(processHandle);
+    processHandle = NULL;
 
-    if (!ImpersonateLoggedOnUser(hImpersonationToken)) {
-        CloseHandle(hSystemToken);
-        CloseHandle(hImpersonationToken);
-        LOG_ERROR(L"Elevator", L"Failed to impersonate logged on SYSTEM.");
+    if (!DuplicateTokenEx(processToken, MAXIMUM_ALLOWED, nullptr,
+        SecurityImpersonation, TokenPrimary, &systemToken)) {
+        LOG_ERROR(L"Elevator", L"Failed to duplicate winlogon.exe primary token.");
+        cleanup();
         return false;
     }
 
-    if (!SetThreadToken(NULL, hImpersonationToken)) {
-        CloseHandle(hSystemToken);
-        CloseHandle(hImpersonationToken);
-        LOG_ERROR(L"Elevator", L"Failed to set thread token.");
+    if (!DuplicateTokenEx(processToken, MAXIMUM_ALLOWED, nullptr,
+        SecurityImpersonation, TokenImpersonation, &impersonationToken)) {
+        LOG_ERROR(L"Elevator", L"Failed to duplicate winlogon.exe impersonation token.");
+        cleanup();
         return false;
     }
 
-    SC_HANDLE scManager = OpenSCManagerW(nullptr, nullptr, SC_MANAGER_ALL_ACCESS);
-    if (!scManager) {
-        RevertToSelf();
-        CloseHandle(hSystemToken);
-        CloseHandle(hImpersonationToken);
-        LOG_ERROR(L"Elevator", L"Failed to open SCManager.");
+    CloseHandle(processToken);
+    processToken = NULL;
+
+    if (!ImpersonateLoggedOnUser(impersonationToken)) {
+        LOG_ERROR(L"Elevator", L"Failed to impersonate SYSTEM.");
+        cleanup();
+        return false;
+    }
+    impersonating = true;
+
+    SC_HANDLE serviceManager = OpenSCManagerW(nullptr, nullptr, SC_MANAGER_CONNECT);
+    if (!serviceManager) {
+        LOG_ERROR(L"Elevator", L"Failed to open service manager.");
+        cleanup();
         return false;
     }
 
-    SC_HANDLE service = OpenServiceW(scManager, L"TrustedInstaller", SERVICE_ALL_ACCESS);
-    bool serviceStarted = false;
+    SC_HANDLE service = OpenServiceW(serviceManager, L"TrustedInstaller", SERVICE_START | SERVICE_QUERY_STATUS);
+    bool serviceStarted = service && (StartServiceW(service, 0, nullptr) || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING);
 
-    if (service) {
-        if (!StartServiceW(service, 0, nullptr)) {
-            if (GetLastError() != ERROR_SERVICE_ALREADY_RUNNING) {
-                LOG_ERROR(L"Elevator", L"Failed to start service, trying to start process directly...");
-                std::wstring trustedInstallerPath = L"C:\\Windows\\servicing\\TrustedInstaller.exe";
-
-                STARTUPINFOW si = { sizeof(si) };
-                PROCESS_INFORMATION pi = { 0 };
-
-                if (CreateProcessAsUserW(hSystemToken, trustedInstallerPath.c_str(),
-                    nullptr, nullptr, nullptr, FALSE, 0,
-                    nullptr, nullptr, &si, &pi)) {
-                    CloseHandle(pi.hThread);
-                    CloseHandle(pi.hProcess);
-                    serviceStarted = true;
-                }
-                else {
-                    CloseHandle(pi.hThread);
-                    CloseHandle(pi.hProcess);
-                    serviceStarted = false;
-                }
-            }
-            else {
-                serviceStarted = true;
-            }
-        }
-        else {
-            serviceStarted = true;
-        }
-        CloseServiceHandle(service);
-    }
-    CloseServiceHandle(scManager);
+    if (service) CloseServiceHandle(service);
+    CloseServiceHandle(serviceManager);
 
     if (!serviceStarted) {
-        RevertToSelf();
-        CloseHandle(hSystemToken);
-        CloseHandle(hImpersonationToken);
-        LOG_ERROR(L"Elevator", L"All attempts to starting TrustedInstaller are failed!");
+        std::wstring trustedInstallerPath = L"C:\\Windows\\servicing\\TrustedInstaller.exe";
+        STARTUPINFOW startupInfo{ sizeof(startupInfo) };
+        PROCESS_INFORMATION processInfo{};
+
+        serviceStarted = CreateProcessAsUserW(systemToken, trustedInstallerPath.c_str(), nullptr,
+            nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startupInfo, &processInfo);
+
+        if (processInfo.hThread) CloseHandle(processInfo.hThread);
+        if (processInfo.hProcess) CloseHandle(processInfo.hProcess);
+    }
+
+    if (!serviceStarted) {
+        LOG_ERROR(L"Elevator", L"Failed to start TrustedInstaller.");
+        cleanup();
         return false;
     }
 
-
-    DWORD tiPid = 0;
-    for (int i = 0; i < 10; i++) {
-        tiPid = FindProcessId(L"TrustedInstaller.exe");
-        if (tiPid != 0) break;
-        Sleep(500);
+    DWORD trustedInstallerPid = 0;
+    for (int i = 0; i < 10 && !trustedInstallerPid; i++) {
+        trustedInstallerPid = FindProcessId(L"TrustedInstaller.exe");
+        if (!trustedInstallerPid) Sleep(500);
     }
 
-    if (tiPid == 0) {
-        RevertToSelf();
-        CloseHandle(hSystemToken);
-        CloseHandle(hImpersonationToken);
+    if (!trustedInstallerPid) {
         LOG_ERROR(L"Elevator", L"Failed to find TrustedInstaller.exe.");
+        cleanup();
         return false;
     }
 
-    HANDLE hTiProcess = OpenProcess(PROCESS_QUERY_INFORMATION, FALSE, tiPid);
-    if (!hTiProcess) {
-        RevertToSelf();
-        CloseHandle(hSystemToken);
-        CloseHandle(hImpersonationToken);
+    processHandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, trustedInstallerPid);
+    if (!processHandle) {
         LOG_ERROR(L"Elevator", L"Failed to open TrustedInstaller.exe.");
+        cleanup();
         return false;
     }
 
-    if (!OpenProcessToken(hTiProcess, TOKEN_DUPLICATE, &hTrustedInstallerProcessToken)) {
-        CloseHandle(hTiProcess);
-        RevertToSelf();
-        CloseHandle(hSystemToken);
-        CloseHandle(hImpersonationToken);
+    if (!OpenProcessToken(processHandle, TOKEN_DUPLICATE | TOKEN_QUERY, &trustedInstallerProcessToken)) {
         LOG_ERROR(L"Elevator", L"Failed to get TrustedInstaller.exe token.");
+        cleanup();
         return false;
     }
 
-    SECURITY_ATTRIBUTES sa = { sizeof(sa) };
-    if (!DuplicateTokenEx(hTrustedInstallerProcessToken, TOKEN_ALL_ACCESS, &sa, SecurityImpersonation, TokenPrimary, &hTrustedInstallerToken)) {
-        CloseHandle(hTiProcess);
-        RevertToSelf();
-        CloseHandle(hSystemToken);
-        CloseHandle(hImpersonationToken);
+    SECURITY_ATTRIBUTES securityAttributes{ sizeof(securityAttributes) };
+    if (!DuplicateTokenEx(trustedInstallerProcessToken, TOKEN_ALL_ACCESS, &securityAttributes,
+        SecurityImpersonation, TokenPrimary, &trustedInstallerToken)) {
         LOG_ERROR(L"Elevator", L"Failed to duplicate TrustedInstaller.exe token.");
+        cleanup();
         return false;
     }
-    CloseHandle(hTiProcess);
 
-    if (fullPrivileges) {
-        if (!EnableAllPrivileges(hTrustedInstallerToken)) {
-            CloseHandle(hTrustedInstallerToken);
-            RevertToSelf();
-            CloseHandle(hSystemToken);
-            CloseHandle(hImpersonationToken);
-            LOG_ERROR(L"Elevator", L"Failed to enable all privileges.");
-            return false;
-        }
+    CloseHandle(processHandle);
+    processHandle = NULL;
+    CloseHandle(trustedInstallerProcessToken);
+    trustedInstallerProcessToken = NULL;
+
+    if (fullPrivileges && !EnableAllPrivileges(trustedInstallerToken)) {
+        LOG_ERROR(L"Elevator", L"Failed to enable all privileges.");
+        cleanup();
+        return false;
     }
 
     DWORD currentSessionId = WTSGetActiveConsoleSessionId();
     ProcessIdToSessionId(GetCurrentProcessId(), &currentSessionId);
-
-    if (!SetTokenInformation(hTrustedInstallerToken, TokenSessionId, &currentSessionId, sizeof(currentSessionId))) {
-        CloseHandle(hTrustedInstallerToken);
-        RevertToSelf();
-        CloseHandle(hSystemToken);
-        CloseHandle(hImpersonationToken);
-        LOG_ERROR(L"Elevator", L"Failed to set token information.");
+    if (!SetTokenInformation(trustedInstallerToken, TokenSessionId, &currentSessionId, sizeof(currentSessionId))) {
+        LOG_ERROR(L"Elevator", L"Failed to set token session.");
+        cleanup();
         return false;
     }
 
     RevertToSelf();
+    impersonating = false;
 
-    STARTUPINFOW si = { sizeof(si) };
-    PROCESS_INFORMATION pi = { 0 };
+    STARTUPINFOW startupInfo{ sizeof(startupInfo) };
+    PROCESS_INFORMATION processInfo{};
     std::wstring commandLine = L"\"" + processName + L"\"";
-    if (!extraArgs.empty()) {
-        commandLine += L" ";
-        commandLine += extraArgs;
+    if (!extraArgs.empty())
+        commandLine += L" " + extraArgs;
+
+    startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+    startupInfo.wShowWindow = SW_SHOW;
+
+    bool created = CreateProcessWithTokenW(trustedInstallerToken, LOGON_WITH_PROFILE,
+        processName.c_str(), commandLine.data(), 0, nullptr, nullptr, &startupInfo, &processInfo);
+
+    if (!created) {
+        LOG_WARNING(L"Elevator", L"CreateProcessWithTokenW() failed, trying CreateProcessAsUserW()...");
+        created = CreateProcessAsUserW(trustedInstallerToken, processName.c_str(), commandLine.data(),
+            nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startupInfo, &processInfo);
     }
 
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_SHOW;
+    if (processInfo.hThread) CloseHandle(processInfo.hThread);
+    if (processInfo.hProcess) CloseHandle(processInfo.hProcess);
+    cleanup();
 
-    if (!CreateProcessWithTokenW(hTrustedInstallerToken,
-        LOGON_WITH_PROFILE,
-        processName.c_str(),
-        commandLine.data(),
-        0,
-        nullptr,
-        nullptr,
-        &si,
-        &pi)) {
-        LOG_ERROR(L"Elevator", L"CreateProcessWithTokenW() failed, trying CreateProcessAsUserW()...");
+    if (!created)
+        LOG_ERROR(L"Elevator", L"CreateProcessAsUserW() failed.");
 
-        if (!CreateProcessAsUserW(hTrustedInstallerToken,
-            processName.c_str(),
-            commandLine.data(),
-            nullptr,
-            nullptr,
-            FALSE,
-            0,
-            nullptr,
-            nullptr,
-            &si,
-            &pi)) {
-            CloseHandle(pi.hThread);
-            CloseHandle(pi.hProcess);
-            CloseHandle(hTrustedInstallerToken);
-            CloseHandle(hSystemToken);
-            CloseHandle(hImpersonationToken);
-            LOG_ERROR(L"Elevator", L"CreateProcessAsUserW() failed!");
-            return false;
-        }
-    }
-
-    CloseHandle(pi.hThread);
-    CloseHandle(pi.hProcess);
-    CloseHandle(hTrustedInstallerToken);
-    CloseHandle(hSystemToken);
-    CloseHandle(hImpersonationToken);
-
-    return true;
+    return created;
 }

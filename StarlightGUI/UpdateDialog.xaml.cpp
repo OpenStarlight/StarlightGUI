@@ -2,7 +2,11 @@
 #include "UpdateDialog.xaml.h"
 #if __has_include("UpdateDialog.g.cpp")
 #include "UpdateDialog.g.cpp"
+#include "Utils/CppUtils.h"
+#include "Utils/Config.h"
+#include "Utils/Utils.h"
 #endif
+#include <string>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -78,4 +82,3 @@ namespace winrt::StarlightGUI::implementation
         deferral.Complete();
     }
 }
-

@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "Process_HandlePage.g.h"
+#include "Utils/HandleInfo.h"
 #include <map>
 #include <TlHelp32.h>
 #include <winrt/Windows.Foundation.Collections.h>

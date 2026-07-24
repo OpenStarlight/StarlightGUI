@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include "pch.h"
+#include <Windows.h>
 
 typedef ULONG COLLECTION_ENUM;
 typedef ULONG FEATURE_ENUM;

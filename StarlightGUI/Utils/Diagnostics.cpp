@@ -34,7 +34,7 @@ namespace slg
 
         DWORD WINAPI DumpThreadProc(void* parameter) noexcept
         {
-            auto context = static_cast<DumpContext*>(parameter);
+            auto context = (DumpContext*)parameter;
             if (!context) return ERROR_INVALID_PARAMETER;
 
             try {
@@ -59,7 +59,7 @@ namespace slg
                 exceptionInformation.ExceptionPointers = context->exceptionPointers;
                 exceptionInformation.ClientPointers = FALSE;
 
-                auto dumpType = static_cast<MINIDUMP_TYPE>(
+                auto dumpType = (MINIDUMP_TYPE)(
                     MiniDumpWithDataSegs |
                     MiniDumpWithHandleData |
                     MiniDumpWithIndirectlyReferencedMemory |
@@ -109,7 +109,7 @@ namespace slg
     std::filesystem::path GetExecutableDirectory()
     {
         std::wstring path(32768, L'\0');
-        DWORD length = GetModuleFileNameW(nullptr, path.data(), static_cast<DWORD>(path.size()));
+        DWORD length = GetModuleFileNameW(nullptr, path.data(), (DWORD)path.size());
         if (length == 0 || length >= path.size()) return std::filesystem::current_path();
 
         path.resize(length);

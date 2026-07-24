@@ -1,7 +1,11 @@
 ﻿#pragma once
 
 #include "FilePage.g.h"
+#include "Utils/Coroutine.h"
+#include "Utils/FileInfo.h"
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace winrt::StarlightGUI::implementation
 {
@@ -29,7 +33,7 @@ namespace winrt::StarlightGUI::implementation
             winrt::Microsoft::UI::Xaml::Controls::ListViewBase const& sender,
             winrt::Microsoft::UI::Xaml::Controls::ContainerContentChangingEventArgs const& args);
 
-        void ColumnHeader_Click(IInspectable const& sender, RoutedEventArgs const& e);
+        void ColumnHeader_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
         slg::coroutine ApplySort(bool& isAscending, const std::string& column);
         void SortFileList(bool isAscending, const std::string& column, bool updateHeader);
 

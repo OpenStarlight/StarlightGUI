@@ -4,12 +4,11 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#include <winioctl.h>
+#include <string>
 #pragma comment(lib, "advapi32.lib")
 #pragma comment(lib, "version.lib")
 #pragma comment(lib, "shell32.lib")
 #pragma comment(lib, "gdi32.lib")
-#pragma comment(lib, "ntdll.lib")
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "pdh.lib")
 #pragma comment(lib, "iphlpapi.lib")
@@ -17,16 +16,17 @@
 #pragma comment(lib, "nvidia/nvml.lib")
 #pragma comment(lib, "capstone/capstone.lib")
 
-// 取消定义 GetCurrentTime 宏，避免与 Storyboard::GetCurrentTime 冲突
 #undef GetCurrentTime
-// 微软我超牛魔的
 #undef min
 #undef max
 #undef CreateProcess
 #undef LoadImage
 
-// 控制台相关
 #include <Console.h>
+namespace winrt::StarlightGUI::implementation {
+    std::wstring ExtractFunctionName(const std::string& old);
+}
+
 #define __WFUNCTION__ ExtractFunctionName(__FUNCTION__)
 #define LOG_INFO(source, message, ...)     Console::GetInstance().Info(source, message, __VA_ARGS__)
 #define LOG_WARNING(source, message, ...)  Console::GetInstance().Warning(source, message, __VA_ARGS__)
@@ -41,55 +41,12 @@
 #include <Unknwn.h>
 #include <winrt/Windows.Foundation.h>
 #include <winrt/Windows.Foundation.Collections.h>
-#include <winrt/Windows.System.h>
-#include <winrt/Windows.Storage.h>
-#include <winrt/Windows.Storage.Streams.h>
-#include <winrt/Microsoft.Windows.Storage.Pickers.h>
-#include <winrt/Microsoft.UI.Composition.h>
 #include <winrt/Microsoft.UI.Xaml.h>
 #include <winrt/Microsoft.UI.Xaml.Controls.h>
 #include <winrt/Microsoft.UI.Xaml.Controls.Primitives.h>
-#include <winrt/Microsoft.UI.Xaml.Data.h>
-#include <winrt/Microsoft.UI.Xaml.Interop.h>
-#include <winrt/Microsoft.UI.Xaml.Markup.h>
 #include <winrt/Microsoft.UI.Xaml.Media.h>
-#include <winrt/Microsoft.UI.Xaml.Media.Animation.h>
-#include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
-#include <winrt/Microsoft.UI.Xaml.Navigation.h>
-#include <winrt/Microsoft.UI.Xaml.Shapes.h>
-#include <winrt/Microsoft.UI.Dispatching.h>
-#include <winrt/Microsoft.UI.Windowing.h>
-#include <winrt/Microsoft.UI.Interop.h>
-#include <winrt/Microsoft.UI.Text.h>
-#include <winrt/Microsoft.UI.h>
-#include <wil/cppwinrt_helpers.h>
-#include <microsoft.ui.xaml.window.h>
-#include <winrt/WinUI3Package.h>
 
-#include <Utils/ProcessInfo.h>
-#include <Utils/ThreadInfo.h>
-#include <Utils/HandleInfo.h>
-#include <Utils/MokuaiInfo.h>
-#include <Utils/KCTInfo.h>
-#include <Utils/KernelModuleInfo.h>
-#include <Utils/FileInfo.h>
-#include <Utils/WindowInfo.h>
-
-#include <Utils/ObjectEntry.h>
-#include <Utils/GeneralEntry.h>
+#include <Utils/I18n.h>
 #include <Utils/DisplayValueConverter.h>
 
-#include <Utils/TaskUtils.h>
-#include <Utils/CppUtils.h>
-#include <Utils/Utils.h>
-#include <Utils/KernelBase.h>
-#include <Utils/Elevator.h>
-#include <Utils/Config.h>
-#include <Utils/I18n.h>
-
 extern winrt::hstring siriusPath, wtmPath, iamKeyHackerPath;
-extern int enum_file_mode, background_type, mica_type, acrylic_type, navigation_style, image_stretch;
-extern std::string background_image, language, theme;
-extern bool enum_strengthen, function_show_deprecated, function_show_unknown, function_use_document_name, pdh_first, elevated_run, dangerous_confirm, check_update, task_auto_refresh, tray_background_run, auto_stop_driver, auto_start, replace_taskmgr;
-extern bool hypervisor_mode;
-extern int image_opacity, disasm_count;

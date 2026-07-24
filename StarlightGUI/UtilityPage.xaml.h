@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "UtilityPage.g.h"
+#include "Utils/Coroutine.h"
 
 namespace winrt::StarlightGUI::implementation
 {

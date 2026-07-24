@@ -1,9 +1,14 @@
 ﻿#include "pch.h"
 #include "Utils/Config.h"
 #include "Utils/Diagnostics.h"
+#include "Utils/CppUtils.h"
+#include "Utils/Elevator.h"
+#include "Utils/KernelBase.h"
+#include "Utils/Utils.h"
 #include "App.xaml.h"
 #include "MainWindow.xaml.h"
 #include <shellapi.h>
+#include <string>
 #include <vector>
 
 using namespace winrt;
@@ -50,7 +55,7 @@ namespace winrt::StarlightGUI::implementation
             {
                 LOG_ERROR(L"App", L"===== Unhandled exception detected! =====");
                 LOG_ERROR(L"App", L"Type: 'winrt::hresult_error'");
-                LOG_ERROR(L"App", L"Code: 0x%08X", static_cast<uint32_t>(e.Exception().value));
+                LOG_ERROR(L"App", L"Code: 0x%08X", (uint32_t)e.Exception().value);
                 LOG_ERROR(L"App", L"Message: %s", e.Message().c_str());
                 LOG_ERROR(L"App", L"=========================================");
                 slg::CreateCrashDump();
@@ -76,7 +81,7 @@ namespace winrt::StarlightGUI::implementation
 
         InitializeLogger();
 
-        if (elevated_run) {
+        if (elevatedRun) {
             if (trustedInstallerRelaunch) {
                 LOG_INFO(L"", L"Running as TrustedInstaller!");
             }

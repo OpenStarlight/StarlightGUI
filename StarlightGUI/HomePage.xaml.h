@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include "HomePage.g.h"
+#include "Utils/Coroutine.h"
 #include <pdh.h>
 #include <nvidia/nvml.h>
 #include <atomic>
@@ -56,21 +57,20 @@ namespace winrt::StarlightGUI::implementation
         inline static hstring hitokoto;
         inline static winrt::Microsoft::UI::Xaml::Media::Imaging::BitmapImage avatar{ nullptr };
 
-        // 性能显示
-        std::unordered_map<int, DiskCardControl> disk_card_map;
-        inline static hstring cpu_manufacture = L"", gpu_manufacture = L"", netadpt_manufacture = L"";
+        std::unordered_map<int, DiskCardControl> diskCardMap;
+        inline static hstring cpuManufacture = L"", gpuManufacture = L"", networkAdapterManufacture = L"";
         inline static bool initialized, isNvidia, isNetSend = false;
-        inline static double cache_l1, cache_l2, cache_l3;
-        inline static bool net_selected = false;
-        inline static DWORD active_net_if_index = 0;
-        inline static UINT64 last_in_octets = 0, last_out_octets = 0, last_in_packets = 0, last_out_packets = 0;
-        inline static ULONGLONG last_net_tick = 0;
+        inline static double cacheL1, cacheL2, cacheL3;
+        inline static bool networkSelected = false;
+        inline static DWORD activeNetworkInterfaceIndex = 0;
+        inline static UINT64 lastInOctets = 0, lastOutOctets = 0, lastInPackets = 0, lastOutPackets = 0;
+        inline static ULONGLONG lastNetworkTick = 0;
         inline static nvmlDevice_t device;
         inline static PDH_HQUERY query;
-        inline static PDH_HCOUNTER counter_cpu_time, counter_cpu_freq, counter_cpu_process, counter_cpu_thread, counter_cpu_syscall;
-        inline static PDH_HCOUNTER counter_mem_cached, counter_mem_committed, counter_mem_read, counter_mem_write, counter_mem_input, counter_mem_output;
-        inline static PDH_HCOUNTER counter_disk_time, counter_disk_trans, counter_disk_read, counter_disk_write, counter_disk_io;
-        inline static PDH_HCOUNTER counter_gpu_time;
+        inline static PDH_HCOUNTER cpuTimeCounter, cpuFrequencyCounter, processCounter, threadCounter, systemCallCounter;
+        inline static PDH_HCOUNTER cachedMemoryCounter, committedMemoryCounter, memoryReadCounter, memoryWriteCounter, memoryInputCounter, memoryOutputCounter;
+        inline static PDH_HCOUNTER diskTimeCounter, diskTransferCounter, diskReadCounter, diskWriteCounter, diskIoCounter;
+        inline static PDH_HCOUNTER gpuTimeCounter;
 
         void ChangeMode_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e);
     };

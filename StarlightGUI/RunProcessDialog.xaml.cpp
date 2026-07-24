@@ -4,6 +4,8 @@
 #include "RunProcessDialog.g.cpp"
 #endif
 #include <shellapi.h>
+#include "Utils/Utils.h"
+#include <string>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -50,6 +52,4 @@ namespace winrt::StarlightGUI::implementation
         deferral.Complete();
     }
 }
-
-
 

@@ -6,6 +6,7 @@
 
 
 #include <winrt/Microsoft.UI.Xaml.h>
+#include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.System.h>
@@ -13,10 +14,12 @@
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <winrt/Windows.Foundation.h>
+#include <wil/cppwinrt_helpers.h>
 #include <TlHelp32.h>
 #include <Psapi.h>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 #include <Utils/Utils.h>
 #include <Utils/TaskUtils.h>
 #include <Utils/KernelBase.h>
@@ -134,7 +137,7 @@ namespace winrt::StarlightGUI::implementation
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         // 更新句柄数量文本
-        HandleCountText().Text(t(L"ProcHandle.Detail", static_cast<size_t>(m_handleList.Size()), static_cast<long long>(duration.count())));
+        HandleCountText().Text(t(L"ProcHandle.Detail", (size_t)m_handleList.Size(), (long long)duration.count()));
         LoadingRing().IsActive(false);
 
         LOG_INFO(__WFUNCTION__, L"Loaded handle list, %d entry(s) in total.", m_handleList.Size());

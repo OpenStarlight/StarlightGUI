@@ -4,7 +4,9 @@
 #include "WindowPage.g.cpp"
 #endif
 
+#include <algorithm>
 #include <winrt/Microsoft.UI.Composition.h>
+#include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Microsoft.UI.Xaml.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
 #include <winrt/Windows.Storage.Streams.h>
@@ -13,15 +15,23 @@
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <winrt/Windows.Foundation.h>
+#include <winrt/WinUI3Package.h>
+#include <wil/cppwinrt_helpers.h>
 #include <shellapi.h>
 #include <array>
 #include <sstream>
 #include <iomanip>
 #include <mutex>
+#include <optional>
+#include <unordered_map>
 #include <unordered_set>
 #include <InfoWindow.xaml.h>
 #include <MainWindow.xaml.h>
 #include <psapi.h>
+#include "Utils/CppUtils.h"
+#include "Utils/KernelBase.h"
+#include "Utils/TaskUtils.h"
+#include "Utils/Utils.h"
 
 using namespace winrt;
 using namespace WinUI3Package;
@@ -35,20 +45,18 @@ using namespace Windows::Graphics::Imaging;
 using namespace Windows::System;
 
 typedef BOOL(*WTMInit_t)(void);
-typedef BOOL(*WTMUninit_t)(void);
-typedef BOOL(*WTMSetWindowBand_t)(HWND hWnd, HWND hWndInsertAfter, DWORD dwBand);
-typedef BOOL(*WTMGetWindowBand_t)(HWND hWnd, PDWORD pdwBand);
+typedef BOOL(*WTMSetWindowBand_t)(HWND windowHandle, HWND insertAfter, DWORD band);
+typedef BOOL(*WTMGetWindowBand_t)(HWND windowHandle, PDWORD band);
 
 namespace winrt::StarlightGUI::implementation
 {
     static std::unordered_map<hstring, std::optional<winrt::Microsoft::UI::Xaml::Media::ImageSource>> iconCache;
     static std::chrono::steady_clock::time_point lastRefresh;
-    static WTMInit_t WTMInit = nullptr;
-    static WTMUninit_t WTMUninit = nullptr;
-    static WTMSetWindowBand_t WTMSetWindowBand = nullptr;
-    static WTMGetWindowBand_t WTMGetWindowBand = nullptr;
-    static HMODULE WTMModule = nullptr;
-    static HMODULE IAMKeyHackerModule = nullptr;
+    static WTMInit_t wtmInitialize = nullptr;
+    static WTMSetWindowBand_t wtmSetWindowBand = nullptr;
+    static WTMGetWindowBand_t wtmGetWindowBand = nullptr;
+    static HMODULE wtmModule = nullptr;
+    static HMODULE iamKeyHackerModule = nullptr;
 
     static hstring GetDriverErrorMessage()
     {
@@ -592,50 +600,48 @@ namespace winrt::StarlightGUI::implementation
 
     winrt::Windows::Foundation::IAsyncAction WindowPage::GetWindowInfoAsync(std::vector<winrt::StarlightGUI::WindowInfo>& windows)
     {
-        EnumWindows([](HWND hwnd, LPARAM lParam) -> BOOL {
-            std::vector<winrt::StarlightGUI::WindowInfo>& windowsRef = *reinterpret_cast<std::vector<winrt::StarlightGUI::WindowInfo>*>(lParam);
+        EnumWindows([](HWND windowHandle, LPARAM referenceData) -> BOOL {
+            std::vector<winrt::StarlightGUI::WindowInfo>& windowsRef = *(std::vector<winrt::StarlightGUI::WindowInfo>*)referenceData;
 
-            if (m_showVisibleOnly && !IsWindowVisible(hwnd)) return TRUE;
+            if (m_showVisibleOnly && !IsWindowVisible(windowHandle)) return TRUE;
 
             std::wstring windowTitle{ t(L"Common.Unknown") };
-            int length = GetWindowTextLengthW(hwnd);
+            int length = GetWindowTextLengthW(windowHandle);
             if (length > 0) {
-                windowTitle = std::wstring(length + 1, '\0');
-                GetWindowTextW(hwnd, &windowTitle[0], length + 1);
+                windowTitle = std::wstring(length + 1, L'\0');
+                GetWindowTextW(windowHandle, &windowTitle[0], length + 1);
             }
             else if (!m_showNoTitle) return TRUE;
 
             DWORD processId = 0;
-            GetWindowThreadProcessId(hwnd, &processId);
-            HANDLE hProcess = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+            GetWindowThreadProcessId(windowHandle, &processId);
+            HANDLE processHandle = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, processId);
             std::wstring processName;
-            if (hProcess) {
-                wchar_t processNameTemp[MAX_PATH];
-                if (K32GetModuleFileNameExW(hProcess, nullptr, processNameTemp, MAX_PATH)) {
-                    processName = processNameTemp;
-                }
-                CloseHandle(hProcess);
+            if (processHandle) {
+                wchar_t processNameBuffer[MAX_PATH];
+                if (K32GetModuleFileNameExW(processHandle, nullptr, processNameBuffer, MAX_PATH))
+                    processName = processNameBuffer;
+                CloseHandle(processHandle);
             }
 
             std::wstring className{ t(L"Common.Unknown") };
-            wchar_t classNameTmp[MAX_PATH];
-            GetClassNameW(hwnd, &classNameTmp[0], MAX_PATH);
-            className = classNameTmp;
+            wchar_t classNameBuffer[MAX_PATH];
+            GetClassNameW(windowHandle, classNameBuffer, MAX_PATH);
+            className = classNameBuffer;
 
             DWORD windowStyle = 0;
             DWORD windowStyleEx = 0;
 
-            WINDOWINFO pwndInfo = { 0 };
-            pwndInfo.cbSize = sizeof(WINDOWINFO);
-            if (GetWindowInfo(hwnd, &pwndInfo)) {
-                windowStyle = pwndInfo.dwStyle;
-                windowStyleEx = pwndInfo.dwExStyle;
+            WINDOWINFO windowInfoData{};
+            windowInfoData.cbSize = sizeof(windowInfoData);
+            if (GetWindowInfo(windowHandle, &windowInfoData)) {
+                windowStyle = windowInfoData.dwStyle;
+                windowStyleEx = windowInfoData.dwExStyle;
             }
 
             DWORD band = 0;
-            if (WTMGetWindowBand) {
-			    WTMGetWindowBand(hwnd, &band);
-            }
+            if (wtmGetWindowBand)
+			    wtmGetWindowBand(windowHandle, &band);
 
             winrt::StarlightGUI::WindowInfo windowInfo = winrt::make<winrt::StarlightGUI::implementation::WindowInfo>();
             windowInfo.Name(windowTitle);
@@ -645,12 +651,12 @@ namespace winrt::StarlightGUI::implementation
             windowInfo.WindowStyle(windowStyle);
             windowInfo.WindowStyleEx(windowStyleEx);
             windowInfo.Band(band);
-            windowInfo.Hwnd((uint64_t)hwnd);
+            windowInfo.Hwnd((uint64_t)windowHandle);
             windowInfo.Description(ExtractFileName(processName) + L" / " + className);
             windowsRef.push_back(windowInfo);
 
             return TRUE;
-            }, reinterpret_cast<LPARAM>(&windows));
+            }, (LPARAM)&windows);
 
         co_return;
     }
@@ -661,13 +667,13 @@ namespace winrt::StarlightGUI::implementation
 
         if (cacheIt == iconCache.end()) {
 			// 获取窗口图标 ICON
-            HICON hIcon = (HICON)GetClassLongPtrW((HWND)window.Hwnd(), GCLP_HICON);
-            if (!hIcon)
-                hIcon = (HICON)GetClassLongPtrW((HWND)window.Hwnd(), GCLP_HICONSM);
-            if (!hIcon)
-				hIcon = (HICON)LoadImageW(NULL, MAKEINTRESOURCEW(32512), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
-            if (!hIcon) return;
-            auto iconSource = slg::CreateImageSourceFromHIcon(hIcon, 16, false);
+            HICON iconHandle = (HICON)GetClassLongPtrW((HWND)window.Hwnd(), GCLP_HICON);
+            if (!iconHandle)
+                iconHandle = (HICON)GetClassLongPtrW((HWND)window.Hwnd(), GCLP_HICONSM);
+            if (!iconHandle)
+				iconHandle = (HICON)LoadImageW(NULL, MAKEINTRESOURCEW(32512), IMAGE_ICON, 0, 0, LR_DEFAULTSIZE | LR_SHARED);
+            if (!iconHandle) return;
+            auto iconSource = slg::CreateImageSourceFromHIcon(iconHandle, 16, false);
             if (!iconSource) return;
 
             iconCache.insert_or_assign(cacheKey, iconSource);
@@ -694,47 +700,46 @@ namespace winrt::StarlightGUI::implementation
             iamKeyHackerPath = installedPath + L"\\IAMKeyHacker.dll";
         }
 
-        if (!IAMKeyHackerModule) {
-            IAMKeyHackerModule = LoadLibraryW(iamKeyHackerPath.c_str());
-            if (!IAMKeyHackerModule) {
+        if (!iamKeyHackerModule) {
+            iamKeyHackerModule = LoadLibraryW(iamKeyHackerPath.c_str());
+            if (!iamKeyHackerModule) {
                 LOG_ERROR(__WFUNCTION__, L"Failed to load IAMKeyHacker.dll, GetLastError() = %d", GetLastError());
                 return false;
             }
         }
 
-        if (!WTMModule) {
-            WTMModule = LoadLibraryW(wtmPath.c_str());
-            if (!WTMModule) {
+        if (!wtmModule) {
+            wtmModule = LoadLibraryW(wtmPath.c_str());
+            if (!wtmModule) {
                 LOG_ERROR(__WFUNCTION__, L"Failed to load WindowTopMost.dll, GetLastError() = %d", GetLastError());
                 return false;
             }
 
-            WTMInit = (WTMInit_t)GetProcAddress(WTMModule, "WTMInit");
-            WTMUninit = (WTMUninit_t)GetProcAddress(WTMModule, "WTMUninit");
-            WTMSetWindowBand = (WTMSetWindowBand_t)GetProcAddress(WTMModule, "WTMSetWindowBand");
-            WTMGetWindowBand = (WTMGetWindowBand_t)GetProcAddress(WTMModule, "WTMGetWindowBand");
+            wtmInitialize = (WTMInit_t)GetProcAddress(wtmModule, "WTMInit");
+            wtmSetWindowBand = (WTMSetWindowBand_t)GetProcAddress(wtmModule, "WTMSetWindowBand");
+            wtmGetWindowBand = (WTMGetWindowBand_t)GetProcAddress(wtmModule, "WTMGetWindowBand");
         }
 
-        if (!WTMInit || !WTMSetWindowBand) {
+        if (!wtmInitialize || !wtmSetWindowBand) {
             LOG_ERROR(__WFUNCTION__, L"WindowTopMost.dll exports are incomplete.");
             return false;
         }
 
-        initialized = WTMInit();
+        initialized = wtmInitialize();
         if (!initialized) {
             LOG_ERROR(__WFUNCTION__, L"WindowTopMost failed to initialize.");
         }
         return initialized;
     }
 
-    bool WindowPage::SetWindowZBID(HWND hwnd, ZBID zbid) {
+    bool WindowPage::SetWindowZBID(HWND windowHandle, ZBID zbid) {
         if (!EnsureZBIDModulesInitialized()) {
             LOG_ERROR(__WFUNCTION__, L"WindowTopMost failed to load! Is the module broken?");
             return false;
         }
 
         LOG_INFO(__WFUNCTION__, L"Setting window band to %d.", (DWORD)zbid);
-		BOOL result = WTMSetWindowBand(hwnd, NULL, (DWORD)zbid);
+		BOOL result = wtmSetWindowBand(windowHandle, NULL, (DWORD)zbid);
 
         return result;
     }

@@ -1,9 +1,15 @@
 ﻿#include "pch.h"
 #include "CopyFileDialog.xaml.h"
+#include <winrt/Microsoft.UI.h>
+#include <winrt/Microsoft.UI.Interop.h>
+#include <winrt/Microsoft.Windows.Storage.Pickers.h>
+#include <winrt/Windows.Storage.h>
 #if __has_include("CopyFileDialog.g.cpp")
 #include "CopyFileDialog.g.cpp"
 #endif
 #include "MainWindow.xaml.h"
+#include "Utils/Utils.h"
+#include <string>
 
 using namespace winrt;
 using namespace Microsoft::UI::Xaml;
@@ -46,9 +52,9 @@ namespace winrt::StarlightGUI::implementation
 
     slg::coroutine CopyFileDialog::ExploreButton_Click(IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)
     {
-        HWND hWnd = g_mainWindowInstance->GetWindowHandle();
+        HWND windowHandle = g_mainWindowInstance->GetWindowHandle();
 
-        FolderPicker picker = FolderPicker(winrt::Microsoft::UI::GetWindowIdFromWindow(hWnd));
+        FolderPicker picker = FolderPicker(winrt::Microsoft::UI::GetWindowIdFromWindow(windowHandle));
 
         picker.SuggestedStartLocation(PickerLocationId::ComputerFolder);
 
@@ -59,6 +65,3 @@ namespace winrt::StarlightGUI::implementation
         CopyPathTextBox().Text(result.Path());
     }
 }
-
-
-

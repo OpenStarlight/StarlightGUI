@@ -1,12 +1,16 @@
 ﻿#include "pch.h"
 #include "Console.h"
+#include "Utils/Config.h"
+#include <filesystem>
 #include "Utils/Diagnostics.h"
+#include "Utils/Utils.h"
 
 #include <dwmapi.h>
 #include <codecvt>
 #include <locale>
 
 using winrt::StarlightGUI::implementation::GetLocalizedString;
+using winrt::StarlightGUI::implementation::t;
 
 static Console* g_instance = nullptr;
 static std::mutex g_instanceMutex;
@@ -88,14 +92,14 @@ bool Console::Initialize() {
         freopen("CONOUT$", "w", stderr);
         freopen("CONIN$", "r", stdin);
 
-        m_hConsoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-        m_hConsoleInput = GetStdHandle(STD_INPUT_HANDLE);
-        m_hConsoleWnd = GetConsoleWindow();
+        m_consoleOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+        m_consoleInput = GetStdHandle(STD_INPUT_HANDLE);
+        m_consoleWindow = GetConsoleWindow();
 
-        DWORD dwMode = 0;
-        if (m_hConsoleOutput && m_hConsoleOutput != INVALID_HANDLE_VALUE && GetConsoleMode(m_hConsoleOutput, &dwMode)) {
-            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT;
-            SetConsoleMode(m_hConsoleOutput, dwMode);
+        DWORD consoleMode = 0;
+        if (m_consoleOutput && m_consoleOutput != INVALID_HANDLE_VALUE && GetConsoleMode(m_consoleOutput, &consoleMode)) {
+            consoleMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING | ENABLE_PROCESSED_OUTPUT;
+            SetConsoleMode(m_consoleOutput, consoleMode);
         }
 
         SetConsoleOutputCP(CP_UTF8);
@@ -105,18 +109,18 @@ bool Console::Initialize() {
         // 设置字体
         CONSOLE_FONT_INFOEX cfi{};
         cfi.cbSize = sizeof(cfi);
-        if (m_hConsoleOutput && m_hConsoleOutput != INVALID_HANDLE_VALUE && GetCurrentConsoleFontEx(m_hConsoleOutput, FALSE, &cfi)) {
+        if (m_consoleOutput && m_consoleOutput != INVALID_HANDLE_VALUE && GetCurrentConsoleFontEx(m_consoleOutput, FALSE, &cfi)) {
             wcsncpy_s(cfi.FaceName, L"Consolas", _TRUNCATE);
             cfi.dwFontSize.Y = 16;
             cfi.FontWeight = FW_NORMAL;
-            SetCurrentConsoleFontEx(m_hConsoleOutput, FALSE, &cfi);
+            SetCurrentConsoleFontEx(m_consoleOutput, FALSE, &cfi);
         }
 
-        if (m_hConsoleWnd) {
-            ShowWindow(m_hConsoleWnd, SW_HIDE);
+        if (m_consoleWindow) {
+            ShowWindow(m_consoleWindow, SW_HIDE);
 
-            HMENU hMenu = GetSystemMenu(m_hConsoleWnd, FALSE);
-            if (hMenu) EnableMenuItem(hMenu, SC_CLOSE, MF_GRAYED);
+            HMENU menuHandle = GetSystemMenu(m_consoleWindow, FALSE);
+            if (menuHandle) EnableMenuItem(menuHandle, SC_CLOSE, MF_GRAYED);
 
             SetConsoleTitleW(m_consoleTitle.c_str());
 
@@ -143,14 +147,14 @@ bool Console::Initialize() {
 }
 
 void Console::SetAppearanceByConfig() {
-    if (!m_hConsoleWnd) return;
+    if (!m_consoleWindow) return;
 
     BOOL themeType = theme == "light" ? FALSE : theme == "dark" ? TRUE : -1;
-    DWM_SYSTEMBACKDROP_TYPE backgroundType = background_type == 0 ? DWMSBT_NONE : background_type == 1 ? (mica_type == 0 ? DWMSBT_MAINWINDOW : DWMSBT_TABBEDWINDOW) : DWMSBT_TRANSIENTWINDOW;
+    DWM_SYSTEMBACKDROP_TYPE backdropType = backgroundType == 0 ? DWMSBT_NONE : backgroundType == 1 ? (micaType == 0 ? DWMSBT_MAINWINDOW : DWMSBT_TABBEDWINDOW) : DWMSBT_TRANSIENTWINDOW;
     MARGINS margins = { -1 };
-    if (themeType != -1) DwmSetWindowAttribute(m_hConsoleWnd, DWMWA_USE_IMMERSIVE_DARK_MODE, &themeType, sizeof(themeType));
-    DwmSetWindowAttribute(m_hConsoleWnd, DWMWA_SYSTEMBACKDROP_TYPE, &backgroundType, sizeof(backgroundType));
-    DwmExtendFrameIntoClientArea(m_hConsoleWnd, &margins);
+    if (themeType != -1) DwmSetWindowAttribute(m_consoleWindow, DWMWA_USE_IMMERSIVE_DARK_MODE, &themeType, sizeof(themeType));
+    DwmSetWindowAttribute(m_consoleWindow, DWMWA_SYSTEMBACKDROP_TYPE, &backdropType, sizeof(backdropType));
+    DwmExtendFrameIntoClientArea(m_consoleWindow, &margins);
 }
 
 bool Console::OpenConsole() {
@@ -159,8 +163,8 @@ bool Console::OpenConsole() {
     }
     if (m_consoleOpen) return true;
 
-    if (m_hConsoleWnd) {
-        ShowWindow(m_hConsoleWnd, SW_SHOW);
+    if (m_consoleWindow) {
+        ShowWindow(m_consoleWindow, SW_SHOW);
         m_consoleOpen = true;
     }
     return m_consoleOpen;
@@ -169,8 +173,8 @@ bool Console::OpenConsole() {
 bool Console::CloseConsole() {
     if (!m_consoleOpen) return true;
 
-    if (m_hConsoleWnd) {
-        ShowWindow(m_hConsoleWnd, SW_HIDE);
+    if (m_consoleWindow) {
+        ShowWindow(m_consoleWindow, SW_HIDE);
     }
     m_consoleOpen = false;
     return true;
@@ -203,13 +207,13 @@ void Console::Shutdown() {
     }
 
     // 释放控制台资源
-    if (m_hConsoleWnd) {
+    if (m_consoleWindow) {
         FreeConsole();
     }
 
-    m_hConsoleOutput = INVALID_HANDLE_VALUE;
-    m_hConsoleInput = INVALID_HANDLE_VALUE;
-    m_hConsoleWnd = nullptr;
+    m_consoleOutput = INVALID_HANDLE_VALUE;
+    m_consoleInput = INVALID_HANDLE_VALUE;
+    m_consoleWindow = nullptr;
 
     m_consoleOpen = false;
     m_initialized = false;
@@ -217,7 +221,7 @@ void Console::Shutdown() {
 
 void Console::SetTitle(const std::wstring& title) {
     m_consoleTitle = title;
-    if (m_hConsoleWnd) {
+    if (m_consoleWindow) {
         SetConsoleTitleW(title.c_str());
     }
 }
@@ -323,15 +327,15 @@ void Console::DrainFileQueue(std::queue<LogEntry>& local) {
 }
 
 void Console::OutputToConsole(const LogEntry& entry) {
-    if (!m_hConsoleOutput || m_hConsoleOutput == INVALID_HANDLE_VALUE) return;
+    if (!m_consoleOutput || m_consoleOutput == INVALID_HANDLE_VALUE) return;
 
     std::wstring output = FormatLogEntry(entry) + L"\n";
 
     SetConsoleColor(GetLevelColor(entry.level));
 
     DWORD charsWritten = 0;
-    WriteConsoleW(m_hConsoleOutput, output.c_str(),
-        static_cast<DWORD>(output.size()),
+    WriteConsoleW(m_consoleOutput, output.c_str(),
+        (DWORD)output.size(),
         &charsWritten, nullptr);
 
     ResetConsoleColor();
@@ -344,8 +348,8 @@ WORD Console::GetLevelColor(LogLevel level) {
 }
 
 void Console::SetConsoleColor(WORD color) {
-    if (m_hConsoleOutput && m_hConsoleOutput != INVALID_HANDLE_VALUE) {
-        SetConsoleTextAttribute(m_hConsoleOutput, color);
+    if (m_consoleOutput && m_consoleOutput != INVALID_HANDLE_VALUE) {
+        SetConsoleTextAttribute(m_consoleOutput, color);
     }
 }
 
@@ -394,21 +398,21 @@ void Console::SetMinLogLevel(LogLevel minLevel) {
 }
 
 void Console::ClearConsole() {
-    if (!m_consoleOpen || !m_hConsoleOutput || m_hConsoleOutput == INVALID_HANDLE_VALUE) return;
+    if (!m_consoleOpen || !m_consoleOutput || m_consoleOutput == INVALID_HANDLE_VALUE) return;
 
     CONSOLE_SCREEN_BUFFER_INFO csbi{};
     DWORD count = 0;
     DWORD cellCount = 0;
     COORD homeCoords{ 0, 0 };
 
-    if (!GetConsoleScreenBufferInfo(m_hConsoleOutput, &csbi)) return;
+    if (!GetConsoleScreenBufferInfo(m_consoleOutput, &csbi)) return;
 
     cellCount = csbi.dwSize.X * csbi.dwSize.Y;
 
-    if (!FillConsoleOutputCharacterW(m_hConsoleOutput, L' ', cellCount, homeCoords, &count)) return;
-    if (!FillConsoleOutputAttribute(m_hConsoleOutput, csbi.wAttributes, cellCount, homeCoords, &count)) return;
+    if (!FillConsoleOutputCharacterW(m_consoleOutput, L' ', cellCount, homeCoords, &count)) return;
+    if (!FillConsoleOutputAttribute(m_consoleOutput, csbi.wAttributes, cellCount, homeCoords, &count)) return;
 
-    SetConsoleCursorPosition(m_hConsoleOutput, homeCoords);
+    SetConsoleCursorPosition(m_consoleOutput, homeCoords);
 }
 
 bool Console::SaveToFile(const std::wstring& filePath) {
@@ -431,8 +435,8 @@ bool Console::SaveToFile(const std::wstring& filePath) {
 }
 
 void Console::SetConsolePosition(int x, int y, int width, int height) {
-    if (!m_hConsoleWnd) return;
-    MoveWindow(m_hConsoleWnd, x, y, width, height, TRUE);
+    if (!m_consoleWindow) return;
+    MoveWindow(m_consoleWindow, x, y, width, height, TRUE);
 }
 
 std::vector<LogEntry> Console::GetLogHistory() {
@@ -441,7 +445,7 @@ std::vector<LogEntry> Console::GetLogHistory() {
 }
 
 HWND Console::GetConsoleHandle() {
-    return m_hConsoleWnd;
+    return m_consoleWindow;
 }
 
 void Console::SetShowTimestamp(bool show) { m_showTimestamp = show; }

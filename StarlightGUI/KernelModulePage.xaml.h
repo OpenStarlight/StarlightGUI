@@ -1,7 +1,10 @@
 ﻿#pragma once
 
 #include "KernelModulePage.g.h"
+#include "Utils/Coroutine.h"
+#include "Utils/KernelModuleInfo.h"
 #include <map>
+#include <string>
 #include <TlHelp32.h>
 #include <winrt/Windows.Foundation.Collections.h>
 

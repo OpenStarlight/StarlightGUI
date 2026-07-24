@@ -1,7 +1,9 @@
 ﻿#pragma once
 
 #include "Process_ThreadPage.g.h"
+#include "Utils/ThreadInfo.h"
 #include <map>
+#include <string>
 #include <TlHelp32.h>
 #include <winrt/Windows.Foundation.Collections.h>
 

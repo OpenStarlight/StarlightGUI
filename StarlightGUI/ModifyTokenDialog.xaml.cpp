@@ -2,6 +2,7 @@
 #include "ModifyTokenDialog.xaml.h"
 #if __has_include("ModifyTokenDialog.g.cpp")
 #include "ModifyTokenDialog.g.cpp"
+#include "Utils/Utils.h"
 #endif
 
 using namespace winrt;
@@ -27,15 +28,13 @@ namespace winrt::StarlightGUI::implementation
 
         hstring pidText = TargetPIDTextBox().Text();
         try {
-            m_targetPID = std::stoul(pidText.c_str());
+            m_targetPid = std::stoul(pidText.c_str());
         }
         catch (...) {
-            m_targetPID = 0;
+            m_targetPid = 0;
         }
 
         deferral.Complete();
     }
 }
-
-
 

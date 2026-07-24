@@ -5,7 +5,9 @@
 #endif
 
 
+#include <algorithm>
 #include <winrt/Microsoft.UI.Composition.h>
+#include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Microsoft.UI.Xaml.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
 #include <winrt/Windows.Storage.Streams.h>
@@ -14,14 +16,22 @@
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <winrt/Windows.Foundation.h>
+#include <winrt/WinUI3Package.h>
+#include <wil/cppwinrt_helpers.h>
 #include <sstream>
 #include <iomanip>
 #include <array>
 #include <mutex>
 #include <unordered_set>
+#include <vector>
 #include <InfoWindow.xaml.h>
 #include <MainWindow.xaml.h>
 #include <LoadDriverDialog.xaml.h>
+#include "Utils/Config.h"
+#include "Utils/CppUtils.h"
+#include "Utils/KernelBase.h"
+#include "Utils/TaskUtils.h"
+#include "Utils/Utils.h"
 
 using namespace winrt;
 using namespace WinUI3Package;
@@ -105,7 +115,7 @@ namespace winrt::StarlightGUI::implementation
             auto lifetime = get_strong();
             auto xamlRoot = XamlRoot();
             auto target = item;
-            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+            if (dangerousConfirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
             if (KernelInstance::SiUnloadDriver(target.DriverObject())) {
@@ -121,7 +131,7 @@ namespace winrt::StarlightGUI::implementation
             auto lifetime = get_strong();
             auto xamlRoot = XamlRoot();
             auto target = item;
-            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+            if (dangerousConfirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
             if (KernelInstance::SiHideDriver(target.DriverObject())) {
@@ -473,7 +483,7 @@ namespace winrt::StarlightGUI::implementation
                 co_return;
             }
 
-            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), XamlRoot()))) {
+            if (dangerousConfirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), XamlRoot()))) {
                 co_return;
             }
 

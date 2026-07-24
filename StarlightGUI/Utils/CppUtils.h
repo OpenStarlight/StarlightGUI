@@ -1,8 +1,10 @@
 ﻿#pragma once
 
-#include "pch.h"
+#include <Windows.h>
 #include <pdh.h>
+#include <string>
 #include <string_view>
+#include <winrt/Windows.Foundation.h>
 
 namespace winrt::StarlightGUI::implementation {
     std::wstring GenerateRandomString(size_t length);
@@ -25,7 +27,7 @@ namespace winrt::StarlightGUI::implementation {
 
     std::wstring ULongToHexString(ULONG64 value, int w, bool uppercase, bool prefix);
 
-    // 需要判断是否成功，因此返回 bool
+    // The caller needs to distinguish invalid input from zero.
     bool HexStringToULong(const std::wstring& input, ULONG64& out);
 
     bool StringToNumber(const std::wstring& input, LONG64& out);

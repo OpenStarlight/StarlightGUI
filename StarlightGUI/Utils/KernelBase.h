@@ -1,10 +1,21 @@
 ﻿#pragma once
 
-#include "pch.h"
+#include <Windows.h>
 #include "NTBase.h"
 #include "SiriusIO.h"
 #include "SiriusError.h"
-#include "unordered_set"
+#include "FileInfo.h"
+#include "GeneralEntry.h"
+#include "HandleInfo.h"
+#include "KCTInfo.h"
+#include "KernelModuleInfo.h"
+#include "MokuaiInfo.h"
+#include "ObjectEntry.h"
+#include "ProcessInfo.h"
+#include "ThreadInfo.h"
+#include <string>
+#include <vector>
+#include <winioctl.h>
 
 // Avoid macro conflicts
 #undef EnumProcesses
@@ -36,7 +47,7 @@ namespace winrt::StarlightGUI::implementation {
 		static BOOL SetPPL(ULONG pid, int level) noexcept;
 		static BOOL SetCriticalProcess(ULONG pid) noexcept;
 		static BOOL InjectDLLToProcess(ULONG pid, PWCHAR dllPath, ULONG size) noexcept;
-		static BOOL ModifyProcessToken(ULONG sourcePID, ULONG targetPID) noexcept;
+		static BOOL ModifyProcessToken(ULONG sourcePid, ULONG targetPid) noexcept;
 
 		// Thread
 		static BOOL SiTerminateThread(ULONG tid) noexcept;
@@ -119,7 +130,7 @@ namespace winrt::StarlightGUI::implementation {
 		static BOOL QuerySystemEnumeration(SystemGetInformation information, SI_ENUMERATION& enumData, ULONG itemSize, ULONG argument = 0) noexcept;
 		static BOOL QueryProcessEnumeration(ProcessGetInformation information, ULONG pid, SI_ENUMERATION& enumData, ULONG itemSize, ULONG argument = 0) noexcept;
 		static BOOL QueryFileEnumeration(FileGetInformation information, LPCWSTR path, SI_ENUMERATION& enumData, ULONG itemSize, ULONG argument = 0) noexcept;
-		static std::string GetMiniFilterMajorFunction(ULONG64 Index) noexcept;
+		static std::string GetMiniFilterMajorFunction(ULONG64 index) noexcept;
 	};
 
 	class DriverUtils {

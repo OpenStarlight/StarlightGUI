@@ -1,6 +1,7 @@
 ﻿#pragma once
 
 #include <cwchar>
+#include <string>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -21,7 +22,7 @@ namespace winrt::StarlightGUI::implementation {
         int length = _scwprintf(format.c_str(), std::forward<Args>(args)...);
         if (length <= 0) return format;
 
-        std::vector<wchar_t> buffer(static_cast<size_t>(length) + 1);
+        std::vector<wchar_t> buffer((size_t)length + 1);
         int written = swprintf_s(buffer.data(), buffer.size(), format.c_str(), std::forward<Args>(args)...);
         if (written <= 0) return format;
 

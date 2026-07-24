@@ -1,12 +1,12 @@
 ﻿#pragma once
 
 #include "MainWindow.g.h"
+#include "Utils/Coroutine.h"
 #include <winrt/Microsoft.UI.Composition.SystemBackdrops.h>
 #include <winrt/Windows.System.h>
 #include <winrt/Windows.UI.h>
 #include <shellapi.h>
-
-namespace slg { struct coroutine; }
+#include <vector>
 
 namespace winrt::StarlightGUI::implementation
 {
@@ -31,14 +31,14 @@ namespace winrt::StarlightGUI::implementation
         void SetTrayBackgroundRun(bool enabled);
 
         // 窗口
-        static LRESULT CALLBACK MainWindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
+        static LRESULT CALLBACK MainWindowProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR subclassId, DWORD_PTR referenceData);
 
         std::vector<winrt::StarlightGUI::InfoWindow> m_openWindows;
         NOTIFYICONDATAW m_notifyIconData{};
         winrt::Windows::Foundation::IAsyncAction m_updateAction{ nullptr };
 
         inline static bool loaded = false;
-        inline static HWND globalHWND;
+        inline static HWND globalWindowHandle;
         inline static constexpr UINT WM_TRAYICON = WM_APP + 100;
         inline static constexpr UINT TRAY_ID = 1;
         inline static constexpr UINT TRAY_CMD_RESTORE = 1001;

@@ -1,6 +1,11 @@
 ﻿#pragma once
 
 #include "WindowPage.g.h"
+#include "Utils/Coroutine.h"
+#include "Utils/NTBase.h"
+#include "Utils/WindowInfo.h"
+#include <string>
+#include <vector>
 
 namespace winrt::StarlightGUI::implementation
 {
@@ -31,7 +36,7 @@ namespace winrt::StarlightGUI::implementation
         void GetWindowIconAsync(const winrt::StarlightGUI::WindowInfo& window);
         winrt::Windows::Foundation::IAsyncAction WaitAndReloadAsync(int interval);
 
-        bool SetWindowZBID(HWND hwnd, ZBID zbid);
+        bool SetWindowZBID(HWND windowHandle, ZBID zbid);
         bool EnsureZBIDModulesInitialized();
 
         winrt::Windows::Foundation::Collections::IObservableVector<winrt::StarlightGUI::WindowInfo> m_windowList{

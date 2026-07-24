@@ -4,7 +4,9 @@
 #include "TaskPage.g.cpp"
 #endif
 
+#include <algorithm>
 #include <winrt/Microsoft.UI.Composition.h>
+#include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Microsoft.UI.Xaml.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
 #include <winrt/Windows.Storage.Streams.h>
@@ -13,9 +15,12 @@
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <winrt/Windows.Foundation.h>
+#include <winrt/WinUI3Package.h>
+#include <wil/cppwinrt_helpers.h>
 #include <Psapi.h>
 #include <array>
 #include <unordered_set>
+#include <unordered_map>
 #include <sstream>
 #include <iomanip>
 #include <shellapi.h>
@@ -24,6 +29,12 @@
 #include <RunProcessDialog.xaml.h>
 #include <InjectDLLDialog.xaml.h>
 #include <ModifyTokenDialog.xaml.h>
+#include "Utils/Config.h"
+#include "Utils/CppUtils.h"
+#include "Utils/Elevator.h"
+#include "Utils/KernelBase.h"
+#include "Utils/TaskUtils.h"
+#include "Utils/Utils.h"
 #undef EnumProcesses
 
 using namespace winrt;
@@ -71,7 +82,7 @@ namespace winrt::StarlightGUI::implementation
             });
         autoRefreshTimer.Interval(std::chrono::seconds(2));
         autoRefreshTimer.Tick([this](auto&&, auto&&) {
-            if (!task_auto_refresh) return;
+            if (!taskAutoRefresh) return;
             if (!IsLoaded()) return;
             if (m_isSorting) return;
             if (m_isLoadingProcesses || m_isPostLoading) return;
@@ -82,7 +93,7 @@ namespace winrt::StarlightGUI::implementation
         cpuRefreshTimer.Interval(std::chrono::seconds(1));
         cpuRefreshTimer.Tick([this](auto&&, auto&&) {
             if (!IsLoaded()) return;
-            if (!task_auto_refresh || !g_mainWindowInstance->m_openWindows.empty()) {
+            if (!taskAutoRefresh || !g_mainWindowInstance->m_openWindows.empty()) {
                 if (m_isRefreshingCpu) ++m_cpuRequestVersion;
                 m_cpuSnapshot = {};
                 return;
@@ -98,7 +109,7 @@ namespace winrt::StarlightGUI::implementation
             cpuRefreshTimer.Start();
             slg::SyncListViewColumnWidths(HeaderColumnsGrid(), BodyColumnsGrid(), ProcessListView(), 1);
             LoadProcessList();
-            if (task_auto_refresh) RefreshProcessCpuUsage();
+            if (taskAutoRefresh) RefreshProcessCpuUsage();
 			});
 
         this->Unloaded([this](auto&&, auto&&) {
@@ -138,9 +149,10 @@ namespace winrt::StarlightGUI::implementation
         auto item1_1 = slg::CreateMenuItem(flyoutStyles, L"\ue711", t(L"Task.Menu.Terminate"), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             BOOL success = FALSE;
             if (item.Id() != 0) {
-                HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, item.Id());
-                if (hProcess) {
-                    success = TerminateProcess(hProcess, 0);
+                HANDLE processHandle = OpenProcess(PROCESS_TERMINATE, FALSE, item.Id());
+                if (processHandle) {
+                    success = TerminateProcess(processHandle, 0);
+                    CloseHandle(processHandle);
                 }
             }
             if (success) {
@@ -168,7 +180,7 @@ namespace winrt::StarlightGUI::implementation
             auto lifetime = get_strong();
             auto xamlRoot = XamlRoot();
             auto target = item;
-            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+            if (dangerousConfirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
             if (KernelInstance::SiTerminateProcessEx(target.Id())) {
@@ -295,7 +307,7 @@ namespace winrt::StarlightGUI::implementation
             auto lifetime = get_strong();
             auto xamlRoot = XamlRoot();
             auto target = item;
-            if (dangerous_confirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
+            if (dangerousConfirm && !(co_await slg::ShowConfirmDialog(t(L"Common.Warning"), t(L"Utility.Msg.ConfirmAction"), t(L"Common.Continue"), t(L"Common.Cancel"), xamlRoot))) {
                 co_return;
             }
             if (KernelInstance::SetCriticalProcess(target.Id())) {
@@ -466,7 +478,7 @@ namespace winrt::StarlightGUI::implementation
         processes.reserve(200);
         visibleProcesses.reserve(200);
 
-        KernelInstance::SiEnumProcesses(processes, enum_strengthen);
+        KernelInstance::SiEnumProcesses(processes, enumStrengthen);
         LOG_INFO(__WFUNCTION__, L"Enumerated processes, %d entry(s).", processes.size());
 
         co_await wil::resume_foreground(DispatcherQueue());
@@ -536,7 +548,7 @@ namespace winrt::StarlightGUI::implementation
                 existingByPid[process.Id()] = process;
             }
 
-            for (int i = static_cast<int>(m_processList.Size()) - 1; i >= 0; --i) {
+            for (int i = (int)m_processList.Size() - 1; i >= 0; --i) {
                 auto process = m_processList.GetAt(i);
                 if (incomingByPid.find(process.Id()) == incomingByPid.end()) {
                     m_processList.RemoveAt(i);
@@ -637,9 +649,9 @@ namespace winrt::StarlightGUI::implementation
         auto lifetime = get_strong();
 
         struct DescriptionUpdate {
-            int32_t Pid{ 0 };
-            std::wstring CacheKey;
-            winrt::hstring Description{ t(L"Task.Desc.Application") };
+            int32_t pid{ 0 };
+            std::wstring cacheKey;
+            winrt::hstring description{ t(L"Task.Desc.Application") };
         };
 
         std::vector<DescriptionUpdate> descriptions;
@@ -702,9 +714,9 @@ namespace winrt::StarlightGUI::implementation
         co_await wil::resume_foreground(DispatcherQueue());
         if (!IsLoaded() || loadToken != m_currentLoadToken) co_return;
         for (auto const& item : descriptions) {
-            descriptionTable[item.Pid] = item.Description;
-            if (!item.CacheKey.empty()) {
-                descriptionCache[item.CacheKey] = item.Description;
+            descriptionTable[item.pid] = item.description;
+            if (!item.cacheKey.empty()) {
+                descriptionCache[item.cacheKey] = item.description;
             }
         }
 
@@ -1182,18 +1194,16 @@ namespace winrt::StarlightGUI::implementation
                     }
                 }
                 else {
-                    SHELLEXECUTEINFOW sei = { sizeof(sei) };
-                    sei.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
-                    sei.lpFile = processPath.c_str();
-                    sei.nShow = SW_SHOWNORMAL;
-                    sei.lpVerb = L"runas";
+                    SHELLEXECUTEINFOW shellExecuteInfo{ sizeof(shellExecuteInfo) };
+                    shellExecuteInfo.fMask = SEE_MASK_NOCLOSEPROCESS | SEE_MASK_FLAG_NO_UI;
+                    shellExecuteInfo.lpFile = processPath.c_str();
+                    shellExecuteInfo.nShow = SW_SHOWNORMAL;
+                    shellExecuteInfo.lpVerb = L"runas";
 
-                    BOOL stauts = ShellExecuteExW(&sei);
+                    BOOL status = ShellExecuteExW(&shellExecuteInfo);
 
-                    if (stauts && sei.hProcess != NULL) {
-                        DWORD processId = GetProcessId(sei.hProcess);
-                        CloseHandle(sei.hProcess);
-                        CloseHandle(sei.hIcon);
+                    if (status && shellExecuteInfo.hProcess != NULL) {
+                        CloseHandle(shellExecuteInfo.hProcess);
                         slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     }
                     else {
@@ -1234,16 +1244,16 @@ namespace winrt::StarlightGUI::implementation
                     }
                 }
 
-                HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+                HANDLE fileHandle = CreateFileW(path.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 
-                if (hFile == INVALID_HANDLE_VALUE) {
+                if (fileHandle == INVALID_HANDLE_VALUE) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Error"), t(L"Msg.FileNotFound").c_str(), InfoBarSeverity::Error, g_mainWindowInstance);
                     co_return;
                 }
 
-                CloseHandle(hFile);
+                CloseHandle(fileHandle);
                 
-                if (KernelInstance::InjectDLLToProcess(pid, const_cast<PWCHAR>(path.c_str()), RTL_NUMBER_OF(path.c_str()))) {
+                if (KernelInstance::InjectDLLToProcess(pid, (PWCHAR)path.c_str(), RTL_NUMBER_OF(path.c_str()))) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
@@ -1267,14 +1277,14 @@ namespace winrt::StarlightGUI::implementation
             auto result = co_await dialog.ShowAsync();
 
             if (result == ContentDialogResult::Primary) {
-                ULONG targetPID = dialog.TargetPID();
+                ULONG targetPid = dialog.TargetPID();
 
-                if (targetPID == 0) {
+                if (targetPid == 0) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), L"Invalid PID", InfoBarSeverity::Error, g_mainWindowInstance);
                     co_return;
                 }
 
-                if (KernelInstance::ModifyProcessToken(pid, targetPID)) {
+                if (KernelInstance::ModifyProcessToken(pid, targetPid)) {
                     slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.Success"), InfoBarSeverity::Success, g_mainWindowInstance);
                     WaitAndReloadAsync(1000);
                 }
@@ -1301,9 +1311,10 @@ namespace winrt::StarlightGUI::implementation
 
             BOOL success = FALSE;
             if (item.Id() != 0) {
-                HANDLE hProcess = OpenProcess(PROCESS_TERMINATE, FALSE, item.Id());
-                if (hProcess) {
-                    success = TerminateProcess(hProcess, 0);
+                HANDLE processHandle = OpenProcess(PROCESS_TERMINATE, FALSE, item.Id());
+                if (processHandle) {
+                    success = TerminateProcess(processHandle, 0);
+                    CloseHandle(processHandle);
                 }
             }
             if (success) {

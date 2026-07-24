@@ -1,9 +1,15 @@
 ﻿#include "pch.h"
 #include "KernelBase.h"
+#include "Config.h"
 #include "CppUtils.h"
+#include <filesystem>
+#include <sstream>
 #include <string>
+#include <vector>
 
 namespace winrt::StarlightGUI::implementation {
+	namespace fs = std::filesystem;
+
 	static HANDLE driverDevice = NULL;
 	static SISTATUS lastErrorCode = SI_SUCCESS;
 	static std::wstring lastErrorMessage = L"";
@@ -53,7 +59,7 @@ namespace winrt::StarlightGUI::implementation {
 		QueryError();
 		if (!result) return FALSE;
 		if (enumData.Count == 0) return TRUE;
-		if (itemSize == 0 || enumData.Count > static_cast<ULONG>(-1) / itemSize) {
+		if (itemSize == 0 || enumData.Count > (ULONG)-1 / itemSize) {
 			lastErrorCode = SI_INVALID_PARAMETER;
 			lastErrorMessage = L"Invalid enumeration size.";
 			return FALSE;
@@ -84,7 +90,7 @@ namespace winrt::StarlightGUI::implementation {
 		QueryError();
 		if (!result) return FALSE;
 		if (enumData.Count == 0) return TRUE;
-		if (itemSize == 0 || enumData.Count > static_cast<ULONG>(-1) / itemSize) {
+		if (itemSize == 0 || enumData.Count > (ULONG)-1 / itemSize) {
 			lastErrorCode = SI_INVALID_PARAMETER;
 			lastErrorMessage = L"Invalid enumeration size.";
 			return FALSE;
@@ -115,7 +121,7 @@ namespace winrt::StarlightGUI::implementation {
 		QueryError();
 		if (!result) return FALSE;
 		if (enumData.Count == 0) return TRUE;
-		if (itemSize == 0 || enumData.Count > static_cast<ULONG>(-1) / itemSize) {
+		if (itemSize == 0 || enumData.Count > (ULONG)-1 / itemSize) {
 			lastErrorCode = SI_INVALID_PARAMETER;
 			lastErrorMessage = L"Invalid enumeration size.";
 			return FALSE;
@@ -190,8 +196,8 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 
-	BOOL KernelInstance::ModifyProcessToken(ULONG sourcePID, ULONG targetPID) noexcept {
-		BOOL result = SiSetProcessInformation(ProcessSetInformation::Token, targetPID, &sourcePID, 0);
+	BOOL KernelInstance::ModifyProcessToken(ULONG sourcePid, ULONG targetPid) noexcept {
+		BOOL result = SiSetProcessInformation(ProcessSetInformation::Token, targetPid, &sourcePid, 0);
 		QueryError();
 		return result;
 	}
@@ -252,15 +258,13 @@ namespace winrt::StarlightGUI::implementation {
 
 		BOOL result = FALSE;
 
-		if (enum_file_mode == 2) {
-			result = QueryFileEnumeration(FileGetInformation::DirectoryFileByNTFS, targetPath, enumData, sizeof(SI_FILE_DATA_FULL), (enum_file_mode == 3) ? 1 : 0);
-		}
-		else {
-			result = QueryFileEnumeration(FileGetInformation::DirectoryFile, targetPath, enumData, sizeof(SI_FILE_DATA), enum_file_mode);
-		}
+		if (enumFileMode == 2)
+			result = QueryFileEnumeration(FileGetInformation::DirectoryFileByNTFS, targetPath, enumData, sizeof(SI_FILE_DATA_FULL), (enumFileMode == 3) ? 1 : 0);
+		else
+			result = QueryFileEnumeration(FileGetInformation::DirectoryFile, targetPath, enumData, sizeof(SI_FILE_DATA), enumFileMode);
 
 		if (result && enumData.Count > 0 && enumData.Buffer) {
-			if (enum_file_mode == 2) {
+			if (enumFileMode == 2) {
 				// NTFSPARSER mode
 				PSI_FILE_DATA_FULL fileData = (PSI_FILE_DATA_FULL)enumData.Buffer;
 				for (ULONG i = 0; i < enumData.Count; i++) {
@@ -296,22 +300,21 @@ namespace winrt::StarlightGUI::implementation {
 	BOOL KernelInstance::SiEnumProcesses(std::vector<winrt::StarlightGUI::ProcessInfo>& targetList, bool strengthen) noexcept {
 		SI_ENUMERATION enumData = { 0 };
 		ULONG strengthenFlag = 1;
-		if (strengthen) {
+		if (strengthen)
 			enumData.Arg = &strengthenFlag;
-		}
 	
 		BOOL result = QuerySystemEnumeration(SystemGetInformation::Process, enumData, sizeof(SI_PROCESS_DATA));
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_PROCESS_DATA processData = (PSI_PROCESS_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
-				auto pi = winrt::make<winrt::StarlightGUI::implementation::ProcessInfo>();
-				pi.Id(processData[i].Pid);
-				pi.Name(to_hstring(processData[i].ImageName));
-				pi.EProcess((ULONG64)processData[i].Eprocess);
-				pi.ExecutablePath(to_hstring(processData[i].ImagePath));
-				pi.MemoryUsage(processData[i].WorkingSetPrivateSize);
-				targetList.push_back(pi);
+				auto processInfo = winrt::make<winrt::StarlightGUI::implementation::ProcessInfo>();
+				processInfo.Id(processData[i].Pid);
+				processInfo.Name(to_hstring(processData[i].ImageName));
+				processInfo.EProcess((ULONG64)processData[i].Eprocess);
+				processInfo.ExecutablePath(to_hstring(processData[i].ImagePath));
+				processInfo.MemoryUsage(processData[i].WorkingSetPrivateSize);
+				targetList.push_back(processInfo);
 			}
 		}
 	
@@ -335,7 +338,7 @@ namespace winrt::StarlightGUI::implementation {
 				threadInfo.Win32Address((ULONG64)threadData[i].Win32StartAddress);
 				threadInfo.PreviousMode(threadData[i].PreviousMode);
 				threadInfo.Priority(threadData[i].Priority);
-				threadInfo.Status(static_cast<ULONG>(threadData[i].State));
+				threadInfo.Status((ULONG)threadData[i].State);
 				threads.push_back(threadInfo);
 			}
 		}
@@ -462,8 +465,8 @@ namespace winrt::StarlightGUI::implementation {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				std::wstring name = StringToWideString(functionData[i].Name);
-				if ((!function_show_deprecated && name.rfind(L"Deprecated", 0) == 0) ||
-					(!function_show_unknown && name.rfind(L"Unknown", 0) == 0)) {
+				if ((!functionShowDeprecated && name.rfind(L"Deprecated", 0) == 0) ||
+					(!functionShowUnknown && name.rfind(L"Unknown", 0) == 0)) {
 					continue;
 				}
 
@@ -488,8 +491,8 @@ namespace winrt::StarlightGUI::implementation {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				std::wstring name = StringToWideString(functionData[i].Name);
-				if ((!function_show_deprecated && name.rfind(L"Deprecated", 0) == 0) ||
-					(!function_show_unknown && name.rfind(L"Unknown", 0) == 0)) {
+				if ((!functionShowDeprecated && name.rfind(L"Deprecated", 0) == 0) ||
+					(!functionShowUnknown && name.rfind(L"Unknown", 0) == 0)) {
 					continue;
 				}
 
@@ -666,14 +669,14 @@ namespace winrt::StarlightGUI::implementation {
 			break;
 		}
 	
-		BOOL result = QuerySystemEnumeration(information, enumData, sizeof(SI_FUNCTION_DATA), function_use_document_name ? 1 : 0);
+		BOOL result = QuerySystemEnumeration(information, enumData, sizeof(SI_FUNCTION_DATA), functionUseDocumentName ? 1 : 0);
 	
 		if (result && enumData.Count > 0 && enumData.Buffer) {
 			PSI_FUNCTION_DATA functionData = (PSI_FUNCTION_DATA)enumData.Buffer;
 			for (ULONG i = 0; i < enumData.Count; i++) {
 				std::wstring name = StringToWideString(functionData[i].Name);
-				if ((!function_show_deprecated && name.rfind(L"Deprecated", 0) == 0) ||
-					(!function_show_unknown && name.rfind(L"Unknown", 0) == 0)) {
+				if ((!functionShowDeprecated && name.rfind(L"Deprecated", 0) == 0) ||
+					(!functionShowUnknown && name.rfind(L"Unknown", 0) == 0)) {
 					continue;
 				}
 
@@ -681,7 +684,7 @@ namespace winrt::StarlightGUI::implementation {
 				entry.String1(name);
 				entry.String2(L"\\SystemRoot\\System32\\ntoskrnl.exe");
 				entry.ULongLong1((ULONG64)functionData[i].Address);
-				entry.ULong1(static_cast<ULONG>(type));
+				entry.ULong1((ULONG)type);
 				halList.push_back(entry);
 			}
 		}
@@ -767,25 +770,20 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::DeleteFileAuto(std::wstring path) noexcept {
-		if (!fs::exists(path)) {
+		if (!fs::exists(path))
 			return FALSE;
-		}
 
-		if (!fs::is_directory(path)) {
+		if (!fs::is_directory(path))
 			return DeleteFileW(path.c_str());
+
+		for (const auto& entry : fs::directory_iterator(path)) {
+			if (fs::is_directory(entry))
+				DeleteFileAuto(entry.path().wstring());
+			if (fs::is_regular_file(entry))
+				DeleteFileW(entry.path().wstring().c_str());
 		}
-		else {
-			for (const auto& entry : fs::directory_iterator(path)) {
-				if (fs::is_directory(entry)) {
-					DeleteFileAuto(entry.path().wstring());
-				}
-				if (fs::is_regular_file(entry)) {
-					DeleteFileW(entry.path().wstring().c_str());
-				}
-			}
-			LOG_INFO(L"KernelInstance", L"Post-deleted directory.");
-			return RemoveDirectoryW(path.c_str());
-		}
+		LOG_INFO(L"KernelInstance", L"Post-deleted directory.");
+		return RemoveDirectoryW(path.c_str());
 	}
 
 	BOOL KernelInstance::SiLockFile(std::wstring path) noexcept {
@@ -950,170 +948,101 @@ namespace winrt::StarlightGUI::implementation {
 		return result;
 	}
 
-	static NtQueryDirectoryObject_t NtQueryDirectoryObject = nullptr;
-	static NtQuerySymbolicLinkObject_t NtQuerySymbolicLinkObject = nullptr;
-	static NtQueryEvent_t NtQueryEvent = nullptr;
-	static NtQueryMutant_t NtQueryMutant = nullptr;
-	static NtQuerySemaphore_t NtQuerySemaphore = nullptr;
-	static NtQuerySection_t NtQuerySection = nullptr;
-	static NtQueryTimer_t NtQueryTimer = nullptr;
-	static NtQueryIoCompletion_t NtQueryIoCompletion = nullptr;
-	static NtOpenDirectoryObject_t NtOpenDirectoryObject = nullptr;
-	static NtOpenSymbolicLinkObject_t NtOpenSymbolicLinkObject = nullptr;
-	static NtOpenEvent_t NtOpenEvent = nullptr;
-	static NtOpenMutant_t NtOpenMutant = nullptr;
-	static NtOpenSemaphore_t NtOpenSemaphore = nullptr;
-	static NtOpenSection_t NtOpenSection = nullptr;
-	static NtOpenTimer_t NtOpenTimer = nullptr;
-	static NtOpenFile_t NtOpenFile = nullptr;
-	static NtOpenSession_t NtOpenSession = nullptr;
-	static NtOpenCpuPartition_t NtOpenCpuPartition = nullptr;
-	static NtOpenJobObject_t NtOpenJobObject = nullptr;
-	static NtOpenIoCompletion_t NtOpenIoCompletion = nullptr;
-	static NtOpenPartition_t NtOpenPartition = nullptr;
-
 	BOOL KernelInstance::SiEnumObjectsByDirectory(std::wstring objectPath, std::vector<winrt::StarlightGUI::ObjectEntry>& objectList) noexcept {
-		if (!NtQueryDirectoryObject || !NtQuerySymbolicLinkObject || !NtQueryEvent || !NtQueryMutant || !NtQuerySemaphore || !NtQuerySection || !NtQueryTimer || !NtQueryIoCompletion
-			|| !NtOpenDirectoryObject || !NtOpenSymbolicLinkObject || !NtOpenEvent || !NtOpenMutant || !NtOpenSemaphore || !NtOpenSection || !NtOpenTimer || !NtOpenFile
-			|| !NtOpenSession || !NtOpenCpuPartition || !NtOpenJobObject || !NtOpenIoCompletion || !NtOpenPartition) {
-			HMODULE hModule = GetModuleHandleW(L"ntdll.dll");
-			if (!hModule) return FALSE;
+		UNICODE_STRING objectName;
+		RtlInitUnicodeString(&objectName, objectPath.c_str());
 
-			NtQueryDirectoryObject = (NtQueryDirectoryObject_t)GetProcAddress(hModule, "NtQueryDirectoryObject");
-			NtQuerySymbolicLinkObject = (NtQuerySymbolicLinkObject_t)GetProcAddress(hModule, "NtQuerySymbolicLinkObject");
-			NtQueryEvent = (NtQueryEvent_t)GetProcAddress(hModule, "NtQueryEvent");
-			NtQueryMutant = (NtQueryMutant_t)GetProcAddress(hModule, "NtQueryMutant");
-			NtQuerySemaphore = (NtQuerySemaphore_t)GetProcAddress(hModule, "NtQuerySemaphore");
-			NtQuerySection = (NtQuerySection_t)GetProcAddress(hModule, "NtQuerySection");
-			NtQueryTimer = (NtQueryTimer_t)GetProcAddress(hModule, "NtQueryTimer");
-			NtQueryIoCompletion = (NtQueryIoCompletion_t)GetProcAddress(hModule, "NtQueryIoCompletion");
-			NtOpenDirectoryObject = (NtOpenDirectoryObject_t)GetProcAddress(hModule, "NtOpenDirectoryObject");
-			NtOpenSymbolicLinkObject = (NtOpenSymbolicLinkObject_t)GetProcAddress(hModule, "NtOpenSymbolicLinkObject");
-			NtOpenEvent = (NtOpenEvent_t)GetProcAddress(hModule, "NtOpenEvent");
-			NtOpenMutant = (NtOpenMutant_t)GetProcAddress(hModule, "NtOpenMutant");
-			NtOpenSemaphore = (NtOpenSemaphore_t)GetProcAddress(hModule, "NtOpenSemaphore");
-			NtOpenSection = (NtOpenSection_t)GetProcAddress(hModule, "NtOpenSection");
-			NtOpenTimer = (NtOpenTimer_t)GetProcAddress(hModule, "NtOpenTimer");
-			NtOpenFile = (NtOpenFile_t)GetProcAddress(hModule, "NtOpenFile");
-			NtOpenSession = (NtOpenSession_t)GetProcAddress(hModule, "NtOpenSession");
-			NtOpenCpuPartition = (NtOpenCpuPartition_t)GetProcAddress(hModule, "NtOpenCpuPartition");
-			NtOpenJobObject = (NtOpenJobObject_t)GetProcAddress(hModule, "NtOpenJobObject");
-			NtOpenIoCompletion = (NtOpenIoCompletion_t)GetProcAddress(hModule, "NtOpenIoCompletion");
-			NtOpenPartition = (NtOpenPartition_t)GetProcAddress(hModule, "NtOpenPartition");
+		OBJECT_ATTRIBUTES objectAttributes;
+		InitializeObjectAttributes(&objectAttributes, &objectName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-			if (!NtQueryDirectoryObject || !NtQuerySymbolicLinkObject || !NtQueryEvent || !NtQueryMutant || !NtQuerySemaphore || !NtQuerySection || !NtQueryTimer || !NtQueryIoCompletion
-				|| !NtOpenDirectoryObject || !NtOpenSymbolicLinkObject || !NtOpenEvent || !NtOpenMutant || !NtOpenSemaphore || !NtOpenSection || !NtOpenTimer || !NtOpenFile
-				|| !NtOpenSession || !NtOpenCpuPartition || !NtOpenJobObject || !NtOpenIoCompletion || !NtOpenPartition) return FALSE;
-		}
-
-		UNICODE_STRING objName;
-		RtlInitUnicodeString(&objName, objectPath.c_str());
-
-		OBJECT_ATTRIBUTES objAttr;
-		InitializeObjectAttributes(&objAttr, &objName, OBJ_CASE_INSENSITIVE, NULL, NULL);
-
-		HANDLE hDir = NULL;
-		LONG status = NtOpenDirectoryObject(&hDir, 0x0001 /* DIRECTORY_QUERY */, &objAttr);
-
-		if (status < 0 || !hDir) return FALSE;
+		HANDLE directoryHandle = NULL;
+		LONG status = NtOpenDirectoryObject(&directoryHandle, 0x0001, &objectAttributes);
+		if (status < 0 || !directoryHandle) return FALSE;
 
 		ULONG context = 0;
 		ULONG returnLength = 0;
 		std::vector<BYTE> buffer(0x1000);
+		objectList.clear();
 
-		status = ERROR_SUCCESS;
-		while (status >= 0) {
-			status = NtQueryDirectoryObject(hDir, buffer.data(), buffer.size(), FALSE, FALSE, &context, &returnLength);
+		for (;;) {
+			status = NtQueryDirectoryObject(directoryHandle, buffer.data(), (ULONG)buffer.size(), FALSE, FALSE, &context, &returnLength);
+			if (status < 0) {
+				if (returnLength > buffer.size()) {
+					buffer.resize(returnLength);
+					continue;
+				}
+				break;
+			}
 
 			POBJECT_DIRECTORY_INFORMATION info = (POBJECT_DIRECTORY_INFORMATION)buffer.data();
-
 			while (info->Name.Buffer) {
 				winrt::StarlightGUI::ObjectEntry entry = winrt::make<winrt::StarlightGUI::implementation::ObjectEntry>();
-
 				std::wstring name(info->Name.Buffer, info->Name.Length / sizeof(WCHAR));
 				std::wstring type(info->TypeName.Buffer, info->TypeName.Length / sizeof(WCHAR));
 				hstring path(objectPath + L"\\" + name);
+
 				entry.Name(name);
 				entry.Type(type);
 				entry.Path(FixBackSplash(path));
 
-				if (type == L"SymbolicLink") {
-					KernelInstance::GetObjectDetails(name, type, entry);
-				}
+				if (type == L"SymbolicLink")
+					KernelInstance::GetObjectDetails(entry.Path().c_str(), type, entry);
 
 				objectList.push_back(entry);
-
 				info++;
 			}
 		}
 
-		CloseHandle(hDir);
-		return TRUE;
+		CloseHandle(directoryHandle);
+		return status == (LONG)0x8000001A;
 	}
 
 	BOOL KernelInstance::GetObjectDetails(std::wstring fullPath, std::wstring type, winrt::StarlightGUI::ObjectEntry& entry) noexcept {
-		HANDLE hObject = NULL;
+		HANDLE objectHandle = NULL;
 		LONG status = 0L;
 		ULONG returnLength = 0;
 
-		UNICODE_STRING objName;
-		RtlInitUnicodeString(&objName, fullPath.c_str());
+		UNICODE_STRING objectName;
+		RtlInitUnicodeString(&objectName, fullPath.c_str());
 
-		OBJECT_ATTRIBUTES objAttr;
-		InitializeObjectAttributes(&objAttr, &objName, OBJ_CASE_INSENSITIVE, NULL, NULL);
+		OBJECT_ATTRIBUTES objectAttributes;
+		InitializeObjectAttributes(&objectAttributes, &objectName, OBJ_CASE_INSENSITIVE, NULL, NULL);
 
-		// 根据类型尝试不同方式打开
-		if (type == L"Directory") {
-			status = NtOpenDirectoryObject(&hObject, 0x0001 /* DIRECTORY_QUERY */, &objAttr);
-		}
-		else if (type == L"SymbolicLink") {
-			status = NtOpenSymbolicLinkObject(&hObject, GENERIC_READ, &objAttr);
-		}
-		else if (type == L"Event") {
-			status = NtOpenEvent(&hObject, GENERIC_READ, &objAttr);
-		}
-		else if (type == L"Mutant") {
-			status = NtOpenMutant(&hObject, GENERIC_READ, &objAttr);
-		}
-		else if (type == L"Semaphore") {
-			status = NtOpenSemaphore(&hObject, GENERIC_READ, &objAttr);
-		}
-		else if (type == L"Section") {
-			status = NtOpenSection(&hObject, GENERIC_READ, &objAttr);
-		}
-		else if (type == L"Timer") {
-			status = NtOpenTimer(&hObject, GENERIC_READ, &objAttr);
-		}
+		if (type == L"Directory")
+			status = NtOpenDirectoryObject(&objectHandle, 0x0001, &objectAttributes);
+		else if (type == L"SymbolicLink")
+			status = NtOpenSymbolicLinkObject(&objectHandle, GENERIC_READ, &objectAttributes);
+		else if (type == L"Event")
+			status = NtOpenEvent(&objectHandle, GENERIC_READ, &objectAttributes);
+		else if (type == L"Mutant")
+			status = NtOpenMutant(&objectHandle, GENERIC_READ, &objectAttributes);
+		else if (type == L"Semaphore")
+			status = NtOpenSemaphore(&objectHandle, GENERIC_READ, &objectAttributes);
+		else if (type == L"Section")
+			status = NtOpenSection(&objectHandle, GENERIC_READ, &objectAttributes);
+		else if (type == L"Timer")
+			status = NtOpenTimer(&objectHandle, GENERIC_READ, &objectAttributes);
 		else if (type == L"Device") {
-			// Device 使用 NtOpenFile 打开
 			IO_STATUS_BLOCK ioStatus = { 0 };
-			status = NtOpenFile(&hObject, GENERIC_READ, &objAttr, &ioStatus, FILE_SHARE_READ | FILE_SHARE_WRITE, 0x00000040/* FILE_NON_DIRECTORY_FILE */);
+			status = NtOpenFile(&objectHandle, GENERIC_READ, &objectAttributes, &ioStatus, FILE_SHARE_READ | FILE_SHARE_WRITE, 0x00000040);
 		}
-		else if (type == L"Session") {
-			status = NtOpenSession(&hObject, GENERIC_READ, &objAttr);
-		}
-		else if (type == L"CpuPartition") {
-			status = NtOpenCpuPartition(&hObject, GENERIC_READ, &objAttr);
-		}
-		else if (type == L"Job") {
-			status = NtOpenJobObject(&hObject, GENERIC_READ, &objAttr);
-		}
-		else if (type == L"IoCompletion") {
-			status = NtOpenIoCompletion(&hObject, GENERIC_READ, &objAttr);
-		}
-		else if (type == L"Partition") {
-			status = NtOpenPartition(&hObject, GENERIC_READ, &objAttr);
-		}
-		else {
-			// 不支持的类型
+		else if (type == L"Session")
+			status = NtOpenSession(&objectHandle, GENERIC_READ, &objectAttributes);
+		else if (type == L"CpuPartition")
+			status = NtOpenCpuPartition(&objectHandle, GENERIC_READ, &objectAttributes);
+		else if (type == L"Job")
+			status = NtOpenJobObject(&objectHandle, GENERIC_READ, &objectAttributes);
+		else if (type == L"IoCompletion")
+			status = NtOpenIoCompletion(&objectHandle, GENERIC_READ, &objectAttributes);
+		else if (type == L"Partition")
+			status = NtOpenPartition(&objectHandle, GENERIC_READ, &objectAttributes);
+		else
 			return FALSE;
-		}
 
-		if (status < 0 || !hObject) return FALSE;
+		if (status < 0 || !objectHandle) return FALSE;
 
-		// 获取基本信息
 		OBJECT_BASIC_INFORMATION basicInfo{};
-		status = NtQueryObject(hObject, 0, &basicInfo, sizeof(basicInfo), &returnLength);
+		status = NtQueryObject(objectHandle, 0, &basicInfo, sizeof(basicInfo), &returnLength);
 
 		if (status >= 0) {
 			entry.Permanent((basicInfo.Attributes & OBJ_PERMANENT) != 0);
@@ -1143,24 +1072,23 @@ namespace winrt::StarlightGUI::implementation {
 			if (type == L"SymbolicLink") {
 				UNICODE_STRING target{};
 
-				status = NtQuerySymbolicLinkObject(hObject, &target, &bufferLength);
+				status = NtQuerySymbolicLinkObject(objectHandle, &target, &bufferLength);
 
 				if (status < 0) {
 					target.Buffer = (PWSTR)HeapAlloc(GetProcessHeap(), 0, bufferLength);
 					target.Length = 0;
 					target.MaximumLength = (USHORT)bufferLength;
 
-					status = NtQuerySymbolicLinkObject(hObject, &target, &bufferLength);
-					if (status >= 0) {
+					status = NtQuerySymbolicLinkObject(objectHandle, &target, &bufferLength);
+					if (status >= 0)
 						entry.Link(std::wstring(target.Buffer, target.Length / sizeof(WCHAR)));
-					}
 					HeapFree(GetProcessHeap(), 0, target.Buffer);
 				}
 			}
 			else if (type == L"Event") {
 				EVENT_BASIC_INFORMATION eventInfo{};
 
-				status = NtQueryEvent(hObject, EventBasicInformation, &eventInfo, sizeof(eventInfo), &bufferLength);
+				status = NtQueryEvent(objectHandle, EventBasicInformation, &eventInfo, sizeof(eventInfo), &bufferLength);
 				if (status >= 0) {
 					entry.EventType(eventInfo.EventType == NotificationEvent ? L"Notification (Manual reset)" : L"Synchronization (Auto reset)");
 					entry.EventSignaled(eventInfo.EventState == 0 ? FALSE : TRUE);
@@ -1169,7 +1097,7 @@ namespace winrt::StarlightGUI::implementation {
 			else if (type == L"Mutant") {
 				MUTANT_BASIC_INFORMATION mutantInfo{};
 
-				status = NtQueryMutant(hObject, MutantBasicInformation, &mutantInfo, sizeof(mutantInfo), &bufferLength);
+				status = NtQueryMutant(objectHandle, MutantBasicInformation, &mutantInfo, sizeof(mutantInfo), &bufferLength);
 				if (status >= 0) {
 					entry.MutantHoldCount(mutantInfo.CurrentCount);
 					entry.MutantAbandoned(mutantInfo.AbandonedState == 0 ? FALSE : TRUE);
@@ -1178,7 +1106,7 @@ namespace winrt::StarlightGUI::implementation {
 			else if (type == L"Semaphore") {
 				SEMAPHORE_BASIC_INFORMATION semaphoreInfo{};
 
-				status = NtQuerySemaphore(hObject, SemaphoreBasicInformation, &semaphoreInfo, sizeof(semaphoreInfo), &bufferLength);
+				status = NtQuerySemaphore(objectHandle, SemaphoreBasicInformation, &semaphoreInfo, sizeof(semaphoreInfo), &bufferLength);
 				if (status >= 0) {
 					entry.SemaphoreCount(semaphoreInfo.CurrentCount);
 					entry.SemaphoreLimit(semaphoreInfo.MaximumCount);
@@ -1187,7 +1115,7 @@ namespace winrt::StarlightGUI::implementation {
 			else if (type == L"Section") {
 				SECTION_BASIC_INFORMATION sectionInfo{};
 
-				status = NtQuerySection(hObject, SectionBasicInformation, &sectionInfo, sizeof(sectionInfo), NULL); // 这里传入长度会报错，可能是微软的问题
+				status = NtQuerySection(objectHandle, SectionBasicInformation, &sectionInfo, sizeof(sectionInfo), NULL);
 				if (status >= 0) {
 					entry.SectionBaseAddress((ULONG64)sectionInfo.BaseAddress);
 					entry.SectionMaximumSize(sectionInfo.MaximumSize.QuadPart);
@@ -1196,7 +1124,7 @@ namespace winrt::StarlightGUI::implementation {
 			}
 			else if (type == L"Timer") {
 				TIMER_BASIC_INFORMATION timerInfo{};
-				status = NtQueryTimer(hObject, TimerBasicInformation, &timerInfo, sizeof(timerInfo), &bufferLength);
+				status = NtQueryTimer(objectHandle, TimerBasicInformation, &timerInfo, sizeof(timerInfo), &bufferLength);
 				if (status >= 0) {
 					entry.TimerRemainingTime(timerInfo.RemainingTime.QuadPart);
 					entry.TimerState(timerInfo.TimerState);
@@ -1205,14 +1133,13 @@ namespace winrt::StarlightGUI::implementation {
 			else if (type == L"IoCompletion") {
 				IO_COMPLETION_BASIC_INFORMATION ioCompletionInfo{};
 
-				status = NtQueryIoCompletion(hObject, IoCompletionBasicInformation, &ioCompletionInfo, sizeof(ioCompletionInfo), &bufferLength);
-				if (status >= 0) {
+				status = NtQueryIoCompletion(objectHandle, IoCompletionBasicInformation, &ioCompletionInfo, sizeof(ioCompletionInfo), &bufferLength);
+				if (status >= 0)
 					entry.IoCompletionDepth(ioCompletionInfo.Depth);
-				}
 			}
 		}
 
-		CloseHandle(hObject);
+		CloseHandle(objectHandle);
 		return status >= 0;
 	}
 
@@ -1270,9 +1197,8 @@ namespace winrt::StarlightGUI::implementation {
 
 		BOOL result = SiQuerySystemInformation(SystemGetInformation::ReadMemory, input, 0);
 		QueryError();
-		if (result) {
+		if (result)
 			data.assign(input->Data, input->Data + size);
-		}
 
 		HeapFree(GetProcessHeap(), 0, input);
 		return result;
@@ -1431,152 +1357,54 @@ namespace winrt::StarlightGUI::implementation {
 		return status;
 	}
 
-	std::string KernelInstance::GetMiniFilterMajorFunction(ULONG64 Index) noexcept
-	{
-		std::string funciton_name;
-		switch (Index)
-		{
-		case 0:
-			funciton_name = "IRP_MJ_CREATE";
-			break;
-		case 1:
-			funciton_name = "IRP_MJ_CREATE_NAMED_PIPE";
-			break;
-		case 2:
-			funciton_name = "IRP_MJ_CLOSE";
-			break;
-		case 3:
-			funciton_name = "IRP_MJ_READ";
-			break;
-		case 4:
-			funciton_name = "IRP_MJ_WRITE";
-			break;
-		case 5:
-			funciton_name = "IRP_MJ_QUERY_INFORMATION";
-			break;
-		case 6:
-			funciton_name = "IRP_MJ_SET_INFORMATION";
-			break;
-		case 7:
-			funciton_name = "IRP_MJ_QUERY_EA";
-			break;
-		case 8:
-			funciton_name = "IRP_MJ_SET_EA";
-			break;
-		case 9:
-			funciton_name = "IRP_MJ_FLUSH_BUFFERS";
-			break;
-		case 10:
-			funciton_name = "IRP_MJ_QUERY_VOLUME_INFORMATION";
-			break;
-		case 11:
-			funciton_name = "IRP_MJ_SET_VOLUME_INFORMATION";
-			break;
-		case 12:
-			funciton_name = "IRP_MJ_DIRECTORY_CONTROL";
-			break;
-		case 13:
-			funciton_name = "IRP_MJ_FILE_SYSTEM_CONTROL";
-			break;
-		case 14:
-			funciton_name = "IRP_MJ_DEVICE_CONTROL";
-			break;
-		case 15:
-			funciton_name = "IRP_MJ_INTERNAL_DEVICE_CONTROL";
-			break;
-		case 16:
-			funciton_name = "IRP_MJ_SHUTDOWN";
-			break;
-		case 17:
-			funciton_name = "IRP_MJ_LOCK_CONTROL";
-			break;
-		case 18:
-			funciton_name = "IRP_MJ_CLEANUP";
-			break;
-		case 19:
-			funciton_name = "IRP_MJ_CREATE_MAILSLOT";
-			break;
-		case 20:
-			funciton_name = "IRP_MJ_QUERY_SECURITY";
-			break;
-		case 21:
-			funciton_name = "IRP_MJ_SET_SECURITY";
-			break;
-		case 22:
-			funciton_name = "IRP_MJ_POWER";
-			break;
-		case 23:
-			funciton_name = "IRP_MJ_SYSTEM_CONTROL";
-			break;
-		case 24:
-			funciton_name = "IRP_MJ_DEVICE_CHANGE";
-			break;
-		case 25:
-			funciton_name = "IRP_MJ_QUERY_QUOTA";
-			break;
-		case 26:
-			funciton_name = "IRP_MJ_SET_QUOTA";
-			break;
-		case 27:
-			funciton_name = "IRP_MJ_PNP";
-			break;
-		case 28:
-			funciton_name = "IRP_MJ_PNP_POWER";
-			break;
-		case 255:
-			funciton_name = "IRP_MJ_ACQUIRE_FOR_SECTION_SYNCHRONIZATION";
-			break;
-		case 254:
-			funciton_name = "IRP_MJ_RELEASE_FOR_SECTION_SYNCHRONIZATION";
-			break;
-		case 253:
-			funciton_name = "IRP_MJ_ACQUIRE_FOR_MOD_WRITE";
-			break;
-		case 252:
-			funciton_name = "IRP_MJ_RELEASE_FOR_MOD_WRITE";
-			break;
-		case 251:
-			funciton_name = "IRP_MJ_ACQUIRE_FOR_CC_FLUSH";
-			break;
-		case 250:
-			funciton_name = "IRP_MJ_RELEASE_FOR_CC_FLUSH";
-			break;
-		case 249:
-			funciton_name = "IRP_MJ_QUERY_OPEN";
-			break;
-		case 243:
-			funciton_name = "IRP_MJ_FAST_IO_CHECK_IF_POSSIBLE";
-			break;
-		case 242:
-			funciton_name = "IRP_MJ_NETWORK_QUERY_OPEN";
-			break;
-		case 241:
-			funciton_name = "IRP_MJ_MDL_READ";
-			break;
-		case 240:
-			funciton_name = "IRP_MJ_MDL_READ_COMPLETE";
-			break;
-		case 239:
-			funciton_name = "IRP_MJ_PREPARE_MDL_WRITE";
-			break;
-		case 238:
-			funciton_name = "IRP_MJ_MDL_WRITE_COMPLETE";
-			break;
-		case 237:
-			funciton_name = "IRP_MJ_VOLUME_MOUNT";
-			break;
-		case 236:
-			funciton_name = "IRP_MJ_VOLUME_DISMOUN";
-			break;
-		case 128:
-			funciton_name = "IRP_MJ_OPERATION_END";
-			break;
-		}
-		if (funciton_name.size() > 0) {
-			return funciton_name;
-		}
-		else {
-			return "UNKNOWN(" + std::to_string(Index) + ")";
+	std::string KernelInstance::GetMiniFilterMajorFunction(ULONG64 index) noexcept {
+		switch (index) {
+		case 0: return "IRP_MJ_CREATE";
+		case 1: return "IRP_MJ_CREATE_NAMED_PIPE";
+		case 2: return "IRP_MJ_CLOSE";
+		case 3: return "IRP_MJ_READ";
+		case 4: return "IRP_MJ_WRITE";
+		case 5: return "IRP_MJ_QUERY_INFORMATION";
+		case 6: return "IRP_MJ_SET_INFORMATION";
+		case 7: return "IRP_MJ_QUERY_EA";
+		case 8: return "IRP_MJ_SET_EA";
+		case 9: return "IRP_MJ_FLUSH_BUFFERS";
+		case 10: return "IRP_MJ_QUERY_VOLUME_INFORMATION";
+		case 11: return "IRP_MJ_SET_VOLUME_INFORMATION";
+		case 12: return "IRP_MJ_DIRECTORY_CONTROL";
+		case 13: return "IRP_MJ_FILE_SYSTEM_CONTROL";
+		case 14: return "IRP_MJ_DEVICE_CONTROL";
+		case 15: return "IRP_MJ_INTERNAL_DEVICE_CONTROL";
+		case 16: return "IRP_MJ_SHUTDOWN";
+		case 17: return "IRP_MJ_LOCK_CONTROL";
+		case 18: return "IRP_MJ_CLEANUP";
+		case 19: return "IRP_MJ_CREATE_MAILSLOT";
+		case 20: return "IRP_MJ_QUERY_SECURITY";
+		case 21: return "IRP_MJ_SET_SECURITY";
+		case 22: return "IRP_MJ_POWER";
+		case 23: return "IRP_MJ_SYSTEM_CONTROL";
+		case 24: return "IRP_MJ_DEVICE_CHANGE";
+		case 25: return "IRP_MJ_QUERY_QUOTA";
+		case 26: return "IRP_MJ_SET_QUOTA";
+		case 27: return "IRP_MJ_PNP";
+		case 28: return "IRP_MJ_PNP_POWER";
+		case 128: return "IRP_MJ_OPERATION_END";
+		case 236: return "IRP_MJ_VOLUME_DISMOUNT";
+		case 237: return "IRP_MJ_VOLUME_MOUNT";
+		case 238: return "IRP_MJ_MDL_WRITE_COMPLETE";
+		case 239: return "IRP_MJ_PREPARE_MDL_WRITE";
+		case 240: return "IRP_MJ_MDL_READ_COMPLETE";
+		case 241: return "IRP_MJ_MDL_READ";
+		case 242: return "IRP_MJ_NETWORK_QUERY_OPEN";
+		case 243: return "IRP_MJ_FAST_IO_CHECK_IF_POSSIBLE";
+		case 249: return "IRP_MJ_QUERY_OPEN";
+		case 250: return "IRP_MJ_RELEASE_FOR_CC_FLUSH";
+		case 251: return "IRP_MJ_ACQUIRE_FOR_CC_FLUSH";
+		case 252: return "IRP_MJ_RELEASE_FOR_MOD_WRITE";
+		case 253: return "IRP_MJ_ACQUIRE_FOR_MOD_WRITE";
+		case 254: return "IRP_MJ_RELEASE_FOR_SECTION_SYNCHRONIZATION";
+		case 255: return "IRP_MJ_ACQUIRE_FOR_SECTION_SYNCHRONIZATION";
+		default: return "UNKNOWN(" + std::to_string(index) + ")";
 		}
 	}
 }

@@ -1,5 +1,7 @@
 ﻿#include "pch.h"
 #include "I18n.h"
+#include "Config.h"
+#include "CppUtils.h"
 
 #include <unordered_map>
 #include <fstream>

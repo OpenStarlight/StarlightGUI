@@ -6,6 +6,7 @@
 
 
 #include <winrt/Microsoft.UI.Xaml.h>
+#include <winrt/Microsoft.UI.Dispatching.h>
 #include <winrt/Microsoft.UI.Xaml.Media.Imaging.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/Windows.System.h>
@@ -13,11 +14,14 @@
 #include <winrt/Windows.UI.Core.h>
 #include <winrt/Windows.Graphics.Imaging.h>
 #include <winrt/Windows.Foundation.h>
+#include <wil/cppwinrt_helpers.h>
 #include <TlHelp32.h>
 #include <Psapi.h>
 #include <sstream>
 #include <iomanip>
+#include <vector>
 #include <Utils/Utils.h>
+#include <Utils/CppUtils.h>
 #include <Utils/TaskUtils.h>
 #include <Utils/KernelBase.h>
 #include <InfoWindow.xaml.h>
@@ -157,7 +161,7 @@ namespace winrt::StarlightGUI::implementation
         auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
         // 更新模块数量文本
-        ModuleCountText().Text(t(L"ProcModule.Detail", static_cast<size_t>(m_moduleList.Size()), static_cast<long long>(duration.count())));
+        ModuleCountText().Text(t(L"ProcModule.Detail", (size_t)m_moduleList.Size(), (long long)duration.count()));
         LoadingRing().IsActive(false);
 
         LOG_INFO(__WFUNCTION__, L"Loaded module list, %d entry(s) in total.", m_moduleList.Size());
