@@ -57,6 +57,11 @@ namespace winrt::StarlightGUI::implementation
         LOG_INFO(L"Process_HandlePage", L"Process_HandlePage initialized.");
     }
 
+    void Process_HandlePage::OnNavigatedTo(winrt::Microsoft::UI::Xaml::Navigation::NavigationEventArgs const& e)
+    {
+        m_process = e.Parameter().try_as<winrt::StarlightGUI::ProcessInfo>();
+    }
+
     void Process_HandlePage::HandleListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
     {
         auto listView = sender.as<ListView>();
@@ -82,9 +87,9 @@ namespace winrt::StarlightGUI::implementation
         auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
         auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Type").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Type().c_str())) {
-                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, slg::GetInfoWindowForXamlRoot(XamlRoot()));
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, slg::GetInfoWindowForXamlRoot(XamlRoot()));
             co_return;
             });
         item1_1.Items().Append(item1_1_sub1);
@@ -108,9 +113,9 @@ namespace winrt::StarlightGUI::implementation
 
     winrt::Windows::Foundation::IAsyncAction Process_HandlePage::LoadHandleList()
     {
-        if (!processForInfoWindow) co_return;
+        if (!m_process) co_return;
 
-        LOG_INFO(__WFUNCTION__, L"Loading handle list... (pid=%d)", processForInfoWindow.Id());
+        LOG_INFO(__WFUNCTION__, L"Loading handle list... (pid=%d)", m_process.Id());
         m_handleList.Clear();
         LoadingRing().IsActive(true);
 
@@ -124,7 +129,7 @@ namespace winrt::StarlightGUI::implementation
         handles.reserve(500);
 
         // 获取句柄列表
-        KernelInstance::SiEnumProcessHandles(processForInfoWindow.Id(), handles);
+        KernelInstance::SiEnumProcessHandles(m_process.Id(), handles);
         LOG_INFO(__WFUNCTION__, L"Enumerated handles, %d entry(s).", handles.size());
 
         co_await wil::resume_foreground(DispatcherQueue());

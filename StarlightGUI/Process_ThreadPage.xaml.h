@@ -1,7 +1,9 @@
 ﻿#pragma once
 
 #include "Process_ThreadPage.g.h"
+#include "Utils/ProcessInfo.h"
 #include "Utils/ThreadInfo.h"
+#include <winrt/Microsoft.UI.Xaml.Navigation.h>
 #include <map>
 #include <string>
 #include <TlHelp32.h>
@@ -13,6 +15,7 @@ namespace winrt::StarlightGUI::implementation
     {
         Process_ThreadPage();
         void SetupLocalization();
+        void OnNavigatedTo(winrt::Microsoft::UI::Xaml::Navigation::NavigationEventArgs const& e);
 
         void ThreadListView_RightTapped(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e);
         void ThreadListView_ContainerContentChanging(
@@ -28,6 +31,7 @@ namespace winrt::StarlightGUI::implementation
         winrt::Windows::Foundation::Collections::IObservableVector<winrt::StarlightGUI::ThreadInfo> m_threadList{
             winrt::single_threaded_observable_vector<winrt::StarlightGUI::ThreadInfo>()
         };
+        winrt::StarlightGUI::ProcessInfo m_process{ nullptr };
 
         inline static bool m_isIdAscending = true;
         inline static bool m_isEThreadAscending = true;

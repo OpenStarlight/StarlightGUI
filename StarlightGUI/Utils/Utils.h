@@ -31,7 +31,6 @@ namespace winrt::StarlightGUI::implementation {
     struct MainWindow;
     struct InfoWindow;
     extern MainWindow* g_mainWindowInstance;
-    extern InfoWindow* g_infoWindowInstance;
 }
 
 namespace slg {
@@ -79,6 +78,8 @@ namespace slg {
     void CreateInfoBarAndDisplay(hstring title, hstring message, InfoBarSeverity severity, winrt::StarlightGUI::implementation::MainWindow* instance, int time = 1500);
 
     void CreateInfoBarAndDisplay(hstring title, hstring message, InfoBarSeverity severity, winrt::StarlightGUI::implementation::InfoWindow* instance, int time = 1500);
+
+    winrt::StarlightGUI::implementation::InfoWindow* GetInfoWindowForXamlRoot(XamlRoot const& xamlRoot);
 
     ContentDialog CreateContentDialog(hstring title, hstring content, hstring closeMessage, XamlRoot xamlRoot);
 

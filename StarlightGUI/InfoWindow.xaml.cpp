@@ -17,6 +17,7 @@
 #include <winrt/WinUI3Package.h>
 #include <microsoft.ui.xaml.window.h>
 #include <commctrl.h>
+#include <algorithm>
 #include <utility>
 #include <MainWindow.xaml.h>
 #include <Utils/ProcessInfo.h>
@@ -37,18 +38,16 @@ using namespace Microsoft::UI::Composition::SystemBackdrops;
 
 namespace winrt::StarlightGUI::implementation
 {
-    static HWND globalWindowHandle;
-    InfoWindow* g_infoWindowInstance = nullptr;
-    winrt::StarlightGUI::ProcessInfo processForInfoWindow = nullptr;
+    InfoWindow::InfoWindow() : InfoWindow(nullptr) {}
 
-    InfoWindow::InfoWindow() {
+    InfoWindow::InfoWindow(winrt::StarlightGUI::ProcessInfo const& process) : m_process(process) {
         InitializeComponent();
         SetupLocalization();
 
         auto windowNative{ this->try_as<::IWindowNative>() };
         HWND windowHandle{ 0 };
         windowNative->get_WindowHandle(&windowHandle);
-        globalWindowHandle = windowHandle;
+        m_windowHandle = windowHandle;
 
         SetWindowPos(windowHandle, g_mainWindowInstance->GetWindowHandle(), 0, 0, 1200, 800, SWP_NOMOVE);
 
@@ -62,15 +61,6 @@ namespace winrt::StarlightGUI::implementation
         int32_t height = ReadConfig("window_height", 800);
         AppWindow().Resize(SizeInt32{ width, height });
 
-        auto openWindows = std::move(g_mainWindowInstance->m_openWindows);
-        g_mainWindowInstance->m_openWindows.clear();
-        for (auto& window : openWindows) {
-            if (window) {
-                window.Close();
-            }
-        }
-
-        g_infoWindowInstance = this;
         g_mainWindowInstance->m_openWindows.push_back(*this);
 
         // 外观
@@ -78,21 +68,21 @@ namespace winrt::StarlightGUI::implementation
         LoadBackground();
         LoadNavigation();
 
-        MainFrame().Navigate(xaml_typename<StarlightGUI::Process_ThreadPage>());
+        MainFrame().Navigate(xaml_typename<StarlightGUI::Process_ThreadPage>(), m_process);
         RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(0));
-        AppTitleBar().Title(processForInfoWindow.Name());
-        AppTitleBar().Subtitle(L"(" + to_hstring(processForInfoWindow.Id()) + L")");
-        Title(processForInfoWindow.Name());
+        AppTitleBar().Title(m_process ? m_process.Name() : L"");
+        AppTitleBar().Subtitle(m_process ? L"(" + to_hstring(m_process.Id()) + L")" : L"");
+        Title(m_process ? m_process.Name() : L"");
 
         auto iconSource = Microsoft::UI::Xaml::Controls::ImageIconSource();
-        iconSource.ImageSource(processForInfoWindow.Icon());
+        if (m_process) iconSource.ImageSource(m_process.Icon());
         AppTitleBar().IconSource(iconSource);
 
         Closed([this](auto&& sender, const winrt::Microsoft::UI::Xaml::WindowEventArgs& args) {
-            if (g_infoWindowInstance == this) {
-                g_mainWindowInstance->m_openWindows.clear();
-                g_infoWindowInstance = nullptr;
-            }
+            auto& windows = g_mainWindowInstance->m_openWindows;
+            std::erase_if(windows, [this](auto const& window) {
+                return window && winrt::get_self<InfoWindow>(window) == this;
+                });
             });
     }
 
@@ -105,22 +95,22 @@ namespace winrt::StarlightGUI::implementation
 
         if (invokedItem == L"Thread")
         {
-            MainFrame().NavigateToType(xaml_typename<StarlightGUI::Process_ThreadPage>(), nullptr, options);
+            MainFrame().NavigateToType(xaml_typename<StarlightGUI::Process_ThreadPage>(), m_process, options);
             RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(0));
         }
         else if (invokedItem == L"Handle")
         {
-            MainFrame().NavigateToType(xaml_typename<StarlightGUI::Process_HandlePage>(), nullptr, options);
+            MainFrame().NavigateToType(xaml_typename<StarlightGUI::Process_HandlePage>(), m_process, options);
             RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(1));
         }
         else if (invokedItem == L"Module")
         {
-            MainFrame().NavigateToType(xaml_typename<StarlightGUI::Process_ModulePage>(), nullptr, options);
+            MainFrame().NavigateToType(xaml_typename<StarlightGUI::Process_ModulePage>(), m_process, options);
             RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(2));
         }
         else if (invokedItem == L"KCT")
         {
-            MainFrame().NavigateToType(xaml_typename<StarlightGUI::Process_KCTPage>(), nullptr, options);
+            MainFrame().NavigateToType(xaml_typename<StarlightGUI::Process_KCTPage>(), m_process, options);
             RootNavigation().SelectedItem(RootNavigation().MenuItems().GetAt(3));
         }
     }
@@ -254,7 +244,7 @@ namespace winrt::StarlightGUI::implementation
 
     HWND InfoWindow::GetWindowHandle()
     {
-        return globalWindowHandle;
+        return m_windowHandle;
     }
 
     LRESULT CALLBACK InfoWindow::InfoWindowProc(HWND windowHandle, UINT message, WPARAM wParam, LPARAM lParam, UINT_PTR subclassId, DWORD_PTR referenceData)

@@ -59,6 +59,11 @@ namespace winrt::StarlightGUI::implementation
         LOG_INFO(L"Process_ModulePage", L"Process_ModulePage initialized.");
     }
 
+    void Process_ModulePage::OnNavigatedTo(winrt::Microsoft::UI::Xaml::Navigation::NavigationEventArgs const& e)
+    {
+        m_process = e.Parameter().try_as<winrt::StarlightGUI::ProcessInfo>();
+    }
+
     void Process_ModulePage::ModuleListView_RightTapped(IInspectable const& sender, winrt::Microsoft::UI::Xaml::Input::RightTappedRoutedEventArgs const& e)
     {
         auto listView = sender.as<ListView>();
@@ -84,25 +89,25 @@ namespace winrt::StarlightGUI::implementation
         auto item1_1 = slg::CreateMenuSubItem(flyoutStyles, L"\ue8c8", t(L"Common.CopyInfo").c_str());
         auto item1_1_sub1 = slg::CreateMenuItem(flyoutStyles, L"\ue943", t(L"Common.Name").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Name().c_str())) {
-                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, slg::GetInfoWindowForXamlRoot(XamlRoot()));
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, slg::GetInfoWindowForXamlRoot(XamlRoot()));
             co_return;
             });
         item1_1.Items().Append(item1_1_sub1);
         auto item1_1_sub2 = slg::CreateMenuItem(flyoutStyles, L"\uec6c", t(L"Common.Path").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(item.Path().c_str())) {
-                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, slg::GetInfoWindowForXamlRoot(XamlRoot()));
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, slg::GetInfoWindowForXamlRoot(XamlRoot()));
             co_return;
             });
         item1_1.Items().Append(item1_1_sub2);
         auto item1_1_sub3 = slg::CreateMenuItem(flyoutStyles, L"\ueb1d", t(L"Common.Address").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
             if (TaskUtils::CopyToClipboard(ULongToHexString(item.Address()).c_str())) {
-                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, g_infoWindowInstance);
+                slg::CreateInfoBarAndDisplay(t(L"Common.Success"), t(L"Msg.CopyToClipboard.Success"), InfoBarSeverity::Success, slg::GetInfoWindowForXamlRoot(XamlRoot()));
             }
-            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, g_infoWindowInstance);
+            else slg::CreateInfoBarAndDisplay(t(L"Common.Failed"), t(L"Msg.CopyToClipboard.Failed"), InfoBarSeverity::Error, slg::GetInfoWindowForXamlRoot(XamlRoot()));
             co_return;
             });
         item1_1.Items().Append(item1_1_sub3);
@@ -129,9 +134,9 @@ namespace winrt::StarlightGUI::implementation
 
     winrt::Windows::Foundation::IAsyncAction Process_ModulePage::LoadModuleList()
     {
-        if (!processForInfoWindow) co_return;
+        if (!m_process) co_return;
 
-        LOG_INFO(__WFUNCTION__, L"Loading module list... (pid=%d)", processForInfoWindow.Id());
+        LOG_INFO(__WFUNCTION__, L"Loading module list... (pid=%d)", m_process.Id());
         m_moduleList.Clear();
         LoadingRing().IsActive(true);
 
@@ -145,7 +150,7 @@ namespace winrt::StarlightGUI::implementation
         modules.reserve(500);
 
         // 获取句柄列表
-        KernelInstance::SiEnumProcessModules(processForInfoWindow.Id(), modules);
+        KernelInstance::SiEnumProcessModules(m_process.Id(), modules);
         LOG_INFO(__WFUNCTION__, L"Enumerated modules, %d entry(s).", modules.size());
 
         co_await wil::resume_foreground(DispatcherQueue());

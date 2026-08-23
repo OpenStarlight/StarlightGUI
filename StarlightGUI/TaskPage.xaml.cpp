@@ -86,14 +86,13 @@ namespace winrt::StarlightGUI::implementation
             if (!IsLoaded()) return;
             if (m_isSorting) return;
             if (m_isLoadingProcesses || m_isPostLoading) return;
-            if (!g_mainWindowInstance->m_openWindows.empty()) return;
 
             LoadProcessList(false);
             });
         cpuRefreshTimer.Interval(std::chrono::seconds(1));
         cpuRefreshTimer.Tick([this](auto&&, auto&&) {
             if (!IsLoaded()) return;
-            if (!taskAutoRefresh || !g_mainWindowInstance->m_openWindows.empty()) {
+            if (!taskAutoRefresh) {
                 if (m_isRefreshingCpu) ++m_cpuRequestVersion;
                 m_cpuSnapshot = {};
                 return;
@@ -345,8 +344,7 @@ namespace winrt::StarlightGUI::implementation
 
         // 选项3.1
         auto item3_1 = slg::CreateMenuItem(flyoutStyles, L"\ue946", t(L"Task.Menu.MoreInfo").c_str(), [this, item](IInspectable const& sender, RoutedEventArgs const& e) -> winrt::Windows::Foundation::IAsyncAction {
-            processForInfoWindow = item;
-            auto infoWindow = winrt::make<InfoWindow>();
+            auto infoWindow = winrt::make<InfoWindow>(item);
             infoWindow.Activate();
             co_return;
             });
@@ -1339,7 +1337,7 @@ namespace winrt::StarlightGUI::implementation
         co_await wil::resume_foreground(DispatcherQueue());
 
         if (!IsLoaded() || requestVersion != m_reloadRequestVersion) co_return;
-        if (g_mainWindowInstance->m_openWindows.empty()) LoadProcessList(true);
+        LoadProcessList(true);
 
         co_return;
     }

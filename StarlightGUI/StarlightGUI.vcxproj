@@ -626,7 +626,6 @@
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
       <FileType>Document</FileType>
     </Text>
-    <None Include="packages.config" />
     <None Include="WindowTopMost.dll">
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
       <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
@@ -646,6 +645,24 @@
   <PropertyGroup Condition="'$(DisableHasPackageAndPublishMenuAddedByProject)'!='true' and '$(EnableMsixTooling)'=='true'">
     <HasPackageAndPublishMenu>true</HasPackageAndPublishMenu>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4129.50" />
+    <PackageReference Include="Microsoft.Windows.CppWinRT" Version="3.0.260818.1" />
+    <PackageReference Include="Microsoft.Windows.ImplementationLibrary" Version="1.0.260126.7" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2526" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.4.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.AI" Version="2.4.4" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Base" Version="2.0.4" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.DWrite" Version="2.1.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" Version="2.3.9" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.1.6" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" Version="2.4.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.Widgets" Version="2.0.5" />
+    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.3.6" />
+    <PackageReference Include="WinUIEssential.WinUI3" Version="1.7.1" />
+    <PackageReference Include="XamlToolkit.WinUI.Controls.Native" Version="0.8.0-alpha" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <Target Name="CopyI18nJson" AfterTargets="Build">
     <Copy SourceFiles="Strings\en-US\Resources.json" DestinationFolder="$(OutDir)Strings\en-US\" SkipUnchangedFiles="true" />
@@ -659,29 +676,4 @@
     <RemoveDir Directories="@(_WindowsAppSDKLanguageDirectoryToRemove)" />
     <Message Importance="High" Text="Removed unused Windows App SDK language directories: @(_WindowsAppSDKLanguageDirectoryToRemove->'%(Filename)', ', ')" Condition="'@(_WindowsAppSDKLanguageDirectoryToRemove)' != ''" />
   </Target>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Graphics.Win2D" Version="1.4.0" />
-    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3967.48" />
-    <PackageReference Include="Microsoft.Windows.AI.MachineLearning" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Windows.CppWinRT" Version="3.0.260520.1" />
-    <PackageReference Include="Microsoft.Windows.ImplementationLibrary" Version="1.0.260126.7" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools.MSIX" Version="1.7.260518100" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.1.3" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.AI" Version="2.1.10" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.Base" Version="2.0.4" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.DWrite" Version="2.1.0" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.Foundation" Version="2.0.21" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.InteractiveExperiences" Version="2.0.13" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.ML" Version="2.1.1" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.Runtime" Version="2.1.3" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.Widgets" Version="2.0.5" />
-    <PackageReference Include="Microsoft.WindowsAppSDK.WinUI" Version="2.1.0" />
-    <PackageReference Include="WinUIEssential.WinUI3" Version="1.6.7" />
-    <PackageReference Include="XamlToolkit.Labs.WinUI.Native" Version="0.3.0-alpha" />
-    <PackageReference Include="XamlToolkit.WinUI.Controls.Native" Version="0.3.0-alpha" />
-    <PackageReference Include="XamlToolkit.WinUI.Converters.Native" Version="0.3.0-alpha" />
-    <PackageReference Include="XamlToolkit.WinUI.Helpers.Native" Version="0.3.0-alpha" />
-    <PackageReference Include="XamlToolkit.WinUI.Native" Version="0.3.0-alpha" />
-  </ItemGroup>
 </Project>

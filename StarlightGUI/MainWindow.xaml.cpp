@@ -19,6 +19,7 @@
 #include <winrt/Windows.Storage.h>
 #include <winrt/Windows.Storage.Streams.h>
 #include <winrt/WinUI3Package.h>
+#include <utility>
 #include <wil/cppwinrt_helpers.h>
 #include <microsoft.ui.xaml.window.h>
 #include <commctrl.h>
@@ -139,7 +140,9 @@ namespace winrt::StarlightGUI::implementation
     {
         RemoveTrayIcon();
 
-        for (auto& window : m_openWindows) {
+        auto openWindows = std::move(m_openWindows);
+        m_openWindows.clear();
+        for (auto& window : openWindows) {
             if (window) {
                 window.Close();
             }

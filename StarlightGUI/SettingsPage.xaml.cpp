@@ -36,6 +36,20 @@ namespace winrt::StarlightGUI::implementation
     static const std::wstring replaceTaskManagerTriggerScriptName = L"StarlightGUI_OpenTaskMgr.vbs";
     static const std::wstring replaceTaskManagerLaunchScriptName = L"StarlightGUI_OpenTaskMgrLaunch.vbs";
 
+    static void LoadInfoWindowBackdrops()
+    {
+        for (auto const& window : g_mainWindowInstance->m_openWindows) {
+            if (window) winrt::get_self<InfoWindow>(window)->LoadBackdrop();
+        }
+    }
+
+    static void LoadInfoWindowBackgrounds()
+    {
+        for (auto const& window : g_mainWindowInstance->m_openWindows) {
+            if (window) winrt::get_self<InfoWindow>(window)->LoadBackground();
+        }
+    }
+
     static std::wstring GetConfigSidePath(std::wstring const& fileName) { return GetInstalledLocationPath() + L"\\" + fileName; }
 
     static bool UpdateAutoStartTask(bool enabled)
@@ -237,7 +251,7 @@ namespace winrt::StarlightGUI::implementation
         SaveConfig("background_type", (int)BackgroundComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackground();
-        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackground();
+        LoadInfoWindowBackgrounds();
         Console::GetInstance().SetAppearanceByConfig();
     }
 
@@ -251,7 +265,7 @@ namespace winrt::StarlightGUI::implementation
         SaveConfig("mica_type", (int)MicaTypeComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackdrop();
-        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackdrop();
+        LoadInfoWindowBackdrops();
         Console::GetInstance().SetAppearanceByConfig();
     }
 
@@ -265,7 +279,7 @@ namespace winrt::StarlightGUI::implementation
         SaveConfig("acrylic_type", (int)AcrylicTypeComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackdrop();
-        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackdrop();
+        LoadInfoWindowBackdrops();
         Console::GetInstance().SetAppearanceByConfig();
     }
     
@@ -396,7 +410,7 @@ namespace winrt::StarlightGUI::implementation
         ImagePathText().Text(L"");
 
         g_mainWindowInstance->LoadBackground();
-        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackground();
+        LoadInfoWindowBackgrounds();
     }
 
     slg::coroutine SettingsPage::SetImageButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
@@ -425,7 +439,7 @@ namespace winrt::StarlightGUI::implementation
                 ImagePathText().Text(to_hstring(backgroundImage));
 
                 g_mainWindowInstance->LoadBackground();
-                if (g_infoWindowInstance) g_infoWindowInstance->LoadBackground();
+                LoadInfoWindowBackgrounds();
             }
         }
         catch (hresult_error) {
@@ -437,7 +451,7 @@ namespace winrt::StarlightGUI::implementation
     void SettingsPage::RefreshOpacityButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         if (!IsLoaded()) return;
         g_mainWindowInstance->LoadBackground();
-        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackground();
+        LoadInfoWindowBackgrounds();
     }
 
     void SettingsPage::ImageStretchComboBox_SelectionChanged(IInspectable const& sender, SelectionChangedEventArgs const& e)
@@ -449,7 +463,7 @@ namespace winrt::StarlightGUI::implementation
         SaveConfig("image_stretch", (int)ImageStretchComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackground();
-        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackground();
+        LoadInfoWindowBackgrounds();
     }
 
     void SettingsPage::LogButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)

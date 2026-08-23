@@ -203,7 +203,21 @@ namespace slg {
     }
 
     void CreateInfoBarAndDisplay(hstring title, hstring message, InfoBarSeverity severity, StarlightGUI::implementation::InfoWindow* instance, int time) {
+        if (!instance) return;
         DisplayInfoBar(CreateInfoBar(title, message, severity, instance->InfoWindowGrid().XamlRoot()), instance->InfoBarPanel(), time);
+    }
+
+    StarlightGUI::implementation::InfoWindow* GetInfoWindowForXamlRoot(XamlRoot const& xamlRoot)
+    {
+        if (!xamlRoot || !g_mainWindowInstance) return nullptr;
+
+        for (auto const& window : g_mainWindowInstance->m_openWindows) {
+            if (!window) continue;
+            auto instance = winrt::get_self<StarlightGUI::implementation::InfoWindow>(window);
+            if (instance->InfoWindowGrid().XamlRoot() == xamlRoot) return instance;
+        }
+
+        return nullptr;
     }
 
     ContentDialog CreateContentDialog(hstring title, hstring content, hstring closeMessage, XamlRoot xamlRoot) {
@@ -352,13 +366,17 @@ namespace slg {
             g_mainWindowInstance->LoadBackdrop();
         }
 
-        if (g_infoWindowInstance) {
-            DwmSetWindowAttribute(g_infoWindowInstance->GetWindowHandle(), DWMWA_USE_IMMERSIVE_DARK_MODE, &isDark, sizeof(isDark));
-            g_infoWindowInstance->InfoWindowGrid().RequestedTheme(targetTheme);
-            g_infoWindowInstance->RootNavigation().RequestedTheme(targetTheme);
-            g_infoWindowInstance->AppTitleBar().RequestedTheme(targetTheme);
-            g_infoWindowInstance->CaptionButtonThemeWorkaround().RequestedTheme(targetTheme);
-            g_infoWindowInstance->LoadBackdrop();
+        if (g_mainWindowInstance) {
+            for (auto const& window : g_mainWindowInstance->m_openWindows) {
+                if (!window) continue;
+                auto instance = winrt::get_self<StarlightGUI::implementation::InfoWindow>(window);
+                DwmSetWindowAttribute(instance->GetWindowHandle(), DWMWA_USE_IMMERSIVE_DARK_MODE, &isDark, sizeof(isDark));
+                instance->InfoWindowGrid().RequestedTheme(targetTheme);
+                instance->RootNavigation().RequestedTheme(targetTheme);
+                instance->AppTitleBar().RequestedTheme(targetTheme);
+                instance->CaptionButtonThemeWorkaround().RequestedTheme(targetTheme);
+                instance->LoadBackdrop();
+            }
         }
     }
 
