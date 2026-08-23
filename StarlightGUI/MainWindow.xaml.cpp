@@ -317,7 +317,7 @@ namespace winrt::StarlightGUI::implementation
                 micaBackdrop.Kind(MicaKind::BaseAlt);
             }
 
-            MainWindowGrid().Background(nullptr);
+            if (backgroundImage.empty()) MainWindowGrid().Background(nullptr);
         }
         else if (backgroundType == 2) {
             static CustomAcrylicBackdrop acrylicBackdrop = CustomAcrylicBackdrop();
@@ -336,6 +336,7 @@ namespace winrt::StarlightGUI::implementation
                 acrylicBackdrop.Kind(DesktopAcrylicKind::Default);
             }
 
+            if (backgroundImage.empty()) MainWindowGrid().Background(nullptr);
         }
         else
         {
@@ -601,8 +602,10 @@ namespace winrt::StarlightGUI::implementation
         case WM_GETMINMAXINFO:
         {
             MINMAXINFO* minMaxInfo = (MINMAXINFO*)lParam;
-            minMaxInfo->ptMinTrackSize.x = 800;
-            minMaxInfo->ptMinTrackSize.y = 600;
+            UINT dpi = GetDpiForWindow(windowHandle);
+            if (dpi == 0) dpi = USER_DEFAULT_SCREEN_DPI;
+            minMaxInfo->ptMinTrackSize.x = MulDiv(800, dpi, USER_DEFAULT_SCREEN_DPI);
+            minMaxInfo->ptMinTrackSize.y = MulDiv(600, dpi, USER_DEFAULT_SCREEN_DPI);
             return 0;
         };
 

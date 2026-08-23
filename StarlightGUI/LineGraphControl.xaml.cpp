@@ -582,9 +582,7 @@ namespace winrt::StarlightGUI::implementation
 
                     auto yText = TextBlock();
                     yText.Text(yss.str());
-                    yText.Foreground(SolidColorBrush(Colors::Black()));
-                    yText.FontSize(12);
-                    yText.VerticalAlignment(VerticalAlignment::Center);
+                    yText.Style(unbox_value<Microsoft::UI::Xaml::Style>(Resources().Lookup(winrt::box_value(L"TooltipTextStyle"))));
 
                     yItem.Children().Append(dot);
                     yItem.Children().Append(yText);

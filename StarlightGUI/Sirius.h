@@ -1,10 +1,8 @@
 ﻿#pragma once
 
-#include <Windows.h>
-
-typedef ULONG COLLECTION_ENUM;
-typedef ULONG FEATURE_ENUM;
-typedef ULONG TYPE_ENUM;
+typedef unsigned long COLLECTION_ENUM;
+typedef unsigned long FEATURE_ENUM;
+typedef unsigned long TYPE_ENUM;
 
 #define SIAPI
 #define SIPRIVATEAPI

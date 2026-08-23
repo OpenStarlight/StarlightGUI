@@ -22,7 +22,10 @@
                 <essential:ModernStandardWindowContextMenu x:Name="Menu" Window="{x:Bind}" />
             </Grid.Resources>
 
-            <essential:WindowCaptionButtonThemeWorkaround Height="48" Window="{x:Bind}" />
+            <essential:WindowCaptionButtonThemeWorkaround
+                x:Name="CaptionButtonThemeWorkaround"
+                Height="48"
+                Window="{x:Bind}" />
 
             <TitleBar
                 x:Name="AppTitleBar"

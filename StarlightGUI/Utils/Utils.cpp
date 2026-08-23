@@ -355,6 +355,9 @@ namespace slg {
         if (g_infoWindowInstance) {
             DwmSetWindowAttribute(g_infoWindowInstance->GetWindowHandle(), DWMWA_USE_IMMERSIVE_DARK_MODE, &isDark, sizeof(isDark));
             g_infoWindowInstance->InfoWindowGrid().RequestedTheme(targetTheme);
+            g_infoWindowInstance->RootNavigation().RequestedTheme(targetTheme);
+            g_infoWindowInstance->AppTitleBar().RequestedTheme(targetTheme);
+            g_infoWindowInstance->CaptionButtonThemeWorkaround().RequestedTheme(targetTheme);
             g_infoWindowInstance->LoadBackdrop();
         }
     }

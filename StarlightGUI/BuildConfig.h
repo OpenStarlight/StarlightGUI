@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-//#define STARLIGHT_PREMIUM
-#define STARLIGHT_VERSION_BASE L"v4.1.0"
+#define STARLIGHT_PREMIUM
+#define STARLIGHT_VERSION_BASE L"v4.1.1"
 
 #ifdef STARLIGHT_PREMIUM
 #define STARLIGHT_EDITION_NAME L"Premium"

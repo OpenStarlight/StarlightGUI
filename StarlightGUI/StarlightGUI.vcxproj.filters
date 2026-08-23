@@ -249,12 +249,6 @@
     <ClInclude Include="Utils\GeneralEntry.h">
       <Filter>Utils\Types</Filter>
     </ClInclude>
-    <ClInclude Include="SiriusIO.h">
-      <Filter>Utils\Advanced</Filter>
-    </ClInclude>
-    <ClInclude Include="SiriusError.h">
-      <Filter>Utils\Advanced</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Assets\github-mark.png">
@@ -317,6 +311,9 @@
     <Filter Include="Strings\en-US">
       <UniqueIdentifier>{7126c4af-1a4c-463c-9147-cfa3113705fa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Utils\Advanced\Sirius">
+      <UniqueIdentifier>{19618cb2-aacc-41ce-9e09-64eb8731d22c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="nvml.dll">
@@ -353,5 +350,16 @@
     <Text Include="Strings\en-US\Resources.json">
       <Filter>Strings\en-US</Filter>
     </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SiriusCollection.h">
+      <Filter>Utils\Advanced\Sirius</Filter>
+    </ClInclude>
+    <ClInclude Include="Sirius.h">
+      <Filter>Utils\Advanced\Sirius</Filter>
+    </ClInclude>
+    <ClInclude Include="SiriusIO.h">
+      <Filter>Utils\Advanced\Sirius</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

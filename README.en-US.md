@@ -151,9 +151,7 @@ By installing and running this software, you acknowledge that you have **read an
 
 - All drivers used by this software are **self-developed**
 - If you encounter antivirus warnings for drivers during use, please **temporarily** add them to your **trust list**, and make sure to **completely remove the trust** after you stop using the software
-- Driver digital signatures are obtained from **unofficial channels** — do not trust the certificate
 - **Unauthorized** use of this project's drivers for other purposes is **prohibited**
-> Since the drivers are signed, they may be misleading and could potentially be exploited for illegal purposes. Please ensure you have not found these drivers running on your computer outside of this project. If you do, perform a security check immediately!
 
 > Most of the technologies used in this project are publicly available and are used entirely legally within this project. If this project's drivers are used by programs outside of this project, the corresponding developers shall bear full responsibility for their actions! The developer of this project assumes no liability!
 

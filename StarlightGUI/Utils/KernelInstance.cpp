@@ -2,6 +2,7 @@
 #include "KernelBase.h"
 #include "Config.h"
 #include "CppUtils.h"
+#include <cwctype>
 #include <filesystem>
 #include <sstream>
 #include <string>
@@ -11,43 +12,51 @@ namespace winrt::StarlightGUI::implementation {
 	namespace fs = std::filesystem;
 
 	static HANDLE driverDevice = NULL;
-	static SISTATUS lastErrorCode = SI_SUCCESS;
+	static DWORD lastErrorCode = ERROR_SUCCESS;
 	static std::wstring lastErrorMessage = L"";
 
-	SISTATUS KernelInstance::GetLastErrorCode() noexcept {
+	DWORD KernelInstance::GetLastErrorCode() noexcept {
 		return lastErrorCode;
 	}
 
 	std::wstring KernelInstance::GetLastErrorMessage() noexcept {
-		return lastErrorMessage;
+		if (lastErrorCode == ERROR_SUCCESS) return lastErrorMessage;
+
+		LPWSTR messageBuffer = nullptr;
+		DWORD length = FormatMessageW(
+			FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			nullptr,
+			lastErrorCode,
+			0,
+			reinterpret_cast<LPWSTR>(&messageBuffer),
+			0,
+			nullptr);
+
+		std::wstring message;
+		if (length != 0 && messageBuffer != nullptr) {
+			message.assign(messageBuffer, length);
+			LocalFree(messageBuffer);
+			while (!message.empty() && iswspace(message.back())) message.pop_back();
+		}
+		else {
+			message = lastErrorMessage;
+		}
+
+		wchar_t errorCode[16];
+		swprintf_s(errorCode, L" (%lu)", lastErrorCode);
+		message += errorCode;
+		return message;
 	}
 
 	void KernelInstance::QueryError() noexcept {
 		if (driverDevice == NULL) {
-			lastErrorCode = SI_ERROR;
+			lastErrorCode = ERROR_INVALID_HANDLE;
 			lastErrorMessage = L"Driver device not initialized.";
 			return;
 		}
 
-		SISTATUS errorCode = SI_SUCCESS;
-		if (!DeviceIoControl(driverDevice, IOCTL_SIRIUS_GET_ERROR_CODE, NULL, 0, &errorCode, sizeof(SISTATUS), 0, NULL)) {
-			lastErrorCode = SI_ERROR;
-			lastErrorMessage = L"Failed to query error code from driver.";
-			return;
-		}
-
-		lastErrorCode = errorCode;
-
-		if (ERROR(errorCode)) {
-			SI_ERROR_DETAIL errorDetail = { 0 };
-			if (DeviceIoControl(driverDevice, IOCTL_SIRIUS_GET_ERROR_DETAIL, NULL, 0, &errorDetail, sizeof(SI_ERROR_DETAIL), 0, NULL)) {
-				lastErrorMessage = std::wstring(errorDetail.Data);
-			} else {
-				lastErrorMessage = L"Failed to query error detail from driver.";
-			}
-		} else {
-			lastErrorMessage = L"";
-		}
+		lastErrorCode = GetLastError();
+		lastErrorMessage = lastErrorCode == ERROR_SUCCESS ? L"" : L"The driver operation failed.";
 	}
 
 	BOOL KernelInstance::QuerySystemEnumeration(SystemGetInformation information, SI_ENUMERATION& enumData, ULONG itemSize, ULONG argument) noexcept {
@@ -60,7 +69,7 @@ namespace winrt::StarlightGUI::implementation {
 		if (!result) return FALSE;
 		if (enumData.Count == 0) return TRUE;
 		if (itemSize == 0 || enumData.Count > (ULONG)-1 / itemSize) {
-			lastErrorCode = SI_INVALID_PARAMETER;
+			lastErrorCode = ERROR_INVALID_PARAMETER;
 			lastErrorMessage = L"Invalid enumeration size.";
 			return FALSE;
 		}
@@ -69,7 +78,7 @@ namespace winrt::StarlightGUI::implementation {
 		ULONG capacity = enumData.Count;
 		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 		if (!enumData.Buffer) {
-			lastErrorCode = SI_ALLOCATION_FAILED;
+			lastErrorCode = ERROR_NOT_ENOUGH_MEMORY;
 			lastErrorMessage = L"Failed to allocate enumeration buffer.";
 			return FALSE;
 		}
@@ -91,7 +100,7 @@ namespace winrt::StarlightGUI::implementation {
 		if (!result) return FALSE;
 		if (enumData.Count == 0) return TRUE;
 		if (itemSize == 0 || enumData.Count > (ULONG)-1 / itemSize) {
-			lastErrorCode = SI_INVALID_PARAMETER;
+			lastErrorCode = ERROR_INVALID_PARAMETER;
 			lastErrorMessage = L"Invalid enumeration size.";
 			return FALSE;
 		}
@@ -100,7 +109,7 @@ namespace winrt::StarlightGUI::implementation {
 		ULONG capacity = enumData.Count;
 		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 		if (!enumData.Buffer) {
-			lastErrorCode = SI_ALLOCATION_FAILED;
+			lastErrorCode = ERROR_NOT_ENOUGH_MEMORY;
 			lastErrorMessage = L"Failed to allocate enumeration buffer.";
 			return FALSE;
 		}
@@ -122,7 +131,7 @@ namespace winrt::StarlightGUI::implementation {
 		if (!result) return FALSE;
 		if (enumData.Count == 0) return TRUE;
 		if (itemSize == 0 || enumData.Count > (ULONG)-1 / itemSize) {
-			lastErrorCode = SI_INVALID_PARAMETER;
+			lastErrorCode = ERROR_INVALID_PARAMETER;
 			lastErrorMessage = L"Invalid enumeration size.";
 			return FALSE;
 		}
@@ -131,7 +140,7 @@ namespace winrt::StarlightGUI::implementation {
 		ULONG capacity = enumData.Count;
 		enumData.Buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, enumData.BufferSize);
 		if (!enumData.Buffer) {
-			lastErrorCode = SI_ALLOCATION_FAILED;
+			lastErrorCode = ERROR_NOT_ENOUGH_MEMORY;
 			lastErrorMessage = L"Failed to allocate enumeration buffer.";
 			return FALSE;
 		}
@@ -239,7 +248,7 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::SiHideDriver(ULONG64 driverObj) noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorCode = ERROR_CALL_NOT_IMPLEMENTED;
 		lastErrorMessage = L"Not implemented.";
 		return FALSE;
 	}
@@ -661,7 +670,7 @@ namespace winrt::StarlightGUI::implementation {
 		case HalTableType::HalIommuDispatchTable:
 		case HalTableType::HalAcpiDispatchTable:
 		case HalTableType::HalSubComponents:
-			lastErrorCode = SI_NOT_AVAILABLE;
+			lastErrorCode = ERROR_NOT_SUPPORTED;
 			lastErrorMessage = t(L"Common.PremiumOnly");
 			return FALSE;
 #endif
@@ -787,7 +796,7 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::SiLockFile(std::wstring path) noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorCode = ERROR_CALL_NOT_IMPLEMENTED;
 		lastErrorMessage = L"Not implemented.";
 		return FALSE;
 	}
@@ -836,7 +845,7 @@ namespace winrt::StarlightGUI::implementation {
 		QueryError();
 		return result;
 #else
-		lastErrorCode = SI_NOT_AVAILABLE;
+		lastErrorCode = ERROR_NOT_SUPPORTED;
 		lastErrorMessage = t(L"Common.PremiumOnly");
 		return FALSE;
 #endif
@@ -849,7 +858,7 @@ namespace winrt::StarlightGUI::implementation {
 		QueryError();
 		return result;
 #else 		
-		lastErrorCode = SI_NOT_AVAILABLE;
+		lastErrorCode = ERROR_NOT_SUPPORTED;
 		lastErrorMessage = t(L"Common.PremiumOnly");
 		return FALSE;
 #endif
@@ -884,13 +893,13 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::EnableModifyRegistry() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorCode = ERROR_CALL_NOT_IMPLEMENTED;
 		lastErrorMessage = L"Not implemented";
 		return FALSE;
 	}
 
 	BOOL KernelInstance::DisableModifyRegistry() noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorCode = ERROR_CALL_NOT_IMPLEMENTED;
 		lastErrorMessage = L"Not implemented";
 		return FALSE;
 	}
@@ -898,7 +907,7 @@ namespace winrt::StarlightGUI::implementation {
 	BOOL KernelInstance::EnableDSE(bool hypervisor) noexcept {
 #ifndef STARLIGHT_PREMIUM
 		if (hypervisor) {
-			lastErrorCode = SI_NOT_AVAILABLE;
+			lastErrorCode = ERROR_NOT_SUPPORTED;
 			lastErrorMessage = t(L"Common.PremiumOnly");
 			return FALSE;
 		}
@@ -912,7 +921,7 @@ namespace winrt::StarlightGUI::implementation {
 	BOOL KernelInstance::DisableDSE(bool hypervisor) noexcept {
 #ifndef STARLIGHT_PREMIUM
 		if (hypervisor) {
-			lastErrorCode = SI_NOT_AVAILABLE;
+			lastErrorCode = ERROR_NOT_SUPPORTED;
 			lastErrorMessage = t(L"Common.PremiumOnly");
 			return FALSE;
 		}
@@ -936,7 +945,7 @@ namespace winrt::StarlightGUI::implementation {
 		QueryError();
 		return result;
 #else
-		lastErrorCode = SI_NOT_AVAILABLE;
+		lastErrorCode = ERROR_NOT_SUPPORTED;
 		lastErrorMessage = t(L"Common.PremiumOnly");
 		return FALSE;
 #endif
@@ -1155,7 +1164,7 @@ namespace winrt::StarlightGUI::implementation {
 	}
 
 	BOOL KernelInstance::RemoveMiniFilter(winrt::StarlightGUI::GeneralEntry& entry) noexcept {
-		lastErrorCode = SI_NOT_IMPLEMENTED;
+		lastErrorCode = ERROR_CALL_NOT_IMPLEMENTED;
 		lastErrorMessage = L"Not implemented";
 		return FALSE;
 	}
@@ -1170,7 +1179,7 @@ namespace winrt::StarlightGUI::implementation {
 		QueryError();
 		return result;
 #else
-		lastErrorCode = SI_NOT_AVAILABLE;
+		lastErrorCode = ERROR_NOT_SUPPORTED;
 		lastErrorMessage = t(L"Common.PremiumOnly");
 		return FALSE;
 #endif
@@ -1179,7 +1188,7 @@ namespace winrt::StarlightGUI::implementation {
 	BOOL KernelInstance::ReadMemory(std::vector<BYTE>& data, PVOID address, ULONG size) noexcept {
 		data.clear();
 		if (!address || !size || size > (ULONG)-1 - FIELD_OFFSET(SI_MEMORY, Data)) {
-			lastErrorCode = SI_INVALID_PARAMETER;
+			lastErrorCode = ERROR_INVALID_PARAMETER;
 			lastErrorMessage = L"Invalid memory read parameter.";
 			return FALSE;
 		}
@@ -1187,7 +1196,7 @@ namespace winrt::StarlightGUI::implementation {
 		ULONG bufferSize = FIELD_OFFSET(SI_MEMORY, Data) + size;
 		PSI_MEMORY input = (PSI_MEMORY)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
 		if (!input) {
-			lastErrorCode = SI_ALLOCATION_FAILED;
+			lastErrorCode = ERROR_NOT_ENOUGH_MEMORY;
 			lastErrorMessage = L"Failed to allocate memory read buffer.";
 			return FALSE;
 		}
@@ -1206,7 +1215,7 @@ namespace winrt::StarlightGUI::implementation {
 
 	BOOL KernelInstance::WriteMemory(PVOID address, PVOID data, ULONG size) noexcept {
 		if (!address || !data || !size || size > (ULONG)-1 - FIELD_OFFSET(SI_MEMORY, Data)) {
-			lastErrorCode = SI_INVALID_PARAMETER;
+			lastErrorCode = ERROR_INVALID_PARAMETER;
 			lastErrorMessage = L"Invalid memory write parameter.";
 			return FALSE;
 		}
@@ -1214,7 +1223,7 @@ namespace winrt::StarlightGUI::implementation {
 		ULONG bufferSize = FIELD_OFFSET(SI_MEMORY, Data) + size;
 		PSI_MEMORY input = (PSI_MEMORY)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, bufferSize);
 		if (!input) {
-			lastErrorCode = SI_ALLOCATION_FAILED;
+			lastErrorCode = ERROR_NOT_ENOUGH_MEMORY;
 			lastErrorMessage = L"Failed to allocate memory write buffer.";
 			return FALSE;
 		}

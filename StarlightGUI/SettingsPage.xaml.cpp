@@ -9,6 +9,7 @@
 #endif
 
 #include "Utils/Config.h"
+#include "InfoWindow.xaml.h"
 #include "MainWindow.xaml.h"
 #include <algorithm>
 #include <cwctype>
@@ -235,7 +236,8 @@ namespace winrt::StarlightGUI::implementation
         backgroundType = (int)BackgroundComboBox().SelectedIndex();
         SaveConfig("background_type", (int)BackgroundComboBox().SelectedIndex());
 
-        g_mainWindowInstance->LoadBackdrop();
+        g_mainWindowInstance->LoadBackground();
+        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackground();
         Console::GetInstance().SetAppearanceByConfig();
     }
 
@@ -249,6 +251,7 @@ namespace winrt::StarlightGUI::implementation
         SaveConfig("mica_type", (int)MicaTypeComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackdrop();
+        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackdrop();
         Console::GetInstance().SetAppearanceByConfig();
     }
 
@@ -262,6 +265,7 @@ namespace winrt::StarlightGUI::implementation
         SaveConfig("acrylic_type", (int)AcrylicTypeComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackdrop();
+        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackdrop();
         Console::GetInstance().SetAppearanceByConfig();
     }
     
@@ -392,6 +396,7 @@ namespace winrt::StarlightGUI::implementation
         ImagePathText().Text(L"");
 
         g_mainWindowInstance->LoadBackground();
+        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackground();
     }
 
     slg::coroutine SettingsPage::SetImageButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
@@ -420,6 +425,7 @@ namespace winrt::StarlightGUI::implementation
                 ImagePathText().Text(to_hstring(backgroundImage));
 
                 g_mainWindowInstance->LoadBackground();
+                if (g_infoWindowInstance) g_infoWindowInstance->LoadBackground();
             }
         }
         catch (hresult_error) {
@@ -431,6 +437,7 @@ namespace winrt::StarlightGUI::implementation
     void SettingsPage::RefreshOpacityButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e) {
         if (!IsLoaded()) return;
         g_mainWindowInstance->LoadBackground();
+        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackground();
     }
 
     void SettingsPage::ImageStretchComboBox_SelectionChanged(IInspectable const& sender, SelectionChangedEventArgs const& e)
@@ -442,6 +449,7 @@ namespace winrt::StarlightGUI::implementation
         SaveConfig("image_stretch", (int)ImageStretchComboBox().SelectedIndex());
 
         g_mainWindowInstance->LoadBackground();
+        if (g_infoWindowInstance) g_infoWindowInstance->LoadBackground();
     }
 
     void SettingsPage::LogButton_Click(winrt::Windows::Foundation::IInspectable const& sender, winrt::Microsoft::UI::Xaml::RoutedEventArgs const& e)

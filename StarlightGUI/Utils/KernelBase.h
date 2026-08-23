@@ -3,7 +3,6 @@
 #include <Windows.h>
 #include "NTBase.h"
 #include "SiriusIO.h"
-#include "SiriusError.h"
 #include "FileInfo.h"
 #include "GeneralEntry.h"
 #include "HandleInfo.h"
@@ -33,7 +32,7 @@ namespace winrt::StarlightGUI::implementation {
 	class KernelInstance {
 	public:
 		// Error handling
-		static SISTATUS GetLastErrorCode() noexcept;
+		static DWORD GetLastErrorCode() noexcept;
 		static std::wstring GetLastErrorMessage() noexcept;
 		static void QueryError() noexcept;
 

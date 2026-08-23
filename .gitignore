@@ -17,8 +17,4 @@
 /.claude
 /.codex
 
-# Local normal code-signing assets
-/SignSirius.bat
-/SiriusLocalCodeSigning.pfx
-/SiriusLocalCodeSigning.cer
 /StarlightGUI/obj

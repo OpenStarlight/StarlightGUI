@@ -29,6 +29,12 @@
             <Setter Property="VerticalAlignment" Value="Center" />
         </Style>
 
+        <Style x:Key="TooltipTextStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{ThemeResource AppGraphTooltipForegroundBrush}" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
         <!--  图例  -->
         <Style x:Key="LegendItemStyle" TargetType="StackPanel">
             <Setter Property="Orientation" Value="Horizontal" />
