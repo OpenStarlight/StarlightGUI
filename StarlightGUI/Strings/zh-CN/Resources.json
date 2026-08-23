@@ -415,7 +415,7 @@
   "Settings.Desc.Card.TrayBgRun": "关闭窗口时最小化到托盘并在后台运行",
   "Settings.Desc.Card.ElevatedRun": "以 TrustedInstaller 权限运行 Starlight GUI",
   "Settings.Desc.Card.AutoStart": "通过计划任务在登录后自动启动，可避免开机时弹出 UAC",
-  "Settings.Desc.Card.ReplaceTaskMgr": "接管系统任务管理器启动，打开任务管理器时自动唤起并跳转到任务管理页",
+  "Settings.Desc.Card.ReplaceTaskMgr": "接管系统任务管理器，打开任务管理器时自动启动",
   "Settings.Desc.Card.AutoStopDriver": "当 Starlight GUI 退出时，自动停止驱动服务",
   "Settings.Desc.Card.Background": "应用的背景颜色类型",
   "Settings.Desc.Card.AcrylicType": "背景的亚克力效果模式",
